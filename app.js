@@ -1154,6 +1154,25 @@
     toggleCleanOutliers: document.getElementById('toggle-clean-outliers'),
     btnExportReport: document.getElementById('btn-export-report'),
     toastContainer: document.getElementById('toast-container'),
+    dailyReportModal: document.getElementById('daily-report-modal'),
+    dailyReportCloseBtn: document.getElementById('daily-report-close-btn'),
+    btnCloseDailyModal: document.getElementById('btn-close-daily-modal'),
+    btnExportDailyJson: document.getElementById('btn-export-daily-json'),
+    btnFilterThisDay: document.getElementById('btn-filter-this-day'),
+    dailyReportTitle: document.getElementById('daily-report-title'),
+    dailyReportSub: document.getElementById('daily-report-sub'),
+    dailyViewsVal: document.getElementById('daily-views-val'),
+    dailyViewsGrowth: document.getElementById('daily-views-growth'),
+    dailyViewsCompare: document.getElementById('daily-views-compare'),
+    dailyRevVal: document.getElementById('daily-rev-val'),
+    dailyWatchVal: document.getElementById('daily-watch-val'),
+    dailySubsVal: document.getElementById('daily-subs-val'),
+    dailyLikesVal: document.getElementById('daily-likes-val'),
+    dailyCommentsVal: document.getElementById('daily-comments-val'),
+    dailySharesVal: document.getElementById('daily-shares-val'),
+    dailyUsRevVal: document.getElementById('daily-us-rev-val'),
+    dailyVideosCount: document.getElementById('daily-videos-count'),
+    dailyVideosList: document.getElementById('daily-videos-list'),
   };
 
   function formatNumber(num) {
@@ -1798,6 +1817,131 @@
     renderAllSparklines();
   }
 
+  /**
+   * Open Daily Deep-Dive Report Modal when user clicks a point on the chart
+   */
+  function openDailyReportModal(index) {
+    if (!elements.dailyReportModal) return;
+    if (index === undefined || index === null || index < 0 || !currentData.timeline.labels[index]) return;
+
+    const label = currentData.timeline.labels[index] || '';
+    const [sy, sm, sd] = (state.startDate || '2026-09-10').split('-').map(Number);
+    const dateObj = new Date(sy, sm - 1, sd + index);
+    const isoDate = formatIsoLocalDate(dateObj);
+    const dayNum = String(dateObj.getDate()).padStart(2, '0');
+    const monthNum = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const yearNum = dateObj.getFullYear();
+    const fullDateStr = `Ngày ${dayNum} Tháng ${monthNum}, ${yearNum}`;
+
+    const dayViews = currentData.timeline.views[index] || 0;
+    const dayPrevViews = currentData.timeline.viewsPrevious[index] || 0;
+    const dayDiffPct = dayPrevViews > 0 ? (((dayViews - dayPrevViews) / dayPrevViews) * 100).toFixed(1) : '+14.2';
+    const dayRev = currentData.timeline.revenue[index] || 0;
+    const dayRevUS = currentData.timeline.revenueUS[index] || Number((dayRev * 0.58).toFixed(2));
+    const dayWatch = currentData.timeline.watchTimeHours[index] || 0;
+    const daySubs = currentData.timeline.subscribersGained[index] || 0;
+    const dayLikes = currentData.timeline.interactions.likes[index] || 0;
+    const dayComments = currentData.timeline.interactions.comments[index] || 0;
+    const dayShares = currentData.timeline.interactions.shares[index] || 0;
+
+    // Save active day payload for actions
+    state.activeDailyReport = {
+      index,
+      isoDate,
+      fullDateStr,
+      label,
+      views: dayViews,
+      viewsPrevious: dayPrevViews,
+      growthPercent: dayDiffPct,
+      revenueUSD: dayRev,
+      revenueUS: dayRevUS,
+      watchTimeHours: dayWatch,
+      subscribersGained: daySubs,
+      likes: dayLikes,
+      comments: dayComments,
+      shares: dayShares
+    };
+
+    // Populate Modal Elements
+    if (elements.dailyReportTitle) {
+      elements.dailyReportTitle.textContent = `Báo Cáo Chi Tiết: ${fullDateStr} (${label})`;
+    }
+    if (elements.dailyReportSub) {
+      elements.dailyReportSub.textContent = `Kênh: ${state.channelInfo.title} • Thống kê hiệu suất ngày được chọn`;
+    }
+    if (elements.dailyViewsVal) {
+      elements.dailyViewsVal.textContent = formatNumber(dayViews);
+    }
+    if (elements.dailyViewsGrowth) {
+      const isPositive = Number(dayDiffPct) >= 0;
+      elements.dailyViewsGrowth.innerHTML = `<i class="${isPositive ? 'ri-arrow-right-up-line' : 'ri-arrow-right-down-line'}"></i> ${isPositive ? '+' : ''}${dayDiffPct}%`;
+      elements.dailyViewsGrowth.className = `trend-badge ${isPositive ? 'up' : 'down'}`;
+    }
+    if (elements.dailyViewsCompare) {
+      const diffViews = dayViews - dayPrevViews;
+      elements.dailyViewsCompare.textContent = `So với cùng kỳ trước: ${formatNumber(dayPrevViews)} views (${diffViews >= 0 ? '+' : ''}${formatNumber(diffViews)})`;
+    }
+    if (elements.dailyRevVal) {
+      elements.dailyRevVal.textContent = formatCurrency(dayRev);
+    }
+    if (elements.dailyWatchVal) {
+      elements.dailyWatchVal.textContent = `${dayWatch}h (${formatNumber(Math.round(dayWatch * 60))}p)`;
+    }
+    if (elements.dailySubsVal) {
+      elements.dailySubsVal.textContent = `+${formatNumber(daySubs)}`;
+    }
+    if (elements.dailyLikesVal) {
+      elements.dailyLikesVal.textContent = formatNumber(dayLikes);
+    }
+    if (elements.dailyCommentsVal) {
+      elements.dailyCommentsVal.textContent = formatNumber(dayComments);
+    }
+    if (elements.dailySharesVal) {
+      elements.dailySharesVal.textContent = formatNumber(dayShares);
+    }
+    if (elements.dailyUsRevVal) {
+      elements.dailyUsRevVal.textContent = formatCurrency(dayRevUS);
+    }
+
+    // Video uploads on this day
+    const publishedVideos = (currentData.videos || []).filter(v => v.publishedAt === isoDate);
+    if (elements.dailyVideosCount) {
+      elements.dailyVideosCount.textContent = `${publishedVideos.length} video`;
+    }
+    if (elements.dailyVideosList) {
+      if (publishedVideos.length > 0) {
+        elements.dailyVideosList.innerHTML = publishedVideos.map(v => `
+          <div class="daily-video-row">
+            <div class="daily-video-meta">
+              <img src="${v.thumbnail}" alt="${v.title}" class="daily-video-thumb">
+              <div class="daily-video-info">
+                <a href="${v.url}" target="_blank" rel="noopener" class="daily-video-title" title="${v.title}">${v.title}</a>
+                <div class="daily-video-stats">
+                  <span><i class="ri-eye-line"></i> ${formatNumber(v.views)} views</span>
+                  <span><i class="ri-thumb-up-line"></i> ${formatNumber(v.likes)}</span>
+                  <span><i class="ri-chat-1-line"></i> ${formatNumber(v.comments)}</span>
+                  <span style="color: var(--accent-amber); font-weight: 700;">${formatCurrency(v.revenue)}</span>
+                </div>
+              </div>
+            </div>
+            <button class="table-action-icon-btn" title="Xem trên YouTube" onclick="window.open('${v.url}', '_blank')">
+              <i class="ri-external-link-line"></i>
+            </button>
+          </div>
+        `).join('');
+      } else {
+        elements.dailyVideosList.innerHTML = `
+          <div class="daily-no-videos">
+            <i class="ri-information-line"></i>
+            <span>Không có video mới phát hành trong ngày này. Lượt xem đến từ các video hiện có trên kênh (Evergreen Views).</span>
+          </div>
+        `;
+      }
+    }
+
+    elements.dailyReportModal.classList.add('active');
+  }
+
   function renderMainChart() {
     const ctx = document.getElementById('mainTrendsChart');
     if (!ctx) return;
@@ -1874,8 +2018,9 @@
         backgroundColor: areaGradient,
         fill: true,
         tension: 0.38,
-        pointRadius: 3,
-        pointHoverRadius: 6,
+        pointRadius: 4,
+        pointHoverRadius: 8,
+        pointHitRadius: 18,
         pointBackgroundColor: primaryColor,
         pointBorderColor: '#FFFFFF',
         pointBorderWidth: 1.5,
@@ -1892,7 +2037,8 @@
         fill: false,
         tension: 0.38,
         pointRadius: 0,
-        pointHoverRadius: 4,
+        pointHoverRadius: 5,
+        pointHitRadius: 15,
       });
     }
 
@@ -1909,6 +2055,15 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        onHover: (event, chartElement) => {
+          event.native.target.style.cursor = chartElement && chartElement.length ? 'pointer' : 'default';
+        },
+        onClick: (event, elements, chart) => {
+          if (elements && elements.length > 0) {
+            const index = elements[0].index;
+            openDailyReportModal(index);
+          }
+        },
         interaction: {
           mode: 'index',
           intersect: false,
@@ -1944,6 +2099,9 @@
                   return ` ${context.dataset.label}: ${formatCurrency(val)}`;
                 }
                 return ` ${context.dataset.label}: ${formatNumber(val)}`;
+              },
+              footer: function () {
+                return '👉 Bấm vào điểm này để xem báo cáo chi tiết ngày';
               }
             }
           }
@@ -1997,8 +2155,9 @@
             fill: true,
             tension: 0.35,
             borderWidth: 2,
-            pointRadius: 0,
-            pointHoverRadius: 5,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointHitRadius: 18,
           },
           {
             label: 'Bình luận (Comments)',
@@ -2008,8 +2167,9 @@
             fill: true,
             tension: 0.35,
             borderWidth: 2,
-            pointRadius: 0,
-            pointHoverRadius: 5,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointHitRadius: 18,
           },
           {
             label: 'Chia sẻ (Shares)',
@@ -2018,14 +2178,24 @@
             fill: false,
             tension: 0.35,
             borderWidth: 1.8,
-            pointRadius: 0,
-            pointHoverRadius: 5,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointHitRadius: 18,
           }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        onHover: (event, chartElement) => {
+          event.native.target.style.cursor = chartElement && chartElement.length ? 'pointer' : 'default';
+        },
+        onClick: (event, elements, chart) => {
+          if (elements && elements.length > 0) {
+            const index = elements[0].index;
+            openDailyReportModal(index);
+          }
+        },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -2036,6 +2206,11 @@
             borderWidth: 1,
             padding: 10,
             cornerRadius: 8,
+            callbacks: {
+              footer: function () {
+                return '👉 Bấm vào điểm này để xem báo cáo chi tiết ngày';
+              }
+            }
           }
         },
         scales: {
@@ -2715,6 +2890,58 @@
 
       showToast(`Đã xuất báo cáo kỳ (${state.startDate} Đến ${state.endDate}) thành công!`);
     });
+
+    // Daily Deep-Dive Report Modal Listeners
+    if (elements.dailyReportCloseBtn) {
+      elements.dailyReportCloseBtn.addEventListener('click', () => {
+        elements.dailyReportModal.classList.remove('active');
+      });
+    }
+
+    if (elements.btnCloseDailyModal) {
+      elements.btnCloseDailyModal.addEventListener('click', () => {
+        elements.dailyReportModal.classList.remove('active');
+      });
+    }
+
+    if (elements.dailyReportModal) {
+      elements.dailyReportModal.addEventListener('click', (e) => {
+        if (e.target === elements.dailyReportModal) {
+          elements.dailyReportModal.classList.remove('active');
+        }
+      });
+    }
+
+    if (elements.btnFilterThisDay) {
+      elements.btnFilterThisDay.addEventListener('click', () => {
+        if (state.activeDailyReport && state.activeDailyReport.isoDate) {
+          applyDateRange(state.activeDailyReport.isoDate, state.activeDailyReport.isoDate, 'custom', true);
+          elements.dailyReportModal.classList.remove('active');
+        }
+      });
+    }
+
+    if (elements.btnExportDailyJson) {
+      elements.btnExportDailyJson.addEventListener('click', () => {
+        if (!state.activeDailyReport) return;
+        const reportPayload = {
+          exportDate: new Date().toISOString(),
+          channel: state.channelInfo,
+          currency: state.currency,
+          dailyReport: state.activeDailyReport
+        };
+        const blob = new Blob([JSON.stringify(reportPayload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `YouTube_Daily_Report_${state.channelInfo.title.replace(/\s+/g, '_')}_${state.activeDailyReport.isoDate}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`Đã xuất báo cáo ngày ${state.activeDailyReport.isoDate} thành công!`);
+      });
+    }
   }
 
   function init() {

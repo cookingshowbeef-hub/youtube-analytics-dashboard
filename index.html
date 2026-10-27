@@ -760,6 +760,116 @@
     </div>
   </div>
 
+  <!-- Modal: Daily Deep-Dive Report Dialog (Click Point on Chart) -->
+  <div class="modal-backdrop" id="daily-report-modal" role="dialog" aria-modal="true" aria-labelledby="daily-report-title">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge">
+            <i class="ri-calendar-check-fill modal-icon"></i>
+          </div>
+          <div>
+            <h3 class="modal-title" id="daily-report-title">Báo Cáo Chi Tiết Ngày</h3>
+            <p class="modal-sub" id="daily-report-sub">Hiệu suất và tương tác chi tiết trong ngày</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="daily-report-close-btn" aria-label="Đóng"><i class="ri-close-line"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Daily Hero Banner -->
+        <div class="daily-hero-banner" id="daily-hero-banner">
+          <div class="daily-hero-left">
+            <span class="daily-hero-label">Tổng lượt xem trong ngày</span>
+            <div class="daily-hero-value-row">
+              <span class="daily-hero-value" id="daily-views-val">0</span>
+              <span class="trend-badge" id="daily-views-growth">+0%</span>
+            </div>
+            <span class="daily-hero-compare" id="daily-views-compare">So với cùng kỳ trước: 0 views</span>
+          </div>
+          <div class="daily-hero-right">
+            <div class="daily-mini-metric">
+              <span class="d-label">Doanh thu</span>
+              <strong class="d-val text-amber" id="daily-rev-val">$0.00</strong>
+            </div>
+            <div class="daily-mini-metric">
+              <span class="d-label">Thời lượng xem</span>
+              <strong class="d-val text-rose" id="daily-watch-val">0h</strong>
+            </div>
+            <div class="daily-mini-metric">
+              <span class="d-label">Đăng ký mới</span>
+              <strong class="d-val text-emerald" id="daily-subs-val">+0</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail Breakdown Cards Grid -->
+        <div class="daily-stats-grid">
+          <div class="daily-stat-card">
+            <div class="daily-stat-header">
+              <i class="ri-thumb-up-line text-cyan"></i>
+              <span>Lượt thích</span>
+            </div>
+            <div class="daily-stat-val" id="daily-likes-val">0</div>
+            <div class="daily-stat-sub">Tương tác người xem</div>
+          </div>
+
+          <div class="daily-stat-card">
+            <div class="daily-stat-header">
+              <i class="ri-chat-1-line text-amber"></i>
+              <span>Bình luận</span>
+            </div>
+            <div class="daily-stat-val" id="daily-comments-val">0</div>
+            <div class="daily-stat-sub">Thảo luận cộng đồng</div>
+          </div>
+
+          <div class="daily-stat-card">
+            <div class="daily-stat-header">
+              <i class="ri-share-forward-line text-emerald"></i>
+              <span>Chia sẻ</span>
+            </div>
+            <div class="daily-stat-val" id="daily-shares-val">0</div>
+            <div class="daily-stat-sub">Lan tỏa video ra ngoài</div>
+          </div>
+
+          <div class="daily-stat-card">
+            <div class="daily-stat-header">
+              <i class="ri-money-dollar-circle-line text-indigo"></i>
+              <span>Doanh thu US</span>
+            </div>
+            <div class="daily-stat-val" id="daily-us-rev-val">$0.00</div>
+            <div class="daily-stat-sub">58.0% thị phần US</div>
+          </div>
+        </div>
+
+        <!-- Video Published Section -->
+        <div class="daily-videos-section">
+          <div class="daily-videos-header">
+            <h4><i class="ri-movie-2-line"></i> Video Phát Hành Trong Ngày Này</h4>
+            <span class="daily-videos-count-badge" id="daily-videos-count">0 video</span>
+          </div>
+          <div class="daily-videos-list" id="daily-videos-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="btn-export-daily-json">
+          <i class="ri-download-2-line"></i>
+          <span>Xuất JSON Ngày Này</span>
+        </button>
+        <button type="button" class="action-btn-outline" id="btn-filter-this-day">
+          <i class="ri-filter-line"></i>
+          <span>Lọc Chỉ Xem Ngày Này</span>
+        </button>
+        <button type="button" class="action-btn-primary" id="btn-close-daily-modal">
+          <span>Đóng</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Notification Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 

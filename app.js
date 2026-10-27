@@ -1039,15 +1039,18 @@
   ]
 };
 
+  // Default dates dynamically initialized with ending on current date (today)
+  const defaultInitialDates = getPresetDates('30');
+
   // State Management - 100% focused on REAL data
   const state = {
     theme: localStorage.getItem('tubepulse_theme') || 'dark',
     currency: 'USD',
     exchangeRate: 25450,
-    timeRange: 30,
-    startDate: '2026-09-10',
-    endDate: '2026-10-10',
-    periodDays: 31,
+    timeRange: '30',
+    startDate: defaultInitialDates.startDate,
+    endDate: defaultInitialDates.endDate,
+    periodDays: 30,
     activeMetric: 'views',
     comparePrevious: true,
     cleanOutliers: true,
@@ -1335,6 +1338,14 @@
   }
 
   /**
+   * Get today's Date normalized to midnight in local timezone
+   */
+  function getTodayLocalDate() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  /**
    * Format date range into short localized badge string:
    * e.g. "03 Th10 – 10 Th10, 2026" or "15/12/2025 – 10/10/2026"
    */
@@ -1342,6 +1353,9 @@
     if (!startDateStr || !endDateStr) return '';
     const [sy, sm, sd] = startDateStr.split('-');
     const [ey, em, ed] = endDateStr.split('-');
+    if (startDateStr === endDateStr) {
+      return `Ngày ${sd} Th${sm}, ${ey}`;
+    }
     if (sy === ey) {
       return `${sd} Th${sm} – ${ed} Th${em}, ${ey}`;
     }
@@ -1360,33 +1374,36 @@
     const psm = String(prevStart.getMonth() + 1).padStart(2, '0');
     const ped = String(prevEnd.getDate()).padStart(2, '0');
     const pem = String(prevEnd.getMonth() + 1).padStart(2, '0');
+    if (days === 1) {
+      return `Ngày ${ped} Th${pem}`;
+    }
     return `${psd} Th${psm} – ${ped} Th${pem}`;
   }
 
   /**
-   * Calculate preset start and end dates based on standard reporting periods
+   * Calculate preset start and end dates based on standard reporting periods.
+   * Default end date is ALWAYS the current date (today).
    */
   function getPresetDates(preset) {
-    const [ay, am, ad] = '2026-10-10'.split('-').map(Number);
-    const end = new Date(ay, am - 1, ad);
-    let start = new Date(ay, am - 1, ad);
+    const end = getTodayLocalDate();
+    let start = getTodayLocalDate();
 
     if (preset === '7') {
-      start.setDate(end.getDate() - 7); // 2026-10-03 to 2026-10-10 (8 days inclusive)
+      start.setDate(end.getDate() - 6); // exactly 7 days ending today
     } else if (preset === '28') {
-      start.setDate(end.getDate() - 27); // 2026-09-13 to 2026-10-10 (28 days)
+      start.setDate(end.getDate() - 27); // exactly 28 days ending today
     } else if (preset === '30') {
-      start.setDate(end.getDate() - 30); // 2026-09-10 to 2026-10-10 (31 days)
+      start.setDate(end.getDate() - 29); // exactly 30 days ending today
     } else if (preset === '90') {
-      start.setDate(end.getDate() - 90);
+      start.setDate(end.getDate() - 89); // exactly 90 days ending today
     } else if (preset === '365') {
-      start.setDate(end.getDate() - 364);
+      start.setDate(end.getDate() - 364); // 365 days ending today
     } else if (preset === 'this_year') {
-      start = new Date(2026, 0, 1);
+      start = new Date(end.getFullYear(), 0, 1);
     } else if (preset === 'all') {
-      start = new Date(2025, 0, 1);
+      start = new Date(end.getFullYear() - 1, 0, 1);
     } else if (preset === 'today') {
-      start = new Date(ay, am - 1, ad);
+      start = new Date(end);
     }
 
     return { startDate: formatIsoLocalDate(start), endDate: formatIsoLocalDate(end) };
@@ -1512,7 +1529,8 @@
   }
 
   function generateChannelTimeline(channelInfo, videos) {
-    return generateTimelineForRange(channelInfo, videos, state.startDate || '2026-09-10', state.endDate || '2026-10-10');
+    const def = getPresetDates('30');
+    return generateTimelineForRange(channelInfo, videos, state.startDate || def.startDate, state.endDate || def.endDate);
   }
 
   /**
@@ -1825,7 +1843,8 @@
     if (index === undefined || index === null || index < 0 || !currentData.timeline.labels[index]) return;
 
     const label = currentData.timeline.labels[index] || '';
-    const [sy, sm, sd] = (state.startDate || '2026-09-10').split('-').map(Number);
+    const defStart = getPresetDates('30').startDate;
+    const [sy, sm, sd] = (state.startDate || defStart).split('-').map(Number);
     const dateObj = new Date(sy, sm - 1, sd + index);
     const isoDate = formatIsoLocalDate(dateObj);
     const dayNum = String(dateObj.getDate()).padStart(2, '0');
@@ -2840,7 +2859,8 @@
     elements.btnResetFilter.addEventListener('click', () => {
       elements.toggleCleanOutliers.checked = true;
       state.cleanOutliers = true;
-      applyDateRange('2026-09-10', '2026-10-10', '30', false);
+      const def = getPresetDates('30');
+      applyDateRange(def.startDate, def.endDate, '30', false);
       elements.filterModal.classList.remove('active');
       showToast('Đã đặt lại bộ lọc mặc định (30 ngày)');
     });
@@ -2969,7 +2989,25 @@
       }
     }
 
-    applyDateRange(state.startDate, state.endDate, state.timeRange, false);
+    // Always ensure default end date is current date (today)
+    const initialDates = getPresetDates(state.timeRange || '30');
+    state.startDate = initialDates.startDate;
+    state.endDate = initialDates.endDate;
+
+    // Set max date attribute on date inputs to today to prevent future dates
+    const todayIso = formatIsoLocalDate(getTodayLocalDate());
+    if (elements.pickerStartDate) elements.pickerStartDate.max = todayIso;
+    if (elements.pickerEndDate) elements.pickerEndDate.max = todayIso;
+    if (elements.filterStartDate) elements.filterStartDate.max = todayIso;
+    if (elements.filterEndDate) elements.filterEndDate.max = todayIso;
+
+    // Dynamically update current year button label if present
+    const chipThisYear = document.getElementById('chip-preset-this-year');
+    if (chipThisYear) {
+      chipThisYear.textContent = `Năm ${getTodayLocalDate().getFullYear()}`;
+    }
+
+    applyDateRange(state.startDate, state.endDate, state.timeRange || '30', false);
     applyChannelDataToUI();
     setupEvents();
   }

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Kênh YouTube - YouTube Channel Analytics Hub</title>
+  <meta name="description" content="Hệ thống báo cáo và thống kê chuyên sâu kênh YouTube thời gian thực, tích hợp YouTube Data API v3. Giao diện thiết kế theo chuẩn UI/UX taste-skill hiện đại.">
+
+  <!-- Typography: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Remix Icon -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css?v=2.2">
+</head>
+<body>
+  <!-- Layout Container -->
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo-wrap">
+          <i class="ri-youtube-fill brand-icon"></i>
+          <span class="brand-text">TubePulse</span>
+        </div>
+        <span class="brand-badge">STUDIO PRO</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">TỔNG QUAN</div>
+        <a href="#overview" class="nav-item">
+          <i class="ri-dashboard-3-line"></i>
+          <span>Trang Chủ</span>
+        </a>
+        <a href="#channels" class="nav-item">
+          <i class="ri-tv-line"></i>
+          <span>Kênh / Trang</span>
+        </a>
+        <a href="#videos" class="nav-item">
+          <i class="ri-video-line"></i>
+          <span>Danh Sách Video</span>
+        </a>
+        <a href="#reports" class="nav-item active">
+          <i class="ri-bar-chart-box-line"></i>
+          <span>Báo Cáo Phân Tích</span>
+          <span class="nav-pill">V3 API</span>
+        </a>
+
+        <div class="nav-section-label">TĂNG TRƯỞNG & DỊCH VỤ</div>
+        <a href="#statistics" class="nav-item">
+          <i class="ri-line-chart-line"></i>
+          <span>Thống Kê Nâng Cao</span>
+        </a>
+        <a href="#campaigns" class="nav-item">
+          <i class="ri-rocket-2-line"></i>
+          <span>Chiến Dịch View</span>
+        </a>
+        <a href="#orders" class="nav-item">
+          <i class="ri-shopping-bag-3-line"></i>
+          <span>Đơn Hàng & POS</span>
+        </a>
+        <a href="#history" class="nav-item">
+          <i class="ri-history-line"></i>
+          <span>Lịch Sử Dữ Liệu</span>
+        </a>
+
+        <div class="nav-section-label">HỆ THỐNG</div>
+        <a href="#api-settings" class="nav-item" id="btn-open-api-modal">
+          <i class="ri-key-2-line"></i>
+          <span>Kết Nối API v3</span>
+          <span class="status-dot connected" id="api-status-indicator" title="Sẵn sàng"></span>
+        </a>
+        <a href="#settings" class="nav-item">
+          <i class="ri-settings-4-line"></i>
+          <span>Cấu Hình</span>
+        </a>
+      </nav>
+
+      <!-- Current Channel Preview in Sidebar -->
+      <div class="sidebar-channel-card">
+        <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80" alt="Channel Avatar" class="channel-avatar" id="sidebar-channel-avatar">
+        <div class="channel-info">
+          <div class="channel-name" id="sidebar-channel-name">Tech Horizon VN</div>
+          <div class="channel-sub-id" id="sidebar-channel-handle">@techhorizon_official</div>
+        </div>
+        <button class="channel-switch-btn" title="Đổi kênh theo dõi" id="btn-quick-switch-channel">
+          <i class="ri-arrow-up-down-line"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+      
+      <!-- Top Navigation Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" id="mobile-menu-toggle" aria-label="Toggle menu">
+            <i class="ri-menu-2-line"></i>
+          </button>
+          <div class="page-title-group">
+            <div class="breadcrumbs">
+              <span>Studio</span>
+              <i class="ri-arrow-right-s-line"></i>
+              <span>Phân Tích</span>
+              <i class="ri-arrow-right-s-line"></i>
+              <span class="active">Báo Cáo Kênh</span>
+            </div>
+            <h1 class="page-heading">Báo Cáo Hiệu Suất Kênh</h1>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Live API Indicator / Mode Badge -->
+          <div class="data-source-badge" id="data-source-badge" title="Chế độ dữ liệu">
+            <span class="badge-dot"></span>
+            <span id="data-source-label">Mock Data (Chuẩn v3 API)</span>
+          </div>
+
+          <!-- Currency Switcher -->
+          <div class="currency-toggle" id="currency-toggle">
+            <button class="curr-btn active" data-currency="USD">USD ($)</button>
+            <button class="curr-btn" data-currency="VND">VND (₫)</button>
+          </div>
+
+          <!-- Dark / Light Theme Toggle -->
+          <button class="icon-btn theme-toggle" id="theme-toggle-btn" title="Chuyển chế độ sáng/tối">
+            <i class="ri-moon-line dark-icon"></i>
+            <i class="ri-sun-line light-icon"></i>
+          </button>
+
+          <!-- Notifications -->
+          <button class="icon-btn" title="Thông báo hệ thống">
+            <i class="ri-notification-3-line"></i>
+            <span class="notification-dot"></span>
+          </button>
+
+          <!-- User Profile -->
+          <div class="user-profile-menu">
+            <div class="user-avatar-initials">VT</div>
+            <div class="user-meta">
+              <span class="user-name">Lê Văn Tuấn</span>
+              <span class="user-role">Kênh Quản Trị</span>
+            </div>
+            <i class="ri-arrow-down-s-line dropdown-arrow"></i>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dashboard Controls Bar: Date Filter, Compare, Presets, Export -->
+      <section class="controls-toolbar">
+        <div class="toolbar-left">
+          <!-- Time Range Presets -->
+          <div class="filter-tabs" id="time-range-tabs">
+            <button class="tab-btn" data-days="7">7 Ngày</button>
+            <button class="tab-btn active" data-days="30">30 Ngày</button>
+            <button class="tab-btn" data-days="90">90 Ngày</button>
+            <button class="tab-btn" data-days="365">1 Năm</button>
+            <button class="tab-btn" data-days="all">Toàn Thời Gian</button>
+          </div>
+
+          <!-- Date Range Selector -->
+          <div class="date-range-badge" id="date-range-picker-trigger">
+            <i class="ri-calendar-event-line"></i>
+            <span id="date-range-display">2026-09-10 Đến 2026-10-10</span>
+            <i class="ri-arrow-down-s-line"></i>
+          </div>
+        </div>
+
+        <div class="toolbar-right">
+          <!-- Compare Period Toggle -->
+          <button class="action-btn-outline" id="btn-toggle-compare">
+            <i class="ri-git-commit-line"></i>
+            <span>So sánh kỳ trước</span>
+            <span class="switch-indicator on"></span>
+          </button>
+
+          <!-- Filter Modal Button -->
+          <button class="action-btn-outline" id="btn-open-filter">
+            <i class="ri-filter-3-line"></i>
+            <span>Bộ Lọc</span>
+          </button>
+
+          <!-- Export Report Button -->
+          <button class="action-btn-primary" id="btn-export-report">
+            <i class="ri-download-2-line"></i>
+            <span>Xuất Báo Cáo</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- KPI Summary Cards Grid (Taste-Skill Redesign of Top Metrics) -->
+      <section class="kpi-grid">
+        <!-- 1. Lượt Xem (Views) -->
+        <div class="kpi-card" id="kpi-views">
+          <div class="kpi-header">
+            <div class="kpi-title-wrap">
+              <span class="kpi-title">Lượt Xem (Views)</span>
+              <i class="ri-information-line kpi-tooltip" title="Tổng 2,938 lượt xem thực tế từ YouTube Data API v3"></i>
+            </div>
+            <div class="kpi-icon-badge icon-cyan">
+              <i class="ri-eye-line"></i>
+            </div>
+          </div>
+          <div class="kpi-main-stat">
+            <span class="kpi-number" id="val-views">2.938</span>
+            <span class="kpi-trend positive" id="trend-views">
+              <i class="ri-arrow-up-line"></i> +14.2%
+            </span>
+          </div>
+          <div class="kpi-footer">
+            <span class="kpi-subtext" id="kpi-subtext-views">Tổng 19 video đã xuất bản</span>
+            <canvas class="kpi-sparkline" id="sparkline-views" width="90" height="26"></canvas>
+          </div>
+        </div>
+
+        <!-- 2. Doanh Thu Ước Tính (Revenue) -->
+        <div class="kpi-card" id="kpi-revenue">
+          <div class="kpi-header">
+            <div class="kpi-title-wrap">
+              <span class="kpi-title">Doanh Thu Ước Tính</span>
+              <i class="ri-information-line kpi-tooltip" title="Doanh thu ước tính theo RPM đối tác YouTube (~$2.50 / 1K views)"></i>
+            </div>
+            <div class="kpi-icon-badge icon-amber">
+              <i class="ri-money-dollar-circle-line"></i>
+            </div>
+          </div>
+          <div class="kpi-main-stat">
+            <span class="kpi-number" id="val-revenue">$7.35</span>
+            <span class="kpi-trend positive" id="trend-revenue">
+              <i class="ri-arrow-up-line"></i> +18.7%
+            </span>
+          </div>
+          <div class="kpi-footer">
+            <span class="kpi-subtext" id="kpi-subtext-revenue">Dự kiến: RPM $2.50 • CPM $4.10</span>
+            <canvas class="kpi-sparkline" id="sparkline-revenue" width="90" height="26"></canvas>
+          </div>
+        </div>
+
+        <!-- 3. Lượt Tương Tác (Interactions: Likes, Comments, Shares) -->
+        <div class="kpi-card" id="kpi-interactions">
+          <div class="kpi-header">
+            <div class="kpi-title-wrap">
+              <span class="kpi-title">Lượt Tương Tác</span>
+              <i class="ri-information-line kpi-tooltip" title="Tổng 31 likes + 19 comments thực tế từ 19 video của kênh"></i>
+            </div>
+            <div class="kpi-icon-badge icon-indigo">
+              <i class="ri-thumb-up-line"></i>
+            </div>
+          </div>
+          <div class="kpi-main-stat">
+            <span class="kpi-number" id="val-interactions">50</span>
+            <span class="kpi-trend positive" id="trend-interactions">
+              <i class="ri-arrow-up-line"></i> +6.3%
+            </span>
+          </div>
+          <div class="kpi-footer">
+            <span class="kpi-subtext" id="kpi-subtext-interactions">31 lượt thích • 19 bình luận</span>
+            <canvas class="kpi-sparkline" id="sparkline-interactions" width="90" height="26"></canvas>
+          </div>
+        </div>
+
+        <!-- 4. Lượt Đăng Ký (Subscribers Net) -->
+        <div class="kpi-card" id="kpi-subscribers">
+          <div class="kpi-header">
+            <div class="kpi-title-wrap">
+              <span class="kpi-title">Lượt Đăng Ký</span>
+              <i class="ri-information-line kpi-tooltip" title="10 người đăng ký thực tế từ YouTube Data API"></i>
+            </div>
+            <div class="kpi-icon-badge icon-emerald">
+              <i class="ri-user-add-line"></i>
+            </div>
+          </div>
+          <div class="kpi-main-stat">
+            <span class="kpi-number" id="val-subscribers">+10</span>
+            <span class="kpi-trend positive" id="trend-subscribers">
+              <i class="ri-arrow-up-line"></i> +24.8%
+            </span>
+          </div>
+          <div class="kpi-footer">
+            <span class="kpi-subtext" id="kpi-subtext-subs">Tổng 10 người đăng ký công khai</span>
+            <canvas class="kpi-sparkline" id="sparkline-subscribers" width="90" height="26"></canvas>
+          </div>
+        </div>
+
+        <!-- 5. Thời Lượng Xem (Watch Time in Hours) -->
+        <div class="kpi-card" id="kpi-watchtime">
+          <div class="kpi-header">
+            <div class="kpi-title-wrap">
+              <span class="kpi-title">Thời Lượng Xem (Watch Time)</span>
+              <i class="ri-information-line kpi-tooltip" title="Thời lượng tích lũy dựa trên 19 video âm nhạc marathon dài"></i>
+            </div>
+            <div class="kpi-icon-badge icon-rose">
+              <i class="ri-time-line"></i>
+            </div>
+          </div>
+          <div class="kpi-main-stat">
+            <span class="kpi-number" id="val-watchtime">146.9 giờ</span>
+            <span class="kpi-trend positive" id="trend-watchtime">
+              <i class="ri-arrow-up-line"></i> +11.5%
+            </span>
+          </div>
+          <div class="kpi-footer">
+            <span class="kpi-subtext" id="kpi-subtext-watch">8.814 phút • TB: 3p / view</span>
+            <canvas class="kpi-sparkline" id="sparkline-watchtime" width="90" height="26"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Primary Analytics Section: Master Timeline Chart with View Toggles -->
+      <section class="chart-panel">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <div class="panel-title-with-pill">
+              <h2 class="panel-title" id="main-chart-heading">Xu Hướng Tăng Trưởng Lượt Xem</h2>
+              <span class="granularity-badge" id="chart-granularity-badge">Theo Ngày</span>
+            </div>
+            <p class="panel-description">Dữ liệu thực tế đối chiếu theo mốc thời gian, loại bỏ hiện tượng chồng chéo nhãn dữ liệu (anti-slop clean design)</p>
+          </div>
+
+          <!-- Chart Metric Switcher -->
+          <div class="chart-metric-selector">
+            <button class="selector-pill active" data-metric="views">
+              <i class="ri-eye-line"></i> Lượt Xem
+            </button>
+            <button class="selector-pill" data-metric="revenue">
+              <i class="ri-money-dollar-circle-line"></i> Doanh Thu
+            </button>
+            <button class="selector-pill" data-metric="subscribers">
+              <i class="ri-user-add-line"></i> Đăng Ký
+            </button>
+            <button class="selector-pill" data-metric="watchtime">
+              <i class="ri-timer-line"></i> Thời Lượng Xem
+            </button>
+          </div>
+        </div>
+
+        <!-- Chart Canvas Container -->
+        <div class="chart-canvas-wrapper">
+          <canvas id="mainTrendsChart"></canvas>
+          <div class="chart-loading-overlay" id="chart-loading-overlay">
+            <div class="spinner"></div>
+            <span>Đang nạp dữ liệu YouTube API...</span>
+          </div>
+        </div>
+
+        <!-- Chart Quick Insight Summary Bar -->
+        <div class="chart-insight-strip">
+          <div class="insight-item">
+            <span class="insight-label">Đỉnh Điểm Cao Nhất:</span>
+            <strong class="insight-val highlight-blue" id="peak-value">20,450 lượt (19 Th09)</strong>
+          </div>
+          <div class="insight-item">
+            <span class="insight-label">Trung Bình Hàng Ngày:</span>
+            <strong class="insight-val" id="avg-daily-value">4,046 lượt / ngày</strong>
+          </div>
+          <div class="insight-item">
+            <span class="insight-label">Điểm Bất Thường (Outlier Filter):</span>
+            <span class="insight-status safe" id="outlier-status"><i class="ri-checkbox-circle-fill"></i> Đã làm mịn nhiễu âm (-57.9K anomaly)</span>
+          </div>
+          <div class="insight-item export-mini">
+            <button class="text-link-btn" id="btn-chart-fullscreen" title="Xem biểu đồ toàn màn hình">
+              <i class="ri-fullscreen-line"></i> Toàn màn hình
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dual Deep-Dive Analytics Row (Interactions & Revenue Distribution) -->
+      <section class="dual-grid">
+        
+        <!-- Left Deep-Dive: Lượt Tương Tác (Likes, Comments, Shares, Dislikes) -->
+        <div class="deep-dive-card">
+          <div class="card-header-row">
+            <div>
+              <h3 class="card-title">Cơ Cấu Lượt Tương Tác</h3>
+              <span class="card-subtitle">Chi tiết Lượt thích, Bình luận & Chia sẻ theo dòng thời gian</span>
+            </div>
+            <!-- Custom interactive legend checkboxes -->
+            <div class="custom-legend" id="interaction-legend">
+              <span class="legend-badge active" data-series="likes">
+                <span class="legend-color-dot dot-blue"></span> Lượt thích
+              </span>
+              <span class="legend-badge active" data-series="comments">
+                <span class="legend-color-dot dot-amber"></span> Bình luận
+              </span>
+              <span class="legend-badge active" data-series="shares">
+                <span class="legend-color-dot dot-emerald"></span> Chia sẻ
+              </span>
+              <span class="legend-badge" data-series="dislikes">
+                <span class="legend-color-dot dot-rose"></span> Không thích
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body-chart">
+            <canvas id="interactionsChart"></canvas>
+          </div>
+
+          <div class="interaction-stats-grid">
+            <div class="stat-mini-box">
+              <span class="stat-mini-label">Lượt Thích</span>
+              <span class="stat-mini-number text-blue" id="val-total-likes">14,820</span>
+              <span class="stat-mini-sub">79.5% tương tác</span>
+            </div>
+            <div class="stat-mini-box">
+              <span class="stat-mini-label">Bình Luận</span>
+              <span class="stat-mini-number text-amber" id="val-total-comments">2,410</span>
+              <span class="stat-mini-sub">12.9% tương tác</span>
+            </div>
+            <div class="stat-mini-box">
+              <span class="stat-mini-label">Chia Sẻ</span>
+              <span class="stat-mini-number text-emerald" id="val-total-shares">1,420</span>
+              <span class="stat-mini-sub">7.6% tương tác</span>
+            </div>
+            <div class="stat-mini-box">
+              <span class="stat-mini-label">Độ Hài Lòng</span>
+              <span class="stat-mini-number text-purple" id="val-sentiment-score">98.4%</span>
+              <span class="stat-mini-sub">Tỷ lệ like/dislike</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Deep-Dive: Phân Tích Thu Nhập Theo Địa Lý & Đăng Ký Ròng -->
+        <div class="deep-dive-card">
+          <div class="card-header-row">
+            <div>
+              <h3 class="card-title">Địa Lý Doanh Thu & Thu Phóng Thuê Bao</h3>
+              <span class="card-subtitle">Đối chiếu thị trường US vs Quốc tế & Đăng ký Có được / Mất đi</span>
+            </div>
+            <div class="pill-group-mini" id="geo-sub-tabs">
+              <button class="pill-mini-btn active" data-view="subscribers">Thuê Bao Ròng</button>
+              <button class="pill-mini-btn" data-view="geo-revenue">Thị Trường US</button>
+            </div>
+          </div>
+
+          <!-- View 1: Subscribers Donut & Retention KPIs -->
+          <div class="sub-tab-view active" id="view-subscribers-panel">
+            <div class="donut-and-kpis">
+              <div class="donut-wrapper">
+                <canvas id="subscriberDonutChart"></canvas>
+                <div class="donut-center-label">
+                  <span class="donut-center-val" id="donut-net-subs">+1,240</span>
+                  <span class="donut-center-title">Ròng Mới</span>
+                </div>
+              </div>
+              <div class="donut-legend-breakdown">
+                <div class="legend-row">
+                  <div class="legend-color-tag bg-cyan"></div>
+                  <div class="legend-text-col">
+                    <span class="legend-name">Có Được (Gained)</span>
+                    <strong class="legend-num" id="donut-gained-val">+1,430</strong>
+                  </div>
+                  <span class="legend-pct">88.3%</span>
+                </div>
+                <div class="legend-row">
+                  <div class="legend-color-tag bg-rose"></div>
+                  <div class="legend-text-col">
+                    <span class="legend-name">Mất Đi (Lost)</span>
+                    <strong class="legend-num" id="donut-lost-val">-190</strong>
+                  </div>
+                  <span class="legend-pct">11.7%</span>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="retention-score-box">
+                  <div class="score-header">
+                    <span>Tỷ Lệ Giữ Chân Khán Giả</span>
+                    <strong>48.2%</strong>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill" style="width: 48.2%;"></div>
+                  </div>
+                  <span class="score-hint">Cao hơn 12% so với mức trung bình ngành công nghệ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- View 2: US vs Global Revenue Breakdown -->
+          <div class="sub-tab-view" id="view-georevenue-panel" style="display: none;">
+            <div class="card-body-chart">
+              <canvas id="geoRevenueChart"></canvas>
+            </div>
+            <div class="us-revenue-summary">
+              <div class="us-stat-tag">
+                <span class="tag-label">Doanh thu US (Hoa Kỳ):</span>
+                <strong class="tag-val text-emerald" id="val-us-rev">$812.20 (56.8%)</strong>
+              </div>
+              <div class="us-stat-tag">
+                <span class="tag-label">RPM Trung Bình US:</span>
+                <strong class="tag-val text-amber">$7.40 / 1K view</strong>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- Video Performance Table (Direct mapping with YouTube Data API v3 videos.list) -->
+      <section class="table-section">
+        <div class="table-card">
+          <div class="table-header-bar">
+            <div class="table-title-area">
+              <h3 class="table-title">Video Hiệu Suất Cao Nhất Trong Kỳ</h3>
+              <p class="table-desc">Truy vấn chi tiết từ YouTube Data API v3 <code>videos.list (snippet, statistics, contentDetails)</code></p>
+            </div>
+
+            <div class="table-actions">
+              <!-- Search in table -->
+              <div class="table-search-box">
+                <i class="ri-search-line"></i>
+                <input type="text" placeholder="Tìm theo tiêu đề hoặc Video ID..." id="video-search-input">
+              </div>
+
+              <!-- Filter by category or sort -->
+              <select class="styled-select" id="video-sort-select">
+                <option value="views-desc">Sắp xếp: Lượt xem giảm dần</option>
+                <option value="revenue-desc">Sắp xếp: Doanh thu cao nhất</option>
+                <option value="likes-desc">Sắp xếp: Tương tác nhiều nhất</option>
+                <option value="date-desc">Mới phát hành gần nhất</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Responsive Table Container -->
+          <div class="table-responsive">
+            <table class="modern-data-table" id="youtube-videos-table">
+              <thead>
+                <tr>
+                  <th style="width: 44px;">#</th>
+                  <th>Video</th>
+                  <th>Ngày Xuất Bản</th>
+                  <th class="text-right">Lượt Xem</th>
+                  <th class="text-right">Thời Lượng</th>
+                  <th class="text-right">Tương Tác</th>
+                  <th class="text-right">Doanh Thu</th>
+                  <th class="text-center">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="videos-table-body">
+                <!-- Dynamically populated from JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Table Pagination & Counter -->
+          <div class="table-footer">
+            <span class="table-counter" id="table-counter-text">Hiển thị 1 - 5 của 18 video</span>
+            <div class="pagination-controls">
+              <button class="page-nav-btn disabled" id="prev-page-btn"><i class="ri-arrow-left-s-line"></i> Trước</button>
+              <button class="page-nav-btn active">1</button>
+              <button class="page-nav-btn">2</button>
+              <button class="page-nav-btn">3</button>
+              <button class="page-nav-btn" id="next-page-btn">Sau <i class="ri-arrow-right-s-line"></i></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal: YouTube API v3 Settings & Real Data Fetcher -->
+  <div class="modal-backdrop" id="api-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <i class="ri-key-2-fill modal-icon"></i>
+          <div>
+            <h3 class="modal-title">Cấu Hình YouTube Data API v3</h3>
+            <p class="modal-sub">Hỗ trợ dán trực tiếp link kênh, @handle hoặc Channel ID</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="modal-close-btn" aria-label="Đóng"><i class="ri-close-line"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="api-key-input">YouTube Data API v3 Key <span class="required">*</span></label>
+          <div class="input-with-action">
+            <input type="password" id="api-key-input" placeholder="AIzaSyD..." autocomplete="off">
+            <button type="button" class="btn-toggle-eye" id="btn-toggle-key-visibility" title="Hiện/ẩn key">
+              <i class="ri-eye-line"></i>
+            </button>
+          </div>
+          <span class="field-hint">Lấy key từ Google Cloud Console với API "YouTube Data API v3" đã được bật.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="channel-id-input">Link Kênh, Channel ID hoặc Handle <span class="required">*</span></label>
+          <input type="text" id="channel-id-input" placeholder="https://www.youtube.com/@tenkenh hoặc UC...">
+          <div class="channel-quick-suggestions">
+            <span class="suggestion-label">Thử nhanh:</span>
+            <button type="button" class="channel-chip" data-channel="https://www.youtube.com/@The80sGrooveMachine">80s Groove Machine</button>
+            <button type="button" class="channel-chip" data-channel="@MrBeast">MrBeast</button>
+            <button type="button" class="channel-chip" data-channel="@sontungmtp">Sơn Tùng M-TP</button>
+            <button type="button" class="channel-chip" data-channel="@VTV24">VTV24</button>
+          </div>
+          <span class="field-hint">Hỗ trợ: <code>https://youtube.com/@The80sGrooveMachine</code>, <code>@handle</code> hoặc <code>UC...</code></span>
+        </div>
+
+        <!-- Mode Selection Toggle -->
+        <div class="mode-selection-card">
+          <div class="radio-option active" id="opt-mock-mode">
+            <input type="radio" name="api-mode" id="radio-mock" checked>
+            <label for="radio-mock">
+              <strong>Dữ Liệu Mẫu Đẹp (Taste-Skill Curated)</strong>
+              <span>Đầy đủ chỉ số: Views, US Revenue, Retention, Subscribers, Video list</span>
+            </label>
+          </div>
+          <div class="radio-option" id="opt-live-mode">
+            <input type="radio" name="api-mode" id="radio-live">
+            <label for="radio-live">
+              <strong>Kết Nối Trực Tiếp YouTube API v3</strong>
+              <span>Tự động phân tích link và gửi request đến <code>googleapis.com/youtube/v3</code></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Feedback & Status Alert -->
+        <div class="api-alert" id="api-alert-box" style="display: none;">
+          <i class="ri-information-line"></i>
+          <span id="api-alert-text">Đang kiểm tra kết nối...</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-reset-sample">Dùng Dữ Liệu Mẫu</button>
+        <button class="action-btn-primary" id="btn-save-api">
+          <i class="ri-check-line"></i>
+          <span>Lưu & Tải Lại Dữ Liệu</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Filter Drawer / Dialog -->
+  <div class="modal-backdrop" id="filter-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <i class="ri-filter-3-fill modal-icon"></i>
+          <div>
+            <h3 class="modal-title">Bộ Lọc Dữ Liệu Báo Cáo</h3>
+            <p class="modal-sub">Lọc theo định dạng nội dung, thời gian và phạm vi địa lý</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="filter-close-btn"><i class="ri-close-line"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Định Dạng Video</label>
+          <div class="chip-filter-group">
+            <button class="chip-btn active" data-filter="all">Tất cả video</button>
+            <button class="chip-btn" data-filter="long">Video dài (&gt; 5 phút)</button>
+            <button class="chip-btn" data-filter="shorts">YouTube Shorts</button>
+            <button class="chip-btn" data-filter="live">Phát trực tiếp</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Khoảng Thời Gian Tùy Chỉnh</label>
+          <div class="grid-2-col">
+            <div>
+              <span class="field-hint">Từ ngày:</span>
+              <input type="date" id="filter-start-date" value="2026-09-10" class="date-input">
+            </div>
+            <div>
+              <span class="field-hint">Đến ngày:</span>
+              <input type="date" id="filter-end-date" value="2026-10-10" class="date-input">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Xử Lý Điểm Dữ Liệu Âm (Outlier Cleaning)</label>
+          <div class="toggle-row">
+            <span>Tự động làm sạch lỗi số âm (ví dụ: -57.9K bug)</span>
+            <label class="switch">
+              <input type="checkbox" id="toggle-clean-outliers" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-reset-filter">Mặc Định</button>
+        <button class="action-btn-primary" id="btn-apply-filter">Áp Dụng Bộ Lọc</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Application Logic -->
+  <script src="app.js?v=5.0_switch"></script>
+</body>
+</html>

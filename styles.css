@@ -563,6 +563,14 @@ body {
   font-weight: 600;
 }
 
+/* --------------------------------------------------------------------------
+   Date Range Picker & Floating Popover
+   -------------------------------------------------------------------------- */
+.date-range-picker-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
 .date-range-badge {
   display: flex;
   align-items: center;
@@ -576,13 +584,236 @@ body {
   color: var(--text-main);
   cursor: pointer;
   transition: var(--trans-fast);
+  user-select: none;
 }
-.date-range-badge:hover {
+.date-range-badge:hover,
+.date-range-badge.active {
   background: var(--bg-card-hover);
-  border-color: var(--border-medium);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.15);
 }
 .date-range-badge i {
+  color: var(--accent-cyan);
+}
+.date-range-badge .trigger-arrow {
   color: var(--text-dim);
+  font-size: 15px;
+  transition: transform 0.25s ease;
+}
+.date-range-badge.active .trigger-arrow {
+  transform: rotate(180deg);
+  color: var(--accent-cyan);
+}
+
+/* Floating Date Picker Dropdown Popover */
+.date-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1050;
+  width: 390px;
+  max-width: calc(100vw - 32px);
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+  animation: pickerSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.date-picker-dropdown.show {
+  display: flex;
+}
+
+@keyframes pickerSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.date-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 10px;
+}
+
+.date-picker-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.date-picker-title i {
+  color: var(--accent-cyan);
+}
+
+.btn-close-dropdown {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--trans-fast);
+}
+.btn-close-dropdown:hover {
+  background: var(--bg-subtle-hover);
+  color: var(--text-main);
+}
+
+/* Preset Chips */
+.date-picker-presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.preset-chip {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+  cursor: pointer;
+  transition: var(--trans-fast);
+  white-space: nowrap;
+}
+.preset-chip:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-main);
+  border-color: var(--border-medium);
+}
+.preset-chip.active {
+  background: rgba(0, 242, 254, 0.12);
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  font-weight: 600;
+}
+
+/* Custom Date Inputs */
+.date-picker-custom-range {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  background: var(--bg-subtle);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.date-field-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.date-field-group label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-with-icon i {
+  position: absolute;
+  left: 10px;
+  color: var(--text-dim);
+  font-size: 14px;
+  pointer-events: none;
+}
+.input-with-icon input.date-input {
+  width: 100%;
+  padding: 8px 10px 8px 30px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  outline: none;
+  transition: var(--trans-fast);
+}
+.input-with-icon input.date-input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 2px rgba(0, 242, 254, 0.2);
+}
+
+.date-separator-icon {
+  padding-bottom: 8px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* Summary info */
+.date-picker-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: rgba(99, 102, 241, 0.08);
+  border-left: 3px solid var(--accent-indigo);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.date-picker-summary strong {
+  color: var(--text-main);
+}
+.compare-badge-sub {
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+
+/* Action buttons */
+.date-picker-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.btn-cancel-picker {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--trans-fast);
+}
+.btn-cancel-picker:hover {
+  background: var(--bg-subtle-hover);
+  color: var(--text-main);
 }
 
 .action-btn-outline {
@@ -1435,6 +1666,21 @@ body {
   font-size: 10.5px;
   color: var(--text-dim);
   font-family: var(--font-mono);
+}
+
+.badge-in-period {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  margin-left: 6px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .metric-tabular {

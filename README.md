@@ -1,8 +1,8 @@
 # TubePulse - YouTube Channel Analytics Hub
 
-Báo cáo phân tích hiệu suất kênh YouTube hiện đại được xây dựng theo tiêu chuẩn thiết kế cao cấp (**Taste-Skill & Anti-AI-Slop**), kết nối trực tiếp với **YouTube Data API v3**.
+Báo cáo phân tích hiệu suất kênh YouTube hiện đại được xây dựng theo tiêu chuẩn thiết kế cao cấp (**Taste-Skill & Anti-AI-Slop**), kết nối trực tiếp với **YouTube Data API v3**. Mặc định theo dõi kênh âm nhạc [Lunavia (@LunaviaVintageMelodies)](https://www.youtube.com/@LunaviaVintageMelodies).
 
-## ✨ Tính Năng Nổi Bật
+![TubePulse Dashboard Preview](preview.png)
 
 - **Kết nối YouTube Data API v3 Trực Tiếp**:
   - Tự động nhận diện mọi định dạng: Link kênh đầy đủ (`https://youtube.com/@handle`), Handle (`@MrBeast`), hoặc Channel ID (`UC...`).

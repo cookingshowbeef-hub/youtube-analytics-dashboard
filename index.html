@@ -24,81 +24,109 @@
   <!-- Layout Container -->
   <div class="dashboard-layout">
     
-    <!-- Sidebar Navigation -->
+    <!-- Sidebar Navigation (BgMedia Enterprise Layout) -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
         <div class="brand-logo-wrap">
-          <i class="ri-youtube-fill brand-icon"></i>
-          <span class="brand-text">TubePulse</span>
+          <span class="bgmedia-logo-text">BgMedia</span>
         </div>
-        <span class="brand-badge">STUDIO PRO</span>
+        <i class="ri-menu-3-line bgmedia-menu-icon" id="sidebar-toggle-btn" title="Thu gọn menu"></i>
       </div>
 
-      <nav class="sidebar-nav">
-        <div class="nav-section-label">TỔNG QUAN</div>
-        <a href="#overview" class="nav-item">
-          <i class="ri-dashboard-3-line"></i>
-          <span>Trang Chủ</span>
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Direct Management Items -->
+        <a href="#view-mgmt-team" class="nav-item" data-view="view-mgmt-team">
+          <i class="ri-team-line"></i>
+          <span>Quản lý team</span>
         </a>
-        <a href="#channels" class="nav-item">
+        <a href="#view-mgmt-channel" class="nav-item" data-view="view-mgmt-channel">
           <i class="ri-tv-line"></i>
-          <span>Kênh / Trang</span>
+          <span>Quản lý kênh</span>
         </a>
-        <a href="#videos" class="nav-item">
+        <a href="#view-mgmt-video" class="nav-item" data-view="view-mgmt-video">
           <i class="ri-video-line"></i>
-          <span>Danh Sách Video</span>
+          <span>Quản lý Video</span>
         </a>
-        <a href="#reports" class="nav-item active">
-          <i class="ri-bar-chart-box-line"></i>
-          <span>Báo Cáo Phân Tích</span>
-          <span class="nav-pill">V3 API</span>
+        <a href="#view-mgmt-network" class="nav-item" data-view="view-mgmt-network">
+          <i class="ri-share-forward-box-line"></i>
+          <span>Quản lý network</span>
         </a>
-        <a href="#comparison-matrix-section" class="nav-item">
-          <i class="ri-git-merge-line"></i>
-          <span>So Sánh Tháng & Quý</span>
-          <span class="nav-pill" style="background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan);">MoM/QoQ</span>
+        <a href="#view-mgmt-project" class="nav-item" data-view="view-mgmt-project">
+          <i class="ri-folder-6-line"></i>
+          <span>Quản lý dự án</span>
         </a>
+        
+        <!-- Accordion: Quản lý chi phí -->
+        <div class="nav-group" id="nav-group-cost">
+          <div class="nav-group-header" data-toggle="collapse" title="Mở rộng chi phí">
+            <i class="ri-money-dollar-circle-line"></i>
+            <span>Quản lý chi phí</span>
+            <i class="ri-arrow-down-s-line nav-group-arrow"></i>
+          </div>
+        </div>
 
-        <div class="nav-section-label">TĂNG TRƯỞNG & DỊCH VỤ</div>
-        <a href="#statistics" class="nav-item">
-          <i class="ri-line-chart-line"></i>
-          <span>Thống Kê Nâng Cao</span>
-        </a>
-        <a href="#campaigns" class="nav-item">
-          <i class="ri-rocket-2-line"></i>
-          <span>Chiến Dịch View</span>
-        </a>
-        <a href="#orders" class="nav-item">
-          <i class="ri-shopping-bag-3-line"></i>
-          <span>Đơn Hàng & POS</span>
-        </a>
-        <a href="#history" class="nav-item">
-          <i class="ri-history-line"></i>
-          <span>Lịch Sử Dữ Liệu</span>
-        </a>
+        <!-- Accordion: BÁO CÁO (Always expanded, red text as in BgMedia screenshot) -->
+        <div class="nav-group open" id="nav-group-reports">
+          <div class="nav-group-header reports-header" data-toggle="collapse" title="Danh mục báo cáo">
+            <i class="ri-time-line"></i>
+            <span>Báo cáo</span>
+            <i class="ri-arrow-up-s-line nav-group-arrow"></i>
+          </div>
+          <div class="nav-sub-list">
+            <a href="#view-report-overview" class="nav-sub-item active" data-view="view-report-overview" id="nav-sub-overview">
+              <i class="ri-pie-chart-2-line"></i>
+              <span>Báo cáo</span>
+            </a>
+            <a href="#view-report-team" class="nav-sub-item" data-view="view-report-team" id="nav-sub-team">
+              <i class="ri-file-list-3-line"></i>
+              <span>Báo cáo theo team</span>
+            </a>
+            <a href="#view-report-project" class="nav-sub-item" data-view="view-report-project" id="nav-sub-project">
+              <i class="ri-table-line"></i>
+              <span>Báo cáo theo dự án</span>
+            </a>
+            <a href="#view-report-channel" class="nav-sub-item" data-view="view-report-channel" id="nav-sub-channel">
+              <i class="ri-tv-line"></i>
+              <span>Báo cáo theo kênh</span>
+            </a>
+            <a href="#view-report-network" class="nav-sub-item" data-view="view-report-network" id="nav-sub-network">
+              <i class="ri-share-network-line"></i>
+              <span>Báo cáo theo network</span>
+            </a>
+            <a href="#view-report-staff-chart" class="nav-sub-item highlight-red" data-view="view-report-staff-chart" id="nav-sub-staff-chart">
+              <i class="ri-line-chart-line"></i>
+              <span>Báo cáo theo NV (biểu đồ)</span>
+            </a>
+            <a href="#view-report-staff-data" class="nav-sub-item" data-view="view-report-staff-data" id="nav-sub-staff-data">
+              <i class="ri-grid-line"></i>
+              <span>Báo cáo theo NV (số liệu)</span>
+            </a>
+            <a href="#view-report-guide" class="nav-sub-item" data-view="view-report-guide" id="nav-sub-guide">
+              <i class="ri-questionnaire-line"></i>
+              <span>Hướng dẫn</span>
+            </a>
+          </div>
+        </div>
 
-        <div class="nav-section-label">HỆ THỐNG</div>
-        <a href="#api-settings" class="nav-item" id="btn-open-api-modal">
-          <i class="ri-key-2-line"></i>
-          <span>Kết Nối API v3</span>
-          <span class="status-dot connected" id="api-status-indicator" title="Sẵn sàng"></span>
-        </a>
-        <a href="#settings" class="nav-item">
-          <i class="ri-settings-4-line"></i>
-          <span>Cấu Hình</span>
-        </a>
+        <!-- Accordion: Cài đặt -->
+        <div class="nav-group" id="nav-group-settings">
+          <div class="nav-group-header" data-toggle="collapse" title="Cài đặt hệ thống">
+            <i class="ri-settings-4-line"></i>
+            <span>Cài đặt</span>
+            <i class="ri-arrow-down-s-line nav-group-arrow"></i>
+          </div>
+        </div>
       </nav>
 
-      <!-- Current Channel Preview in Sidebar -->
-      <div class="sidebar-channel-card">
-        <img src="https://yt3.ggpht.com/0Gn6D9_lYPEyA_wH_uz3_Hjv8Hyl7o1i8dtePT5L6GltvVSa9JDosEc8w8PYbmmci8N55t8ifw=s240-c-k-c0x00ffffff-no-rj" alt="Channel Avatar" class="channel-avatar" id="sidebar-channel-avatar">
-        <div class="channel-info">
-          <div class="channel-name" id="sidebar-channel-name">Lunavia</div>
-          <div class="channel-sub-id" id="sidebar-channel-handle">@lunaviavintagemelodies</div>
+      <!-- Bottom Administrator Profile Card (Matching BgMedia Screenshot) -->
+      <div class="sidebar-admin-profile">
+        <div class="admin-avatar">
+          <i class="ri-user-3-line"></i>
         </div>
-        <button class="channel-switch-btn" title="Đổi kênh theo dõi" id="btn-quick-switch-channel">
-          <i class="ri-arrow-up-down-line"></i>
-        </button>
+        <div class="admin-meta">
+          <div class="admin-name">System Administrator</div>
+          <div class="admin-role">Tổng công ty - Giám đốc</div>
+        </div>
       </div>
     </aside>
 
@@ -119,11 +147,27 @@
               <i class="ri-arrow-right-s-line"></i>
               <span class="active">Báo Cáo Kênh</span>
             </div>
-            <h1 class="page-heading">Báo Cáo Hiệu Suất Kênh</h1>
+            <h1 class="page-heading" id="main-page-heading">Báo Cáo Hiệu Suất Kênh</h1>
           </div>
         </div>
 
         <div class="topbar-right">
+          <!-- Channel Selector (BgMedia Enterprise Multi-Channel) -->
+          <div class="channel-selector-container" id="channel-selector-container">
+            <button type="button" class="channel-selector-btn" data-channel="network" id="btn-chan-network" title="Tổng hợp toàn bộ 2 kênh">
+              <i class="ri-global-line"></i>
+              <span>Toàn Bộ Network</span>
+            </button>
+            <button type="button" class="channel-selector-btn active" data-channel="lunavia" id="btn-chan-lunavia" title="Kênh Lunavia Vintage Melodies">
+              <img src="https://yt3.ggpht.com/0Gn6D9_lYPEyA_wH_uz3_Hjv8Hyl7o1i8dtePT5L6GltvVSa9JDosEc8w8PYbmmci8N55t8ifw=s240-c-k-c0x00ffffff-no-rj" class="channel-mini-avatar" alt="Lunavia">
+              <span>Lunavia</span>
+            </button>
+            <button type="button" class="channel-selector-btn" data-channel="80sgroove" id="btn-chan-80sgroove" title="Kênh 80s Groove Machine">
+              <img src="https://yt3.ggpht.com/YIWwPKtcGGulhJUMARzpxGAQRHfj6vM64VUu8Ikk4OWiD133V2zYFfmoDIJE9aomsjbyayDmww=s240-c-k-c0x00ffffff-no-rj" class="channel-mini-avatar" alt="80s Groove Machine">
+              <span>80s Groove</span>
+            </button>
+          </div>
+
           <!-- Live API Indicator / Mode Badge -->
           <div class="data-source-badge" id="data-source-badge" title="Chế độ dữ liệu">
             <span class="badge-dot"></span>
@@ -150,15 +194,17 @@
 
           <!-- User Profile -->
           <div class="user-profile-menu">
-            <div class="user-avatar-initials">VT</div>
+            <div class="user-avatar-initials">AD</div>
             <div class="user-meta">
-              <span class="user-name">Lê Văn Tuấn</span>
-              <span class="user-role">Kênh Quản Trị</span>
+              <span class="user-name">System Administrator</span>
+              <span class="user-role">Giám Đốc Quản Trị</span>
             </div>
-            <i class="ri-arrow-down-s-line dropdown-arrow"></i>
           </div>
         </div>
       </header>
+
+      <!-- VIEW 1: BÁO CÁO TỔNG QUAN & ĐỐI CHIẾU THÁNG / QUÝ -->
+      <div class="dashboard-view active" id="view-report-overview">
 
       <!-- Dashboard Controls Bar: Date Filter, Compare, Presets, Export -->
       <section class="controls-toolbar">
@@ -775,8 +821,701 @@
         </div>
       </section>
 
-    </main>
-  </div>
+      </div> <!-- /view-report-overview -->
+
+      <!-- VIEW 2: BÁO CÁO THEO KÊNH (SO SÁNH SONG SONG LUNAVIA VS 80S GROOVE MACHINE) -->
+      <div class="dashboard-view" id="view-report-channel">
+        <section class="channel-compare-section">
+          <!-- Section Title & Badge -->
+          <div class="section-title-wrap" style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 10px;">
+                  <i class="ri-tv-line" style="color: #F53F3F;"></i>
+                  Báo Cáo So Sánh Đối Đầu 2 Kênh (Lunavia vs 80s Groove Machine)
+                </h2>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                  Phân tích đối chiếu toàn diện số liệu giữa 2 kênh chủ lực trực thuộc hệ thống BgMedia
+                </p>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-secondary" id="btn-sync-both-channels"><i class="ri-refresh-line"></i> Đồng Bộ 2 Kênh</button>
+                <button type="button" class="action-btn-primary" id="btn-export-compare-data"><i class="ri-download-2-line"></i> Xuất Báo Cáo Đối Đầu</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hero Cards Comparison Grid -->
+          <div class="compare-cards-grid">
+            <!-- Channel 1: Lunavia -->
+            <div class="channel-hero-card lunavia-card">
+              <div class="hero-card-header">
+                <img src="https://yt3.ggpht.com/0Gn6D9_lYPEyA_wH_uz3_Hjv8Hyl7o1i8dtePT5L6GltvVSa9JDosEc8w8PYbmmci8N55t8ifw=s240-c-k-c0x00ffffff-no-rj" alt="Lunavia Avatar" class="hero-avatar">
+                <div class="hero-title-group">
+                  <h3>Lunavia Vintage Melodies</h3>
+                  <div class="hero-handle">@lunaviavintagemelodies</div>
+                  <span class="hero-category-tag" style="background: rgba(0, 242, 254, 0.12); color: var(--accent-cyan); border: 1px solid rgba(0, 242, 254, 0.3);">
+                    <i class="ri-music-2-line"></i> Vintage Jazz & Lo-fi
+                  </span>
+                </div>
+              </div>
+
+              <!-- Quick Stats Row -->
+              <div class="hero-stats-row">
+                <div class="hero-stat-col">
+                  <span class="stat-lbl">Người Đăng Ký</span>
+                  <span class="stat-num" id="comp-luna-subs">1.320</span>
+                </div>
+                <div class="hero-stat-col">
+                  <span class="stat-lbl">Tổng Views</span>
+                  <span class="stat-num" id="comp-luna-views">251.635</span>
+                </div>
+                <div class="hero-stat-col">
+                  <span class="stat-lbl">Doanh Thu 2026</span>
+                  <span class="stat-num" style="color: var(--accent-amber);" id="comp-luna-rev">$754.90</span>
+                </div>
+                <div class="hero-stat-col">
+                  <span class="stat-lbl">RPM Bình Quân</span>
+                  <span class="stat-num" style="color: var(--accent-emerald);" id="comp-luna-rpm">$3.00</span>
+                </div>
+              </div>
+
+              <!-- Meta List -->
+              <div class="hero-meta-list">
+                <div class="hero-meta-item">
+                  <span>Nhân viên phụ trách (PIC):</span>
+                  <strong>nguyenvana (Nguyễn Văn An)</strong>
+                </div>
+                <div class="hero-meta-item">
+                  <span>Team / Đội ngũ:</span>
+                  <strong>Team Jazz & Lo-fi Retro</strong>
+                </div>
+                <div class="hero-meta-item">
+                  <span>Dự án:</span>
+                  <strong>Dự án Vintage Cafe (PRJ-LUNAVIA)</strong>
+                </div>
+                <div class="hero-meta-item">
+                  <span>Số video xuất bản:</span>
+                  <strong>59 video</strong>
+                </div>
+                <div class="hero-meta-item">
+                  <span>Thị phần khán giả Mỹ (US):</span>
+                  <strong style="color: var(--accent-cyan);">58.0% (Thị trường giá trị cao)</strong>
+                </div>
+              </div>
+
+              <button type="button" class="btn-secondary" style="width: 100%; justify-content: center;" id="btn-select-lunavia-view">
+                <i class="ri-eye-line"></i> Xem Báo Cáo Kênh Lunavia
+              </button>
+            </div>
+
+            <!-- VS Circle Badge -->
+            <div class="vs-badge-wrap">
+              <div class="vs-circle">VS</div>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); margin-top: 8px;">ĐỐI ĐẦU</span>
+            </div>
+
+            <!-- Channel 2: 80s Groove Machine -->
+            <div class="channel-hero-card groove-card">
+              <div class="hero-card-header">
+                <img src="https://yt3.ggpht.com/YIWwPKtcGGulhJUMARzpxGAQRHfj6vM64VUu8Ikk4OWiD133V2zYFfmoDIJE9aomsjbyayDmww=s240-c-k-c0x00ffffff-no-rj" alt="80s Groove Machine Avatar" class="hero-avatar">
+                <div class="hero-title-group">
+                  <h3>80s Groove Machine</h3>
+                  <div class="hero-handle">@the80sgroovemachine</div>
+                  <span class="hero-category-tag" style="background: rgba(245, 63, 63, 0.12); color: #F53F3F; border: 1px solid rgba(245, 63, 63, 0.3);">
+                    <i class="ri-disc-line"></i> 80s Synthwave & Disco
+                  </span>
+                </div>
+              </div>
+
+              <!-- Quick Stats Row -->
+              <div class="hero-stats-row">
+                <div class="hero-stat-col">
+                  <span class="stat-lbl">Người Đăng Ký</span>
+                  <span class="stat-num" id="comp-groove-subs">2.450</span>
+                </div>
+                <div class="hero-stat-col">
+                  <span class="stat-lbl">Tổng Views</span>
+                  <span class="stat-num" id="comp-groove-views">389.420</span>
+                </div>
+                <div class="hero-stat-col">
+                  <span class="stat-lbl">Doanh Thu 2026</span>
+                  <span class="stat-num" style="color: var(--accent-amber);" id="comp-groove-rev">$1.168.20</span>
+                </div>
+                <div class="hero-stat-col">
+                  <span class="stat-lbl">RPM Bình Quân</span>
+                  <span class="stat-num" style="color: var(--accent-emerald);" id="comp-groove-rpm">$3.00</span>
+                </div>
+              </div>
+
+              <!-- Meta List -->
+              <div class="hero-meta-list">
+                <div class="hero-meta-item">
+                  <span>Nhân viên phụ trách (PIC):</span>
+                  <strong>tranminhb (Trần Minh Bình)</strong>
+                </div>
+                <div class="hero-meta-item">
+                  <span>Team / Đội ngũ:</span>
+                  <strong>Team Disco & Electronic Wave</strong>
+                </div>
+                <div class="hero-meta-item">
+                  <span>Dự án:</span>
+                  <strong>Dự án Retro Disco Wave (PRJ-80SGROOVE)</strong>
+                </div>
+                <div class="hero-meta-item">
+                  <span>Số video xuất bản:</span>
+                  <strong>34 video</strong>
+                </div>
+                <div class="hero-meta-item">
+                  <span>Thị phần khán giả Mỹ (US):</span>
+                  <strong style="color: #F53F3F;">64.2% (Thị trường giá trị cao)</strong>
+                </div>
+              </div>
+
+              <button type="button" class="btn-secondary" style="width: 100%; justify-content: center;" id="btn-select-groove-view">
+                <i class="ri-eye-line"></i> Xem Báo Cáo Kênh 80s Groove
+              </button>
+            </div>
+          </div>
+
+          <!-- Comparison Chart: Head-to-Head 12 Months -->
+          <div class="chart-panel" style="margin-top: 10px;">
+            <div class="chart-panel-header">
+              <div class="chart-title-group">
+                <h3 class="chart-title"><i class="ri-line-chart-line" style="color: #F53F3F;"></i> Biểu Đồ Đối Chiếu Lượt Xem 12 Tháng (Lunavia vs 80s Groove Machine)</h3>
+                <p class="chart-subtitle">So sánh tiến trình tăng trưởng tháng qua từng mốc thời gian của 2 kênh</p>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="gran-pill active" id="btn-comp-metric-views"><i class="ri-eye-line"></i> Lượt Xem</button>
+                <button type="button" class="gran-pill" id="btn-comp-metric-revenue"><i class="ri-money-dollar-circle-line"></i> Doanh Thu</button>
+              </div>
+            </div>
+            <div style="height: 340px; position: relative;">
+              <canvas id="channelCompareChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Comparison Table Matrix -->
+          <div class="chart-panel" style="margin-top: 24px;">
+            <div class="chart-panel-header">
+              <div class="chart-title-group">
+                <h3 class="chart-title"><i class="ri-table-line" style="color: var(--accent-cyan);"></i> Bảng Ma Trận Đối Chiếu Chi Tiết 12 Tiêu Chí Cốt Lõi</h3>
+                <p class="chart-subtitle">Đánh giá ưu thế và hiệu suất khai thác nội dung của từng kênh</p>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="matrix-table" id="channel-compare-matrix-table">
+                <thead>
+                  <tr>
+                    <th>Chỉ Số Đánh Giá</th>
+                    <th style="color: var(--accent-cyan);">Lunavia Vintage Melodies</th>
+                    <th style="color: #F53F3F;">80s Groove Machine</th>
+                    <th>Chênh Lệch (Groove vs Luna)</th>
+                    <th>Đánh Giá Hiệu Quả</th>
+                  </tr>
+                </thead>
+                <tbody id="channel-compare-table-body">
+                  <tr>
+                    <td><strong>Tổng Lượt Xem (All-time Views)</strong></td>
+                    <td>251.635 views</td>
+                    <td>389.420 views</td>
+                    <td style="color: #34D399; font-weight: 700;">+137.785 (+54.8%)</td>
+                    <td><span class="status-tag high-growth">80s Groove dẫn đầu</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Số Lượng Video Đã Xuất Bản</strong></td>
+                    <td>59 video (Long-form 2-12h)</td>
+                    <td>34 video (Retro mix 1-3h)</td>
+                    <td style="color: var(--text-dim);">-25 video</td>
+                    <td><span class="status-tag positive">Lunavia năng suất hơn</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Lượt Xem Trung Bình Mỗi Video</strong></td>
+                    <td>4.265 views / video</td>
+                    <td>11.453 views / video</td>
+                    <td style="color: #34D399; font-weight: 700;">+7.188 (+168.5%)</td>
+                    <td><span class="status-tag high-growth">80s Groove viral mạnh</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Tổng Doanh Thu Ước Tính (2026)</strong></td>
+                    <td class="cell-luna-rev">$754.90</td>
+                    <td class="cell-groove-rev">$1.168.20</td>
+                    <td style="color: #34D399; font-weight: 700;" class="cell-diff-rev">+$413.30 (+54.7%)</td>
+                    <td><span class="status-tag high-growth">80s Groove doanh thu cao</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>RPM Trung Bình (Doanh thu / 1K views)</strong></td>
+                    <td class="cell-luna-rpm">$3.00</td>
+                    <td class="cell-groove-rpm">$3.00</td>
+                    <td>0.00 (Tương đương)</td>
+                    <td><span class="status-tag stable">RPM chuẩn thị trường</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Tỷ Trọng Khán Giả Mỹ (US View Share)</strong></td>
+                    <td>58.0%</td>
+                    <td>64.2%</td>
+                    <td style="color: #34D399;">+6.2%</td>
+                    <td><span class="status-tag high-growth">80s Groove tiếp cận US tốt hơn</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Thời Lượng Xem TB (Watch Time/view)</strong></td>
+                    <td>14 phút 30 giây</td>
+                    <td>9 phút 45 giây</td>
+                    <td style="color: var(--accent-cyan); font-weight: 700;">+4p 45s (Luna cao hơn)</td>
+                    <td><span class="status-tag positive">Lunavia giữ chân lâu hơn</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Tăng Trưởng Lượt Xem Tháng Gần Nhất (MoM)</strong></td>
+                    <td style="color: #34D399; font-weight: 700;">+170.2% (Tháng 10 Đột phá)</td>
+                    <td style="color: #34D399; font-weight: 700;">+63.0% (Tháng 10 Đột phá)</td>
+                    <td style="color: var(--accent-cyan);">Luna bứt phá mạnh hơn</td>
+                    <td><span class="status-tag high-growth">Cả 2 kênh đều tăng vọt</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- VIEW 3: BÁO CÁO THEO NHÂN VIÊN (BIỂU ĐỒ - CHUẨN BG MEDIA SCREENSHOT) -->
+      <div class="dashboard-view" id="view-report-staff-chart">
+        <section class="staff-report-section">
+          <!-- Page Header -->
+          <div class="section-title-wrap" style="margin-bottom: 16px;">
+            <h2 style="font-size: 20px; font-weight: 800; color: #F53F3F; display: flex; align-items: center; gap: 8px;">
+              <i class="ri-line-chart-line"></i>
+              Báo Cáo Theo Nhân Viên (Biểu Đồ)
+            </h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+              Theo dõi biến động và so sánh hiệu suất sản xuất của từng nhân sự phụ trách kênh (chuẩn BgMedia)
+            </p>
+          </div>
+
+          <!-- BgMedia Filter Bar (Identical to 20261028-111453.jpg) -->
+          <div class="bgmedia-filter-bar">
+            <div class="filter-field">
+              <label>Ngày bắt đầu</label>
+              <div class="filter-input-wrap">
+                <i class="ri-calendar-line"></i>
+                <input type="date" id="staff-filter-start" value="2026-01-01">
+              </div>
+            </div>
+
+            <div class="filter-field">
+              <label>Ngày kết thúc</label>
+              <div class="filter-input-wrap">
+                <i class="ri-calendar-line"></i>
+                <input type="date" id="staff-filter-end" value="2026-12-31">
+              </div>
+            </div>
+
+            <div class="filter-field">
+              <label>Tài khoản / Nhân viên</label>
+              <div class="filter-input-wrap">
+                <i class="ri-user-line"></i>
+                <select id="staff-filter-user">
+                  <option value="all">Tất cả nhân viên (2)</option>
+                  <option value="nguyenvana" selected>nguyenvana (Lunavia)</option>
+                  <option value="tranminhb">tranminhb (80s Groove)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-field">
+              <label>Loại thời gian</label>
+              <div class="filter-input-wrap">
+                <i class="ri-time-line"></i>
+                <select id="staff-filter-granularity">
+                  <option value="month" selected>Tháng</option>
+                  <option value="day">Ngày</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-field" style="margin-left: auto;">
+              <label>Xem biểu đồ</label>
+              <div class="metric-toggle-group" id="staff-metric-toggles">
+                <button type="button" class="metric-pill-btn active" data-metric="views"><i class="ri-check-line"></i> Lượt xem</button>
+                <button type="button" class="metric-pill-btn active" data-metric="revenue"><i class="ri-check-line"></i> Doanh thu</button>
+                <button type="button" class="metric-pill-btn active" data-metric="subs"><i class="ri-check-line"></i> Lượt sub</button>
+                <button type="button" class="metric-pill-btn active" data-metric="likes"><i class="ri-check-line"></i> Lượt like</button>
+                <button type="button" class="metric-pill-btn active" data-metric="comments"><i class="ri-check-line"></i> Lượt comment</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stacked Charts Stack (Identical layout to screenshot 20261028-111453.jpg) -->
+          <div class="staff-charts-stack">
+            <!-- 1. Lượt xem -->
+            <div class="staff-chart-card" id="card-staff-views">
+              <div class="staff-chart-header">
+                <div class="staff-chart-title">
+                  <i class="ri-eye-line" style="color: #F53F3F;"></i>
+                  <span>Lượt xem</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-dim);" id="legend-staff-views">
+                  <span style="color: #38BDF8;">● nguyenvana</span> &nbsp;|&nbsp; 
+                  <span style="color: #F53F3F;">● tranminhb</span> &nbsp;|&nbsp; 
+                  <span style="color: #FBBF24;">● Tổng</span>
+                </div>
+              </div>
+              <div class="staff-chart-canvas-wrap">
+                <canvas id="staffChartViews"></canvas>
+              </div>
+            </div>
+
+            <!-- 2. Doanh thu -->
+            <div class="staff-chart-card" id="card-staff-revenue">
+              <div class="staff-chart-header">
+                <div class="staff-chart-title">
+                  <i class="ri-money-dollar-circle-line" style="color: var(--accent-amber);"></i>
+                  <span>Doanh thu</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-dim);" id="legend-staff-revenue">
+                  <span style="color: #38BDF8;">● nguyenvana</span> &nbsp;|&nbsp; 
+                  <span style="color: #F53F3F;">● tranminhb</span> &nbsp;|&nbsp; 
+                  <span style="color: #FBBF24;">● Tổng</span>
+                </div>
+              </div>
+              <div class="staff-chart-canvas-wrap">
+                <canvas id="staffChartRevenue"></canvas>
+              </div>
+            </div>
+
+            <!-- 3. Lượt sub -->
+            <div class="staff-chart-card" id="card-staff-subs">
+              <div class="staff-chart-header">
+                <div class="staff-chart-title">
+                  <i class="ri-user-add-line" style="color: var(--accent-indigo);"></i>
+                  <span>Lượt sub (Người đăng ký mới)</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-dim);">
+                  <span style="color: #38BDF8;">● nguyenvana</span> &nbsp;|&nbsp; 
+                  <span style="color: #F53F3F;">● tranminhb</span> &nbsp;|&nbsp; 
+                  <span style="color: #FBBF24;">● Tổng</span>
+                </div>
+              </div>
+              <div class="staff-chart-canvas-wrap">
+                <canvas id="staffChartSubs"></canvas>
+              </div>
+            </div>
+
+            <!-- 4. Lượt like -->
+            <div class="staff-chart-card" id="card-staff-likes">
+              <div class="staff-chart-header">
+                <div class="staff-chart-title">
+                  <i class="ri-thumb-up-line" style="color: var(--accent-rose);"></i>
+                  <span>Lượt like</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-dim);">
+                  <span style="color: #38BDF8;">● nguyenvana</span> &nbsp;|&nbsp; 
+                  <span style="color: #F53F3F;">● tranminhb</span> &nbsp;|&nbsp; 
+                  <span style="color: #FBBF24;">● Tổng</span>
+                </div>
+              </div>
+              <div class="staff-chart-canvas-wrap">
+                <canvas id="staffChartLikes"></canvas>
+              </div>
+            </div>
+
+            <!-- 5. Lượt comment -->
+            <div class="staff-chart-card" id="card-staff-comments">
+              <div class="staff-chart-header">
+                <div class="staff-chart-title">
+                  <i class="ri-chat-3-line" style="color: var(--accent-emerald);"></i>
+                  <span>Lượt comment</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-dim);">
+                  <span style="color: #38BDF8;">● nguyenvana</span> &nbsp;|&nbsp; 
+                  <span style="color: #F53F3F;">● tranminhb</span> &nbsp;|&nbsp; 
+                  <span style="color: #FBBF24;">● Tổng</span>
+                </div>
+              </div>
+              <div class="staff-chart-canvas-wrap">
+                <canvas id="staffChartComments"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- VIEW 4: BÁO CÁO THEO NHÂN VIÊN (SỐ LIỆU) -->
+      <div class="dashboard-view" id="view-report-staff-data">
+        <section class="staff-data-section">
+          <div class="section-title-wrap" style="margin-bottom: 20px;">
+            <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+              <i class="ri-grid-line" style="color: #F53F3F;"></i>
+              Báo Cáo Theo Nhân Viên (Số Liệu & KPI)
+            </h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+              Bảng theo dõi định mức chỉ tiêu và hiệu suất sản xuất của đội ngũ nhân sự BgMedia
+            </p>
+          </div>
+
+          <div class="chart-panel">
+            <div class="table-responsive">
+              <table class="matrix-table" id="staff-kpi-table">
+                <thead>
+                  <tr>
+                    <th>Mã NV</th>
+                    <th>Họ Tên</th>
+                    <th>Team / Phòng Ban</th>
+                    <th>Kênh Phụ Trách</th>
+                    <th class="text-right">Video Đã Dựng</th>
+                    <th class="text-right">Tổng Lượt Xem</th>
+                    <th class="text-right">Doanh Thu Đạt Được</th>
+                    <th class="text-right">RPM Bình Quân</th>
+                    <th class="text-center">% Hoàn Thành KPI</th>
+                    <th class="text-center">Xếp Loại Thi Đua</th>
+                  </tr>
+                </thead>
+                <tbody id="staff-kpi-table-body">
+                  <tr>
+                    <td><code>NV-01</code></td>
+                    <td><strong>Nguyễn Văn An</strong> (nguyenvana)</td>
+                    <td>Team Jazz & Lo-fi Retro</td>
+                    <td><span style="color: var(--accent-cyan); font-weight: 600;">Lunavia</span></td>
+                    <td class="text-right">59 video</td>
+                    <td class="text-right" style="font-weight: 700;">251.635</td>
+                    <td class="text-right cell-staff-rev1" style="font-weight: 700; color: var(--accent-amber);">$754.90</td>
+                    <td class="text-right cell-staff-rpm1" style="color: var(--accent-emerald);">$3.00</td>
+                    <td class="text-center"><span class="status-tag high-growth">118% (Vượt chỉ tiêu)</span></td>
+                    <td class="text-center"><span class="badge-status-top" style="padding: 2px 8px; background: rgba(16, 185, 129, 0.15); color: #10B981; border-radius: 4px; font-weight: 700;">Loại A+</span></td>
+                  </tr>
+                  <tr>
+                    <td><code>NV-02</code></td>
+                    <td><strong>Trần Minh Bình</strong> (tranminhb)</td>
+                    <td>Team Disco & Electronic</td>
+                    <td><span style="color: #F53F3F; font-weight: 600;">80s Groove Machine</span></td>
+                    <td class="text-right">34 video</td>
+                    <td class="text-right" style="font-weight: 700;">389.420</td>
+                    <td class="text-right cell-staff-rev2" style="font-weight: 700; color: var(--accent-amber);">$1.168.20</td>
+                    <td class="text-right cell-staff-rpm2" style="color: var(--accent-emerald);">$3.00</td>
+                    <td class="text-center"><span class="status-tag high-growth">132% (Vượt chỉ tiêu)</span></td>
+                    <td class="text-center"><span class="badge-status-top" style="padding: 2px 8px; background: rgba(16, 185, 129, 0.15); color: #10B981; border-radius: 4px; font-weight: 700;">Loại A+</span></td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr style="background: rgba(255, 255, 255, 0.03); font-weight: 800;">
+                    <td colspan="4">TỔNG TOÀN CÔNG TY (2 NHÂN VIÊN)</td>
+                    <td class="text-right">93 video</td>
+                    <td class="text-right">641.055 views</td>
+                    <td class="text-right cell-staff-total-rev" style="color: var(--accent-amber);">$1.923.10</td>
+                    <td class="text-right cell-staff-total-rpm" style="color: var(--accent-emerald);">$3.00</td>
+                    <td class="text-center" style="color: #34D399;">125% TB</td>
+                    <td class="text-center"><span style="color: #34D399;">Hoàn thành xuất sắc</span></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- VIEW 5: BÁO CÁO THEO TEAM -->
+      <div class="dashboard-view" id="view-report-team">
+        <section class="team-report-section">
+          <div class="section-title-wrap" style="margin-bottom: 20px;">
+            <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+              <i class="ri-team-line" style="color: #F53F3F;"></i>
+              Báo Cáo Theo Nhóm / Team Sản Xuất
+            </h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+              Đối chiếu sản lượng nội dung và doanh thu giữa Team Jazz & Lo-fi và Team Disco & Synthwave
+            </p>
+          </div>
+
+          <div class="chart-panel">
+            <div class="table-responsive">
+              <table class="matrix-table">
+                <thead>
+                  <tr>
+                    <th>Tên Team</th>
+                    <th>Trưởng Nhóm</th>
+                    <th>Kênh Vận Hành</th>
+                    <th class="text-right">Nhân Sự</th>
+                    <th class="text-right">Video</th>
+                    <th class="text-right">Lượt Xem</th>
+                    <th class="text-right">Doanh Thu</th>
+                    <th class="text-center">Tỷ Trọng Doanh Thu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Team Jazz & Lo-fi Retro</strong></td>
+                    <td>Nguyễn Văn An</td>
+                    <td><span style="color: var(--accent-cyan);">Lunavia</span></td>
+                    <td class="text-right">3 người</td>
+                    <td class="text-right">59 video</td>
+                    <td class="text-right">251.635</td>
+                    <td class="text-right cell-team-rev1" style="color: var(--accent-amber); font-weight: 700;">$754.90</td>
+                    <td class="text-center">
+                      <div class="quarter-share-bar" style="justify-content: center;">
+                        <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: 39.2%;"></div></div>
+                        <span>39.2%</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><strong>Team Disco & Electronic</strong></td>
+                    <td>Trần Minh Bình</td>
+                    <td><span style="color: #F53F3F;">80s Groove Machine</span></td>
+                    <td class="text-right">4 người</td>
+                    <td class="text-right">34 video</td>
+                    <td class="text-right">389.420</td>
+                    <td class="text-right cell-team-rev2" style="color: var(--accent-amber); font-weight: 700;">$1.168.20</td>
+                    <td class="text-center">
+                      <div class="quarter-share-bar" style="justify-content: center;">
+                        <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: 60.8%; background: linear-gradient(90deg, #F53F3F, #ff7875);"></div></div>
+                        <span>60.8%</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- VIEW 6: BÁO CÁO THEO DỰ ÁN -->
+      <div class="dashboard-view" id="view-report-project">
+        <section class="project-report-section">
+          <div class="section-title-wrap" style="margin-bottom: 20px;">
+            <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+              <i class="ri-folder-6-line" style="color: #F53F3F;"></i>
+              Báo Cáo Theo Dự Án
+            </h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+              Quản lý tài chính và dòng tiền các gói dự án âm nhạc số
+            </p>
+          </div>
+
+          <div class="chart-panel">
+            <div class="table-responsive">
+              <table class="matrix-table">
+                <thead>
+                  <tr>
+                    <th>Mã Dự Án</th>
+                    <th>Tên Dự Án</th>
+                    <th>Kênh Triển Khai</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-right">Chi Phí Sản Xuất</th>
+                    <th class="text-right">Doanh Thu Thu Về</th>
+                    <th class="text-right">Lợi Nhuận Ròng</th>
+                    <th class="text-center">ROI Dự Án</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>PRJ-LUNAVIA</code></td>
+                    <td><strong>Dự án Vintage Cafe Melodies</strong></td>
+                    <td>Lunavia</td>
+                    <td><span class="status-tag positive">Đang vận hành</span></td>
+                    <td class="text-right cell-prj-cost1">$220.00</td>
+                    <td class="text-right cell-prj-rev1" style="color: var(--accent-amber); font-weight: 700;">$754.90</td>
+                    <td class="text-right cell-prj-prof1" style="color: var(--accent-emerald); font-weight: 700;">+$534.90</td>
+                    <td class="text-center" style="color: #34D399; font-weight: 700;">+243% ROI</td>
+                  </tr>
+                  <tr>
+                    <td><code>PRJ-80SGROOVE</code></td>
+                    <td><strong>Dự án Retro Disco Wave</strong></td>
+                    <td>80s Groove Machine</td>
+                    <td><span class="status-tag high-growth">Tăng trưởng nhanh</span></td>
+                    <td class="text-right cell-prj-cost2">$310.00</td>
+                    <td class="text-right cell-prj-rev2" style="color: var(--accent-amber); font-weight: 700;">$1.168.20</td>
+                    <td class="text-right cell-prj-prof2" style="color: var(--accent-emerald); font-weight: 700;">+$858.20</td>
+                    <td class="text-center" style="color: #34D399; font-weight: 700;">+276% ROI</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- VIEW 7: BÁO CÁO THEO NETWORK -->
+      <div class="dashboard-view" id="view-report-network">
+        <section class="network-report-section">
+          <div class="section-title-wrap" style="margin-bottom: 20px;">
+            <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+              <i class="ri-share-network-line" style="color: #F53F3F;"></i>
+              Báo Cáo Tổng Quan Toàn Mạng Lưới BgMedia
+            </h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+              Hợp nhất dữ liệu toàn bộ mạng lưới kênh YouTube MCN BgMedia
+            </p>
+          </div>
+
+          <!-- Network KPI Grid -->
+          <div class="matrix-kpi-grid" style="margin-bottom: 24px;">
+            <div class="comp-kpi-card">
+              <span class="comp-kpi-label">Tổng Kênh Trực Thuộc</span>
+              <div class="comp-kpi-value" style="color: #F53F3F;">2 Kênh Active</div>
+              <span class="comp-kpi-sub">Lunavia & 80s Groove Machine</span>
+            </div>
+            <div class="comp-kpi-card">
+              <span class="comp-kpi-label">Tổng Khán Giả (Subscribers)</span>
+              <div class="comp-kpi-value" style="color: var(--accent-cyan);">3.770 người</div>
+              <span class="comp-kpi-sub">Tăng trưởng ròng 100% tự nhiên</span>
+            </div>
+            <div class="comp-kpi-card">
+              <span class="comp-kpi-label">Tổng Lượt Xem Network</span>
+              <div class="comp-kpi-value" style="color: var(--accent-emerald);">641.055 views</div>
+              <span class="comp-kpi-sub">93 video dài bản quyền số</span>
+            </div>
+            <div class="comp-kpi-card">
+              <span class="comp-kpi-label">Tổng Doanh Thu Hợp Nhất</span>
+              <div class="comp-kpi-value cell-net-total-rev" style="color: var(--accent-amber);">$1.923.10</div>
+              <span class="comp-kpi-sub">RPM trung bình mạng lưới $3.00</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- VIEW 8: HƯỚNG DẪN -->
+      <div class="dashboard-view" id="view-report-guide">
+        <section class="guide-section">
+          <div class="section-title-wrap" style="margin-bottom: 20px;">
+            <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+              <i class="ri-questionnaire-line" style="color: #F53F3F;"></i>
+              Hướng Dẫn Sử Dụng Hệ Thống Báo Cáo BgMedia
+            </h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+              Quy chuẩn đối soát số liệu, phương pháp phân tích MoM & QoQ và lịch trình kết toán
+            </p>
+          </div>
+
+          <div class="chart-panel" style="line-height: 1.7; font-size: 14px; color: var(--text-muted);">
+            <h3 style="color: var(--text-main); margin-bottom: 10px;">1. Quy tắc tính toán MoM (Month-over-Month)</h3>
+            <p>Tăng trưởng MoM phản ánh tỷ lệ tăng giảm doanh thu hoặc lượt xem giữa tháng báo cáo với tháng liền trước: <code>MoM (%) = [(Tháng này - Tháng trước) / Tháng trước] * 100</code>.</p>
+            <br>
+            <h3 style="color: var(--text-main); margin-bottom: 10px;">2. Quy tắc tính toán QoQ (Quarter-over-Quarter)</h3>
+            <p>Tăng trưởng QoQ phản ánh chu kỳ quý (Q1: 01/01-31/03, Q2: 01/04-30/06, Q3: 01/07-30/09, Q4: 01/10-31/12). Quý 4 luôn có RPM cao nhất do mùa quảng cáo lễ hội cuối năm.</p>
+            <br>
+            <h3 style="color: var(--text-main); margin-bottom: 10px;">3. Đối soát doanh thu AdSense & MCN</h3>
+            <p>Doanh thu hiển thị trên hệ thống là doanh thu ước tính (Estimated Revenue). Doanh thu quyết toán chính thức sẽ được YouTube AdSense cập nhật vào ngày 7-12 hàng tháng và thanh toán vào ngày 21-26 hàng tháng.</p>
+          </div>
+        </section>
+      </div>
+
+      <!-- VIEW 9: QUẢN LÝ CHUNG (TEAM, KÊNH, VIDEO, NETWORK, DỰ ÁN, CHI PHÍ) -->
+      <div class="dashboard-view" id="view-mgmt-general">
+        <section class="mgmt-section">
+          <div class="section-title-wrap" style="margin-bottom: 20px;">
+            <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main);" id="mgmt-view-title">
+              Quản Lý Hệ Thống
+            </h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;" id="mgmt-view-sub">
+              Danh mục quản trị tài nguyên BgMedia
+            </p>
+          </div>
+          <div class="chart-panel" id="mgmt-content-panel">
+            <!-- Dynamically populated -->
+          </div>
+        </section>
+      </div>
 
   <!-- Modal: YouTube API v3 Settings & Real Data Fetcher -->
   <div class="modal-backdrop" id="api-modal">

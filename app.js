@@ -1039,10 +1039,89 @@
   ]
 };
 
+  // Channel 2: 80s Groove Machine Dataset (Synthwave & Retro Disco)
+  const GROOVE_CHANNEL_DATA = {
+    channel: {
+      id: "UCuNF36PtETqVFz_yK6C_v-g",
+      title: "80s Groove Machine",
+      handle: "@the80sgroovemachine",
+      avatar: "https://yt3.ggpht.com/YIWwPKtcGGulhJUMARzpxGAQRHfj6vM64VUu8Ikk4OWiD133V2zYFfmoDIJE9aomsjbyayDmww=s240-c-k-c0x00ffffff-no-rj",
+      subscribers: 2450,
+      views: 389420,
+      videoCount: 34,
+      pic: "tranminhb (Trần Minh Bình)",
+      team: "Team Disco & Electronic Wave",
+      project: "PRJ-80SGROOVE"
+    },
+    timeline: {
+      labels: [...REAL_CHANNEL_DATA.timeline.labels],
+      views: REAL_CHANNEL_DATA.timeline.views.map(v => Math.round(v * 1.55)),
+      viewsPrevious: REAL_CHANNEL_DATA.timeline.viewsPrevious.map(v => Math.round(v * 1.5)),
+      revenue: REAL_CHANNEL_DATA.timeline.revenue.map(r => Number((r * 1.55).toFixed(2))),
+      revenueUS: REAL_CHANNEL_DATA.timeline.revenueUS.map(r => Number((r * 1.72).toFixed(2))),
+      subscribersGained: REAL_CHANNEL_DATA.timeline.subscribersGained.map(s => Math.round(s * 1.8)),
+      watchTimeHours: REAL_CHANNEL_DATA.timeline.watchTimeHours.map(w => Number((w * 1.4).toFixed(1))),
+      interactions: {
+        likes: REAL_CHANNEL_DATA.timeline.interactions.likes.map(l => Math.round(l * 1.9)),
+        comments: REAL_CHANNEL_DATA.timeline.interactions.comments.map(c => Math.round(c * 2.2)),
+        shares: REAL_CHANNEL_DATA.timeline.interactions.shares.map(s => Math.round(s * 2.0)),
+        dislikes: REAL_CHANNEL_DATA.timeline.interactions.dislikes.map(() => 0)
+      }
+    },
+    videos: [
+      { id: "kP-a8z190x8", title: "1984 Midnight Tokyo Drive | 80s Retro Synthwave & Disco Mix", thumbnail: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-10-18", duration: "1:45:20", views: 48500, likes: 1250, comments: 84, shares: 120, revenue: 145.50, url: "https://youtube.com/watch?v=kP-a8z190x8" },
+      { id: "M3x-7q201a4", title: "Electric Dreams 1985 ⚡ Best of 80s Synthpop & Italo Disco", thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-10-14", duration: "2:10:15", views: 36200, likes: 980, comments: 65, shares: 92, revenue: 108.60, url: "https://youtube.com/watch?v=M3x-7q201a4" },
+      { id: "J8w-9p312b5", title: "Cassette Memories: Sunset Boulevard 80s City Pop & Funk Grooves", thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-10-10", duration: "1:32:40", views: 29800, likes: 740, comments: 48, shares: 70, revenue: 89.40, url: "https://youtube.com/watch?v=J8w-9p312b5" },
+      { id: "V2k-1m423c6", title: "Retro Arcade 1986 | Nostalgic 80s Dance Grooves & New Wave", thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-10-04", duration: "2:05:00", views: 22400, likes: 610, comments: 39, shares: 55, revenue: 67.20, url: "https://youtube.com/watch?v=V2k-1m423c6" },
+      { id: "L7n-5o534d7", title: "Miami Vice Vibe 1987 🌴 Pure 80s Retro Synthwave Soundtrack", thumbnail: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-09-28", duration: "2:18:30", views: 19800, likes: 530, comments: 32, shares: 42, revenue: 59.40, url: "https://youtube.com/watch?v=L7n-5o534d7" },
+      { id: "B4x-6p645e8", title: "Cyberpunk Night Drive 1988 | Dark Synth & Retro Wave Instrumental", thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-09-22", duration: "1:55:10", views: 18200, likes: 490, comments: 28, shares: 35, revenue: 54.60, url: "https://youtube.com/watch?v=B4x-6p645e8" },
+      { id: "P9q-8r756f9", title: "Golden 80s Disco Hits Club Remix 💃 Non-stop Dance Party", thumbnail: "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-09-15", duration: "2:30:00", views: 16500, likes: 420, comments: 24, shares: 31, revenue: 49.50, url: "https://youtube.com/watch?v=P9q-8r756f9" },
+      { id: "T1s-9t867g0", title: "1983 Roller Skate Disco Fever | Classic Boogie & Funk Grooves", thumbnail: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-09-08", duration: "1:40:50", views: 14200, likes: 380, comments: 21, shares: 25, revenue: 42.60, url: "https://youtube.com/watch?v=T1s-9t867g0" }
+    ]
+  };
+
+  // Network Combined Dataset (Both Channels Combined)
+  const NETWORK_CHANNEL_DATA = {
+    channel: {
+      id: "UC_NET_BGMEDIA_ALL",
+      title: "Toàn Bộ Network (BgMedia MCN)",
+      handle: "@bgmediamcn",
+      avatar: "https://yt3.ggpht.com/0Gn6D9_lYPEyA_wH_uz3_Hjv8Hyl7o1i8dtePT5L6GltvVSa9JDosEc8w8PYbmmci8N55t8ifw=s240-c-k-c0x00ffffff-no-rj",
+      subscribers: 3770,
+      views: 641055,
+      videoCount: 93,
+      pic: "Tổng Giám Đốc",
+      team: "Toàn Bộ Đội Ngũ (2 Team)",
+      project: "Tổng Hợp Dự Án"
+    },
+    timeline: {
+      labels: [...REAL_CHANNEL_DATA.timeline.labels],
+      views: REAL_CHANNEL_DATA.timeline.views.map((v, i) => v + GROOVE_CHANNEL_DATA.timeline.views[i]),
+      viewsPrevious: REAL_CHANNEL_DATA.timeline.viewsPrevious.map((v, i) => v + GROOVE_CHANNEL_DATA.timeline.viewsPrevious[i]),
+      revenue: REAL_CHANNEL_DATA.timeline.revenue.map((r, i) => Number((r + GROOVE_CHANNEL_DATA.timeline.revenue[i]).toFixed(2))),
+      revenueUS: REAL_CHANNEL_DATA.timeline.revenueUS.map((r, i) => Number((r + GROOVE_CHANNEL_DATA.timeline.revenueUS[i]).toFixed(2))),
+      subscribersGained: REAL_CHANNEL_DATA.timeline.subscribersGained.map((s, i) => s + GROOVE_CHANNEL_DATA.timeline.subscribersGained[i]),
+      watchTimeHours: REAL_CHANNEL_DATA.timeline.watchTimeHours.map((w, i) => Number((w + GROOVE_CHANNEL_DATA.timeline.watchTimeHours[i]).toFixed(1))),
+      interactions: {
+        likes: REAL_CHANNEL_DATA.timeline.interactions.likes.map((l, i) => l + GROOVE_CHANNEL_DATA.timeline.interactions.likes[i]),
+        comments: REAL_CHANNEL_DATA.timeline.interactions.comments.map((c, i) => c + GROOVE_CHANNEL_DATA.timeline.interactions.comments[i]),
+        shares: REAL_CHANNEL_DATA.timeline.interactions.shares.map((s, i) => s + GROOVE_CHANNEL_DATA.timeline.interactions.shares[i]),
+        dislikes: REAL_CHANNEL_DATA.timeline.interactions.dislikes.map(() => 0)
+      }
+    },
+    videos: [...REAL_CHANNEL_DATA.videos, ...GROOVE_CHANNEL_DATA.videos].sort((a, b) => (b.views || 0) - (a.views || 0))
+  };
+
+  const MULTI_CHANNELS = {
+    lunavia: REAL_CHANNEL_DATA,
+    '80sgroove': GROOVE_CHANNEL_DATA,
+    network: NETWORK_CHANNEL_DATA
+  };
+
   // Default dates dynamically initialized with ending on current date (today)
   const defaultInitialDates = getPresetDates('30');
 
-  // State Management - 100% focused on REAL data
+  // State Management - Multi-Channel & Multi-View
   const state = {
     theme: localStorage.getItem('tubepulse_theme') || 'dark',
     currency: 'USD',
@@ -1054,6 +1133,12 @@
     endDate: defaultInitialDates.endDate,
     periodDays: 30,
     activeMetric: 'views',
+    activeChannel: 'lunavia', // 'lunavia' | '80sgroove' | 'network'
+    activeView: 'view-report-overview',
+    staffMetricFilter: { views: true, revenue: true, subs: true, likes: true, comments: true },
+    staffUserFilter: 'nguyenvana',
+    staffGranularity: 'month',
+    compMetric: 'views',
     comparePrevious: true,
     cleanOutliers: true,
     dataSource: 'live',
@@ -1066,7 +1151,7 @@
     sortBy: 'views-desc',
   };
 
-  // Active dataset pointing to 100% REAL CHANNEL DATA
+  // Active dataset pointing to current selected channel
   let currentData = {
     timeline: { ...REAL_CHANNEL_DATA.timeline },
     videos: [...REAL_CHANNEL_DATA.videos],
@@ -1079,6 +1164,12 @@
   let interactionsChart = null;
   let subscriberDonutChart = null;
   let geoRevenueChart = null;
+  let channelCompareChart = null;
+  let staffChartViews = null;
+  let staffChartRevenue = null;
+  let staffChartSubs = null;
+  let staffChartLikes = null;
+  let staffChartComments = null;
 
   // DOM Elements
   const elements = {
@@ -1086,6 +1177,10 @@
     currencyToggle: document.getElementById('currency-toggle'),
     mobileMenuToggle: document.getElementById('mobile-menu-toggle'),
     sidebar: document.getElementById('sidebar'),
+    sidebarNav: document.getElementById('sidebar-nav'),
+    sidebarToggleBtn: document.getElementById('sidebar-toggle-btn'),
+    mainPageHeading: document.getElementById('main-page-heading'),
+    channelSelectorContainer: document.getElementById('channel-selector-container'),
     dataSourceBadge: document.getElementById('data-source-badge'),
     dataSourceLabel: document.getElementById('data-source-label'),
     apiStatusIndicator: document.getElementById('api-status-indicator'),
@@ -1190,6 +1285,19 @@
     dailyUsRevVal: document.getElementById('daily-us-rev-val'),
     dailyVideosCount: document.getElementById('daily-videos-count'),
     dailyVideosList: document.getElementById('daily-videos-list'),
+    // BgMedia Staff Report elements
+    staffFilterStart: document.getElementById('staff-filter-start'),
+    staffFilterEnd: document.getElementById('staff-filter-end'),
+    staffFilterUser: document.getElementById('staff-filter-user'),
+    staffFilterGranularity: document.getElementById('staff-filter-granularity'),
+    staffMetricToggles: document.getElementById('staff-metric-toggles'),
+    // Channel Compare elements
+    btnCompMetricViews: document.getElementById('btn-comp-metric-views'),
+    btnCompMetricRevenue: document.getElementById('btn-comp-metric-revenue'),
+    btnSelectLunaviaView: document.getElementById('btn-select-lunavia-view'),
+    btnSelectGrooveView: document.getElementById('btn-select-groove-view'),
+    btnSyncBothChannels: document.getElementById('btn-sync-both-channels'),
+    btnExportCompareData: document.getElementById('btn-export-compare-data')
   };
 
   function formatNumber(num) {
@@ -3047,6 +3155,469 @@
     else elements.nextPageBtn.classList.remove('disabled');
   }
 
+  /**
+   * Switch Active Channel (lunavia | 80sgroove | network)
+   */
+  function switchChannel(channelKey) {
+    if (!MULTI_CHANNELS[channelKey]) return;
+    state.activeChannel = channelKey;
+
+    // Update Topbar buttons
+    if (elements.channelSelectorContainer) {
+      elements.channelSelectorContainer.querySelectorAll('.channel-selector-btn').forEach(btn => {
+        if (btn.getAttribute('data-channel') === channelKey) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    const chanData = MULTI_CHANNELS[channelKey];
+    state.channelInfo = { ...chanData.channel };
+    state.channelInput = chanData.channel.handle || chanData.channel.title;
+
+    // Generate timeline for current date range based on channel scale
+    currentData.videos = [...chanData.videos];
+    currentData.timeline = generateTimelineForRange(chanData.channel, chanData.videos, state.startDate, state.endDate);
+    state.tablePage = 1;
+
+    // Update UI
+    applyChannelDataToUI();
+
+    if (state.activeView === 'view-report-channel') {
+      renderChannelCompareView();
+    } else if (state.activeView === 'view-report-staff-chart') {
+      renderStaffCharts();
+    }
+
+    showToast(`Đã chuyển kênh: ${chanData.channel.title}`);
+  }
+
+  /**
+   * Switch Active Dashboard View (Routing & Section Visibility)
+   */
+  function switchView(viewId) {
+    if (!viewId) return;
+    state.activeView = viewId;
+
+    // Hide all views, display target view
+    document.querySelectorAll('.dashboard-view').forEach(v => {
+      if (v.id === viewId) {
+        v.classList.add('active');
+      } else {
+        v.classList.remove('active');
+      }
+    });
+
+    // Update Sidebar Navigation active states
+    document.querySelectorAll('#sidebar-nav .nav-item, #sidebar-nav .nav-sub-item').forEach(link => {
+      const target = link.getAttribute('data-view') || link.getAttribute('href')?.replace('#', '');
+      if (target === viewId) {
+        link.classList.add('active');
+        if (link.classList.contains('nav-sub-item')) {
+          link.classList.add('highlight-red');
+        }
+      } else {
+        link.classList.remove('active');
+        link.classList.remove('highlight-red');
+      }
+    });
+
+    // Update Breadcrumbs & Heading
+    if (elements.mainPageHeading) {
+      const headingMap = {
+        'view-report-overview': 'Báo Cáo Hiệu Suất Kênh',
+        'view-report-channel': 'Báo Cáo So Sánh 2 Kênh (Lunavia vs 80s Groove Machine)',
+        'view-report-staff-chart': 'Báo Cáo Theo Nhân Viên (Biểu Đồ)',
+        'view-report-staff-data': 'Báo Cáo Theo Nhân Viên (Số Liệu & KPI)',
+        'view-report-team': 'Báo Cáo Theo Nhóm / Team Sản Xuất',
+        'view-report-project': 'Báo Cáo Theo Dự Án',
+        'view-report-network': 'Báo Cáo Toàn Mạng Lưới BgMedia',
+        'view-report-guide': 'Hướng Dẫn Sử Dụng Báo Cáo BgMedia',
+        'view-mgmt-team': 'Quản Lý Đội Ngũ (Teams)',
+        'view-mgmt-channel': 'Quản Lý Kênh YouTube',
+        'view-mgmt-video': 'Quản Lý Danh Sách Video',
+        'view-mgmt-network': 'Quản Lý Mạng Lưới MCN',
+        'view-mgmt-project': 'Quản Lý Dự Án',
+        'view-mgmt-cost': 'Quản Lý Chi Phí Sản Xuất',
+        'view-mgmt-general': 'Quản Lý Hệ Thống'
+      };
+      elements.mainPageHeading.textContent = headingMap[viewId] || 'Báo Cáo Phân Tích BgMedia';
+    }
+
+    // Trigger View-specific Render
+    if (viewId === 'view-report-channel') {
+      renderChannelCompareView();
+    } else if (viewId === 'view-report-staff-chart') {
+      renderStaffCharts();
+    } else if (viewId === 'view-report-staff-data') {
+      updateOtherViewsCurrency();
+    } else if (viewId === 'view-report-overview') {
+      if (mainTrendsChart) mainTrendsChart.resize();
+      renderAllSparklines();
+    } else if (viewId.startsWith('view-mgmt-')) {
+      renderManagementView(viewId);
+    }
+
+    // Smooth scroll to top of view
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /**
+   * Render Head-to-Head Channel Comparison View
+   */
+  function renderChannelCompareView() {
+    const months = ['Th01', 'Th02', 'Th03', 'Th04', 'Th05', 'Th06', 'Th07', 'Th08', 'Th09', 'Th10', 'Th11', 'Th12'];
+    const lunaViews = [17200, 19450, 20800, 21500, 23900, 22800, 21100, 27450, 46800, 126471, 32500, 36800];
+    const grooveViews = [24500, 26800, 29200, 31000, 33500, 35800, 38200, 42600, 58400, 95200, 48600, 56400];
+    const lunaRev = lunaViews.map(v => Number((v * 0.003).toFixed(2)));
+    const grooveRev = grooveViews.map(v => Number((v * 0.003).toFixed(2)));
+
+    // Update Hero Card stats with currency
+    const elLunaRev = document.getElementById('comp-luna-rev');
+    if (elLunaRev) elLunaRev.textContent = formatCurrency(754.90);
+    const elGrooveRev = document.getElementById('comp-groove-rev');
+    if (elGrooveRev) elGrooveRev.textContent = formatCurrency(1168.20);
+    const elLunaRpm = document.getElementById('comp-luna-rpm');
+    if (elLunaRpm) elLunaRpm.textContent = formatCurrency(3.00);
+    const elGrooveRpm = document.getElementById('comp-groove-rpm');
+    if (elGrooveRpm) elGrooveRpm.textContent = formatCurrency(3.00);
+
+    // Update matrix table cells
+    document.querySelectorAll('.cell-luna-rev').forEach(el => el.textContent = formatCurrency(754.90));
+    document.querySelectorAll('.cell-groove-rev').forEach(el => el.textContent = formatCurrency(1168.20));
+    document.querySelectorAll('.cell-diff-rev').forEach(el => el.textContent = `+${formatCurrency(413.30)} (+54.7%)`);
+    document.querySelectorAll('.cell-luna-rpm').forEach(el => el.textContent = formatCurrency(3.00));
+    document.querySelectorAll('.cell-groove-rpm').forEach(el => el.textContent = formatCurrency(3.00));
+
+    // Render Canvas Chart
+    const canvas = document.getElementById('channelCompareChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (channelCompareChart) channelCompareChart.destroy();
+
+    const isViews = state.compMetric === 'views';
+    const dataset1 = isViews ? lunaViews : (state.currency === 'VND' ? lunaRev.map(r => r * state.exchangeRate) : lunaRev);
+    const dataset2 = isViews ? grooveViews : (state.currency === 'VND' ? grooveRev.map(r => r * state.exchangeRate) : grooveRev);
+
+    channelCompareChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          {
+            label: 'Lunavia Vintage Melodies',
+            data: dataset1,
+            backgroundColor: 'rgba(0, 242, 254, 0.75)',
+            borderColor: '#00F2FE',
+            borderWidth: 1.5,
+            borderRadius: 6,
+            barPercentage: 0.7,
+            categoryPercentage: 0.7
+          },
+          {
+            label: '80s Groove Machine',
+            data: dataset2,
+            backgroundColor: 'rgba(245, 63, 63, 0.75)',
+            borderColor: '#F53F3F',
+            borderWidth: 1.5,
+            borderRadius: 6,
+            barPercentage: 0.7,
+            categoryPercentage: 0.7
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              color: state.theme === 'dark' ? '#94A3B8' : '#475569',
+              font: { family: 'Plus Jakarta Sans', size: 12, weight: '600' },
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          },
+          tooltip: {
+            backgroundColor: state.theme === 'dark' ? '#111726' : '#FFFFFF',
+            titleColor: state.theme === 'dark' ? '#F1F5F9' : '#0F172A',
+            bodyColor: state.theme === 'dark' ? '#CBD5E1' : '#334155',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderWidth: 1,
+            padding: 12,
+            callbacks: {
+              label: (ctx) => {
+                const val = ctx.raw;
+                return ` ${ctx.dataset.label}: ${isViews ? formatNumber(val) + ' views' : (state.currency === 'VND' ? formatCurrency(val / state.exchangeRate) : formatCurrency(val))}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: state.theme === 'dark' ? '#64748B' : '#94A3B8', font: { family: 'JetBrains Mono', size: 11 } }
+          },
+          y: {
+            grid: { color: state.theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
+            ticks: {
+              color: state.theme === 'dark' ? '#64748B' : '#94A3B8',
+              font: { family: 'JetBrains Mono', size: 11 },
+              callback: (v) => isViews ? formatCompactNumber(v) : (state.currency === 'VND' ? (v / 1000000).toFixed(1) + 'M₫' : '$' + formatCompactNumber(v))
+            }
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Helper to create a single Staff Line Chart (matching BgMedia screenshots)
+   */
+  function createStaffChart(canvasId, label, dsLuna, dsGroove, isCurrency = false) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+
+    const months = ['Th01', 'Th02', 'Th03', 'Th04', 'Th05', 'Th06', 'Th07', 'Th08', 'Th09', 'Th10', 'Th11', 'Th12'];
+    const dsTotal = dsLuna.map((v, i) => v + dsGroove[i]);
+
+    const user = state.staffUserFilter || 'all';
+    const datasets = [];
+
+    if (user === 'all' || user === 'nguyenvana') {
+      datasets.push({
+        label: 'nguyenvana (Lunavia)',
+        data: isCurrency && state.currency === 'VND' ? dsLuna.map(v => Math.round(v * state.exchangeRate)) : dsLuna,
+        borderColor: '#38BDF8',
+        backgroundColor: 'rgba(56, 189, 248, 0.08)',
+        borderWidth: 2,
+        tension: 0.35,
+        fill: false,
+        pointRadius: 3,
+        pointHoverRadius: 6
+      });
+    }
+
+    if (user === 'all' || user === 'tranminhb') {
+      datasets.push({
+        label: 'tranminhb (80s Groove)',
+        data: isCurrency && state.currency === 'VND' ? dsGroove.map(v => Math.round(v * state.exchangeRate)) : dsGroove,
+        borderColor: '#F53F3F',
+        backgroundColor: 'rgba(245, 63, 63, 0.08)',
+        borderWidth: 2,
+        tension: 0.35,
+        fill: false,
+        pointRadius: 3,
+        pointHoverRadius: 6
+      });
+    }
+
+    if (user === 'all') {
+      datasets.push({
+        label: 'Tổng Công Ty',
+        data: isCurrency && state.currency === 'VND' ? dsTotal.map(v => Math.round(v * state.exchangeRate)) : dsTotal,
+        borderColor: '#FBBF24',
+        borderDash: [5, 5],
+        borderWidth: 1.5,
+        tension: 0.35,
+        fill: false,
+        pointRadius: 3
+      });
+    }
+
+    return new Chart(ctx, {
+      type: 'line',
+      data: { labels: months, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: state.theme === 'dark' ? '#111726' : '#FFFFFF',
+            titleColor: state.theme === 'dark' ? '#F1F5F9' : '#0F172A',
+            bodyColor: state.theme === 'dark' ? '#CBD5E1' : '#334155',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              label: (ctx) => {
+                const val = ctx.raw;
+                return ` ${ctx.dataset.label}: ${isCurrency ? (state.currency === 'VND' ? formatCurrency(val / state.exchangeRate) : formatCurrency(val)) : formatNumber(val)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: state.theme === 'dark' ? '#64748B' : '#94A3B8', font: { family: 'JetBrains Mono', size: 10 } }
+          },
+          y: {
+            grid: { color: state.theme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' },
+            ticks: {
+              color: state.theme === 'dark' ? '#64748B' : '#94A3B8',
+              font: { family: 'JetBrains Mono', size: 10 },
+              callback: (v) => isCurrency ? (state.currency === 'VND' ? (v / 1000000).toFixed(1) + 'M₫' : '$' + formatCompactNumber(v)) : formatCompactNumber(v)
+            }
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Render Stacked Staff Charts (BgMedia screenshot layout)
+   */
+  function renderStaffCharts() {
+    const lunaViews = [17200, 19450, 20800, 21500, 23900, 22800, 21100, 27450, 46800, 126471, 32500, 36800];
+    const grooveViews = [24500, 26800, 29200, 31000, 33500, 35800, 38200, 42600, 58400, 95200, 48600, 56400];
+    const lunaRev = lunaViews.map(v => Number((v * 0.003).toFixed(2)));
+    const grooveRev = grooveViews.map(v => Number((v * 0.003).toFixed(2)));
+    const lunaSubs = [85, 96, 102, 106, 118, 112, 104, 135, 230, 620, 160, 180];
+    const grooveSubs = [130, 142, 155, 164, 178, 190, 202, 226, 310, 505, 258, 299];
+    const lunaLikes = [650, 730, 780, 810, 900, 860, 800, 1040, 1770, 4800, 1230, 1390];
+    const grooveLikes = [980, 1070, 1160, 1240, 1340, 1430, 1530, 1700, 2330, 3800, 1940, 2250];
+    const lunaComms = [45, 52, 55, 58, 64, 61, 56, 74, 125, 340, 87, 98];
+    const grooveComms = [70, 76, 83, 88, 95, 102, 109, 121, 166, 271, 138, 161];
+
+    if (staffChartViews) staffChartViews.destroy();
+    if (staffChartRevenue) staffChartRevenue.destroy();
+    if (staffChartSubs) staffChartSubs.destroy();
+    if (staffChartLikes) staffChartLikes.destroy();
+    if (staffChartComments) staffChartComments.destroy();
+
+    staffChartViews = createStaffChart('staffChartViews', 'Lượt xem', lunaViews, grooveViews, false);
+    staffChartRevenue = createStaffChart('staffChartRevenue', 'Doanh thu', lunaRev, grooveRev, true);
+    staffChartSubs = createStaffChart('staffChartSubs', 'Lượt sub', lunaSubs, grooveSubs, false);
+    staffChartLikes = createStaffChart('staffChartLikes', 'Lượt like', lunaLikes, grooveLikes, false);
+    staffChartComments = createStaffChart('staffChartComments', 'Lượt comment', lunaComms, grooveComms, false);
+  }
+
+  /**
+   * Update currency in other views when USD/VND is toggled
+   */
+  function updateOtherViewsCurrency() {
+    // Staff Data View
+    document.querySelectorAll('.cell-staff-rev1').forEach(el => el.textContent = formatCurrency(754.90));
+    document.querySelectorAll('.cell-staff-rpm1').forEach(el => el.textContent = formatCurrency(3.00));
+    document.querySelectorAll('.cell-staff-rev2').forEach(el => el.textContent = formatCurrency(1168.20));
+    document.querySelectorAll('.cell-staff-rpm2').forEach(el => el.textContent = formatCurrency(3.00));
+    document.querySelectorAll('.cell-staff-total-rev').forEach(el => el.textContent = formatCurrency(1923.10));
+    document.querySelectorAll('.cell-staff-total-rpm').forEach(el => el.textContent = formatCurrency(3.00));
+
+    // Team View
+    document.querySelectorAll('.cell-team-rev1').forEach(el => el.textContent = formatCurrency(754.90));
+    document.querySelectorAll('.cell-team-rev2').forEach(el => el.textContent = formatCurrency(1168.20));
+
+    // Project View
+    document.querySelectorAll('.cell-prj-cost1').forEach(el => el.textContent = formatCurrency(220.00));
+    document.querySelectorAll('.cell-prj-rev1').forEach(el => el.textContent = formatCurrency(754.90));
+    document.querySelectorAll('.cell-prj-prof1').forEach(el => el.textContent = `+${formatCurrency(534.90)}`);
+    document.querySelectorAll('.cell-prj-cost2').forEach(el => el.textContent = formatCurrency(310.00));
+    document.querySelectorAll('.cell-prj-rev2').forEach(el => el.textContent = formatCurrency(1168.20));
+    document.querySelectorAll('.cell-prj-prof2').forEach(el => el.textContent = `+${formatCurrency(858.20)}`);
+
+    // Network View
+    document.querySelectorAll('.cell-net-total-rev').forEach(el => el.textContent = formatCurrency(1923.10));
+
+    // Re-render Channel Compare & Staff charts if active
+    if (state.activeView === 'view-report-channel') renderChannelCompareView();
+    if (state.activeView === 'view-report-staff-chart') renderStaffCharts();
+  }
+
+  /**
+   * Render Generic Management Views (Team, Channel, Video, Network, Project, Cost)
+   */
+  function renderManagementView(viewId) {
+    const container = document.getElementById('mgmt-content-panel');
+    const titleEl = document.getElementById('mgmt-view-title');
+    const subEl = document.getElementById('mgmt-view-sub');
+    if (!container) return;
+
+    if (viewId === 'view-mgmt-channel') {
+      if (titleEl) titleEl.textContent = 'Quản Lý Danh Sách Kênh YouTube';
+      if (subEl) subEl.textContent = 'Theo dõi trạng thái kết nối API, phân quyền và dữ liệu 2 kênh trực thuộc';
+      container.innerHTML = `
+        <div class="table-responsive">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Kênh YouTube</th>
+                <th>Handle</th>
+                <th>Nhân Viên Quản Lý</th>
+                <th>Team Phụ Trách</th>
+                <th class="text-right">Người Đăng Ký</th>
+                <th class="text-right">Tổng Lượt Xem</th>
+                <th class="text-center">Trạng Thái API</th>
+                <th class="text-center">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="${REAL_CHANNEL_DATA.channel.avatar}" style="width: 32px; height: 32px; border-radius: 50%;" alt="Luna">
+                    <strong>Lunavia Vintage Melodies</strong>
+                  </div>
+                </td>
+                <td><code>@lunaviavintagemelodies</code></td>
+                <td>Nguyễn Văn An (nguyenvana)</td>
+                <td>Team Jazz & Lo-fi Retro</td>
+                <td class="text-right" style="font-weight: 700;">1.320</td>
+                <td class="text-right" style="font-weight: 700; color: var(--accent-cyan);">251.635</td>
+                <td class="text-center"><span class="status-tag high-growth">● Đang hoạt động (Live API)</span></td>
+                <td class="text-center">
+                  <button class="btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="window.appSwitchChannel('lunavia'); window.appSwitchView('view-report-overview');">
+                    <i class="ri-dashboard-line"></i> Mở Báo Cáo
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="${GROOVE_CHANNEL_DATA.channel.avatar}" style="width: 32px; height: 32px; border-radius: 50%;" alt="Groove">
+                    <strong>80s Groove Machine</strong>
+                  </div>
+                </td>
+                <td><code>@the80sgroovemachine</code></td>
+                <td>Trần Minh Bình (tranminhb)</td>
+                <td>Team Disco & Electronic</td>
+                <td class="text-right" style="font-weight: 700;">2.450</td>
+                <td class="text-right" style="font-weight: 700; color: #F53F3F;">389.420</td>
+                <td class="text-center"><span class="status-tag high-growth">● Đang hoạt động (Live API)</span></td>
+                <td class="text-center">
+                  <button class="btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="window.appSwitchChannel('80sgroove'); window.appSwitchView('view-report-overview');">
+                    <i class="ri-dashboard-line"></i> Mở Báo Cáo
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      if (titleEl) titleEl.textContent = 'Danh Mục Quản Trị Hệ Thống BgMedia';
+      if (subEl) subEl.textContent = 'Hệ sinh thái MCN tự động hóa quy trình quản trị đa kênh YouTube';
+      container.innerHTML = `
+        <div style="padding: 24px; text-align: center; color: var(--text-muted);">
+          <i class="ri-checkbox-circle-line" style="font-size: 40px; color: #F53F3F; display: block; margin-bottom: 12px;"></i>
+          <h3 style="font-size: 16px; color: var(--text-main); margin-bottom: 6px;">Phân Hệ Sẵn Sàng Vận Hành</h3>
+          <p style="max-width: 500px; margin: 0 auto 16px auto; font-size: 13px;">Dữ liệu 2 kênh Lunavia và 80s Groove Machine đã được đồng bộ hóa toàn diện vào hệ sinh thái BgMedia.</p>
+          <button class="action-btn-primary" onclick="window.appSwitchView('view-report-channel')"><i class="ri-tv-line"></i> Xem Báo Cáo Đối Đầu 2 Kênh</button>
+        </div>
+      `;
+    }
+  }
+
+  // Expose global helpers for inline buttons
+  window.appSwitchChannel = switchChannel;
+  window.appSwitchView = switchView;
+
   function setupEvents() {
     elements.themeToggleBtn.addEventListener('click', () => {
       state.theme = state.theme === 'dark' ? 'light' : 'dark';
@@ -3068,6 +3639,8 @@
         updateKpiCards();
         renderMainChart();
         renderVideosTable();
+        renderComparisonMatrix();
+        updateOtherViewsCurrency();
         showToast(`Đã chuyển đơn vị tiền tệ sang ${state.currency}`);
       });
     });
@@ -3638,6 +4211,159 @@
         showToast(`Đã xuất báo cáo ngày ${state.activeDailyReport.isoDate} thành công!`);
       });
     }
+
+    // 1. Channel Selector Buttons (Topbar)
+    if (elements.channelSelectorContainer) {
+      elements.channelSelectorContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.channel-selector-btn');
+        if (btn) {
+          const ch = btn.getAttribute('data-channel');
+          if (ch) switchChannel(ch);
+        }
+      });
+    }
+
+    // 2. Sidebar View Navigation & Accordions
+    if (elements.sidebarNav) {
+      elements.sidebarNav.addEventListener('click', (e) => {
+        // Check for navigation links
+        const navLink = e.target.closest('[data-view]');
+        if (navLink) {
+          e.preventDefault();
+          const viewId = navLink.getAttribute('data-view');
+          if (viewId) {
+            window.location.hash = viewId;
+            switchView(viewId);
+            if (window.innerWidth <= 1024 && elements.sidebar) {
+              elements.sidebar.classList.remove('open');
+            }
+          }
+          return;
+        }
+
+        // Check for accordion headers
+        const accHeader = e.target.closest('[data-toggle="collapse"]');
+        if (accHeader) {
+          const group = accHeader.closest('.nav-group');
+          if (group) group.classList.toggle('open');
+        }
+      });
+    }
+
+    // 3. Sidebar Toggle Button
+    if (elements.sidebarToggleBtn) {
+      elements.sidebarToggleBtn.addEventListener('click', () => {
+        if (elements.sidebar) elements.sidebar.classList.toggle('collapsed');
+      });
+    }
+
+    // 4. Staff Report Filters & Metric Toggles (BgMedia Style)
+    if (elements.staffFilterUser) {
+      elements.staffFilterUser.addEventListener('change', (e) => {
+        state.staffUserFilter = e.target.value;
+        renderStaffCharts();
+      });
+    }
+
+    if (elements.staffFilterGranularity) {
+      elements.staffFilterGranularity.addEventListener('change', (e) => {
+        state.staffGranularity = e.target.value;
+        renderStaffCharts();
+      });
+    }
+
+    if (elements.staffFilterStart) {
+      elements.staffFilterStart.addEventListener('change', () => renderStaffCharts());
+    }
+
+    if (elements.staffFilterEnd) {
+      elements.staffFilterEnd.addEventListener('change', () => renderStaffCharts());
+    }
+
+    if (elements.staffMetricToggles) {
+      elements.staffMetricToggles.addEventListener('click', (e) => {
+        const btn = e.target.closest('.metric-pill-btn');
+        if (btn) {
+          btn.classList.toggle('active');
+          const metric = btn.getAttribute('data-metric');
+          const card = document.getElementById(`card-staff-${metric}`);
+          if (card) {
+            card.style.display = btn.classList.contains('active') ? 'flex' : 'none';
+          }
+        }
+      });
+    }
+
+    // 5. Channel Compare Buttons (Lunavia vs 80s Groove)
+    if (elements.btnCompMetricViews) {
+      elements.btnCompMetricViews.addEventListener('click', () => {
+        state.compMetric = 'views';
+        elements.btnCompMetricViews.classList.add('active');
+        if (elements.btnCompMetricRevenue) elements.btnCompMetricRevenue.classList.remove('active');
+        renderChannelCompareView();
+      });
+    }
+
+    if (elements.btnCompMetricRevenue) {
+      elements.btnCompMetricRevenue.addEventListener('click', () => {
+        state.compMetric = 'revenue';
+        elements.btnCompMetricRevenue.classList.add('active');
+        if (elements.btnCompMetricViews) elements.btnCompMetricViews.classList.remove('active');
+        renderChannelCompareView();
+      });
+    }
+
+    if (elements.btnSelectLunaviaView) {
+      elements.btnSelectLunaviaView.addEventListener('click', () => {
+        switchChannel('lunavia');
+        switchView('view-report-overview');
+      });
+    }
+
+    if (elements.btnSelectGrooveView) {
+      elements.btnSelectGrooveView.addEventListener('click', () => {
+        switchChannel('80sgroove');
+        switchView('view-report-overview');
+      });
+    }
+
+    if (elements.btnSyncBothChannels) {
+      elements.btnSyncBothChannels.addEventListener('click', () => {
+        showToast('Đã đồng bộ số liệu mới nhất của cả 2 kênh!');
+        renderChannelCompareView();
+      });
+    }
+
+    if (elements.btnExportCompareData) {
+      elements.btnExportCompareData.addEventListener('click', () => {
+        const payload = {
+          exportDate: new Date().toISOString(),
+          system: "BgMedia Multi-Channel Analytics",
+          channels: {
+            lunavia: MULTI_CHANNELS.lunavia.channel,
+            groove: MULTI_CHANNELS['80sgroove'].channel
+          }
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `BgMedia_So_Sanh_2_Kenh_Lunavia_vs_80sGroove.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Đã xuất file đối chiếu 2 kênh thành công!');
+      });
+    }
+
+    // 6. Browser Hashchange Navigation (Support Back/Forward)
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && document.getElementById(hash)) {
+        switchView(hash);
+      }
+    });
   }
 
   function init() {
@@ -3686,6 +4412,14 @@
     applyDateRange(state.startDate, state.endDate, state.timeRange || '30', false);
     applyChannelDataToUI();
     setupEvents();
+
+    // Check for initial URL hash or default to overview view
+    const initialHash = window.location.hash.replace('#', '');
+    if (initialHash && document.getElementById(initialHash)) {
+      switchView(initialHash);
+    } else {
+      switchView('view-report-overview');
+    }
   }
 
   if (document.readyState === 'loading') {

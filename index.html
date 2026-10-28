@@ -18,7 +18,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css?v=2.3">
+  <link rel="stylesheet" href="styles.css?v=2.4_clean">
 </head>
 <body>
   <!-- Layout Container -->
@@ -203,623 +203,590 @@
         </div>
       </header>
 
-      <!-- VIEW 1: BÁO CÁO TỔNG QUAN & ĐỐI CHIẾU THÁNG / QUÝ -->
+      <!-- VIEW 1: BÁO CÁO TỔNG QUAN HIỆU SUẤT (CLEAN MINIMALIST DESIGN) -->
       <div class="dashboard-view active" id="view-report-overview">
 
-      <!-- Dashboard Controls Bar: Date Filter, Compare, Presets, Export -->
-      <section class="controls-toolbar">
-        <div class="toolbar-left">
-          <!-- Time Range Presets -->
-          <div class="filter-tabs" id="time-range-tabs">
-            <button class="tab-btn" data-days="7">7 Ngày</button>
-            <button class="tab-btn active" data-days="30">30 Ngày</button>
-            <button class="tab-btn" data-days="90">90 Ngày</button>
-            <button class="tab-btn" data-days="365">1 Năm</button>
-            <button class="tab-btn" data-days="all">Toàn Thời Gian</button>
-          </div>
-
-          <!-- Date Range Selector with Interactive Dropdown Popover -->
-          <div class="date-range-picker-wrapper">
-            <div class="date-range-badge" id="date-range-picker-trigger" tabindex="0" role="button" aria-haspopup="dialog" aria-expanded="false" title="Nhấn để chọn khoảng thời gian báo cáo">
-              <i class="ri-calendar-event-line"></i>
-              <span id="date-range-display">10 Th09 – 10 Th10, 2026</span>
-              <i class="ri-arrow-down-s-line trigger-arrow"></i>
+        <!-- Controls Toolbar: Date Filter, Presets, Compare, Export -->
+        <section class="controls-toolbar">
+          <div class="toolbar-left">
+            <!-- Time Range Presets -->
+            <div class="filter-tabs" id="time-range-tabs">
+              <button class="tab-btn" data-days="7">7 Ngày</button>
+              <button class="tab-btn active" data-days="30">30 Ngày</button>
+              <button class="tab-btn" data-days="90">90 Ngày</button>
+              <button class="tab-btn" data-days="365">1 Năm</button>
+              <button class="tab-btn" data-days="all">Toàn Thời Gian</button>
             </div>
 
-            <!-- Floating Date Range Popover -->
-            <div class="date-picker-dropdown" id="date-picker-dropdown" role="dialog" aria-label="Bộ chọn thời gian báo cáo">
-              <div class="date-picker-header">
-                <span class="date-picker-title"><i class="ri-calendar-2-line"></i> Chọn Ngày Báo Cáo</span>
-                <button type="button" class="btn-close-dropdown" id="btn-close-date-picker" title="Đóng"><i class="ri-close-line"></i></button>
+            <!-- Date Range Selector with Popover -->
+            <div class="date-range-picker-wrapper">
+              <div class="date-range-badge" id="date-range-picker-trigger" tabindex="0" role="button" aria-haspopup="dialog" aria-expanded="false" title="Chọn khoảng thời gian báo cáo">
+                <i class="ri-calendar-event-line"></i>
+                <span id="date-range-display">10 Th09 – 10 Th10, 2026</span>
+                <i class="ri-arrow-down-s-line trigger-arrow"></i>
               </div>
 
-              <!-- Quick Presets -->
-              <div class="date-picker-presets" id="date-picker-presets">
-                <button type="button" class="preset-chip" data-preset="7">7 ngày qua</button>
-                <button type="button" class="preset-chip" data-preset="28">28 ngày qua</button>
-                <button type="button" class="preset-chip active" data-preset="30">30 ngày qua</button>
-                <button type="button" class="preset-chip" data-preset="90">90 ngày qua</button>
-                <button type="button" class="preset-chip" data-preset="365">1 năm qua</button>
-                <button type="button" class="preset-chip" data-preset="this_year" id="chip-preset-this-year">Năm 2026</button>
-                <button type="button" class="preset-chip" data-preset="all">Toàn thời gian</button>
-                <button type="button" class="preset-chip" data-preset="today">Hôm nay</button>
-                <button type="button" class="preset-chip" data-preset="this_month">Tháng này</button>
-                <button type="button" class="preset-chip" data-preset="last_month">Tháng trước</button>
-                <button type="button" class="preset-chip" data-preset="this_quarter">Quý 4 (Quý này)</button>
-                <button type="button" class="preset-chip" data-preset="last_quarter">Quý 3 (Quý trước)</button>
-                <button type="button" class="preset-chip" data-preset="custom">Tùy chỉnh...</button>
-              </div>
+              <!-- Floating Date Range Popover -->
+              <div class="date-picker-dropdown" id="date-picker-dropdown" role="dialog" aria-label="Bộ chọn thời gian báo cáo">
+                <div class="date-picker-header">
+                  <span class="date-picker-title"><i class="ri-calendar-2-line"></i> Chọn Ngày Báo Cáo</span>
+                  <button type="button" class="btn-close-dropdown" id="btn-close-date-picker" title="Đóng"><i class="ri-close-line"></i></button>
+                </div>
 
-              <!-- Custom Date Inputs -->
-              <div class="date-picker-custom-range">
-                <div class="date-field-group">
-                  <label for="picker-start-date">Từ ngày</label>
-                  <div class="input-with-icon">
-                    <i class="ri-calendar-line"></i>
-                    <input type="date" id="picker-start-date" class="date-input">
+                <div class="date-picker-presets" id="date-picker-presets">
+                  <button type="button" class="preset-chip" data-preset="7">7 ngày qua</button>
+                  <button type="button" class="preset-chip" data-preset="28">28 ngày qua</button>
+                  <button type="button" class="preset-chip active" data-preset="30">30 ngày qua</button>
+                  <button type="button" class="preset-chip" data-preset="90">90 ngày qua</button>
+                  <button type="button" class="preset-chip" data-preset="365">1 năm qua</button>
+                  <button type="button" class="preset-chip" data-preset="this_year" id="chip-preset-this-year">Năm 2026</button>
+                  <button type="button" class="preset-chip" data-preset="all">Toàn thời gian</button>
+                  <button type="button" class="preset-chip" data-preset="today">Hôm nay</button>
+                  <button type="button" class="preset-chip" data-preset="this_month">Tháng này</button>
+                  <button type="button" class="preset-chip" data-preset="last_month">Tháng trước</button>
+                  <button type="button" class="preset-chip" data-preset="this_quarter">Quý 4 (Quý này)</button>
+                  <button type="button" class="preset-chip" data-preset="last_quarter">Quý 3 (Quý trước)</button>
+                  <button type="button" class="preset-chip" data-preset="custom">Tùy chỉnh...</button>
+                </div>
+
+                <div class="date-picker-custom-range">
+                  <div class="date-field-group">
+                    <label for="picker-start-date">Từ ngày</label>
+                    <div class="input-with-icon">
+                      <i class="ri-calendar-line"></i>
+                      <input type="date" id="picker-start-date" class="date-input">
+                    </div>
+                  </div>
+                  <div class="date-separator-icon"><i class="ri-arrow-right-line"></i></div>
+                  <div class="date-field-group">
+                    <label for="picker-end-date">Đến ngày</label>
+                    <div class="input-with-icon">
+                      <i class="ri-calendar-line"></i>
+                      <input type="date" id="picker-end-date" class="date-input">
+                    </div>
                   </div>
                 </div>
-                <div class="date-separator-icon"><i class="ri-arrow-right-line"></i></div>
-                <div class="date-field-group">
-                  <label for="picker-end-date">Đến ngày</label>
-                  <div class="input-with-icon">
-                    <i class="ri-calendar-line"></i>
-                    <input type="date" id="picker-end-date" class="date-input">
-                  </div>
+
+                <div class="date-picker-summary">
+                  <span id="date-range-diff-text"><i class="ri-time-line"></i> Khoảng thời gian: <strong>31 ngày</strong></span>
+                  <span class="compare-badge-sub" id="date-range-compare-hint">So sánh đối chiếu với 31 ngày liền trước</span>
+                </div>
+
+                <div class="date-picker-actions">
+                  <button type="button" class="btn-cancel-picker" id="btn-cancel-date-picker">Hủy</button>
+                  <button type="button" class="action-btn-primary" id="btn-apply-date-picker">
+                    <i class="ri-check-line"></i>
+                    <span>Áp Dụng</span>
+                  </button>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <!-- Selected Duration Info -->
-              <div class="date-picker-summary">
-                <span id="date-range-diff-text"><i class="ri-time-line"></i> Khoảng thời gian: <strong>31 ngày</strong></span>
-                <span class="compare-badge-sub" id="date-range-compare-hint">So sánh đối chiếu với 31 ngày liền trước</span>
+          <div class="toolbar-right">
+            <!-- Compare Period Toggle -->
+            <button class="action-btn-outline" id="btn-toggle-compare">
+              <i class="ri-git-commit-line"></i>
+              <span>So sánh kỳ trước</span>
+              <span class="switch-indicator on"></span>
+            </button>
+
+            <!-- Hidden dummy to preserve JS binding without cluttering UI -->
+            <button class="action-btn-outline" id="btn-open-filter" style="display: none;"></button>
+
+            <!-- Export Report Button -->
+            <button class="action-btn-primary" id="btn-export-report">
+              <i class="ri-download-2-line"></i>
+              <span>Xuất Báo Cáo</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- KPI Summary Cards Grid (Clean Minimalist Design) -->
+        <section class="kpi-grid">
+          <!-- 1. Lượt Xem (Views) -->
+          <div class="kpi-card" id="kpi-views">
+            <div class="kpi-header">
+              <span class="kpi-title">Lượt Xem (Views)</span>
+              <i class="ri-eye-line kpi-icon-subtle"></i>
+            </div>
+            <div class="kpi-main-stat">
+              <span class="kpi-number" id="val-views">251.635</span>
+              <span class="kpi-trend positive" id="trend-views">
+                <i class="ri-arrow-up-line"></i> +14.2%
+              </span>
+            </div>
+            <span class="kpi-subtext" id="kpi-subtext-views">Toàn kênh: 641K views</span>
+            <canvas class="kpi-sparkline" id="sparkline-views" width="90" height="26" style="display: none;"></canvas>
+          </div>
+
+          <!-- 2. Doanh Thu Ước Tính (Revenue) -->
+          <div class="kpi-card" id="kpi-revenue">
+            <div class="kpi-header">
+              <span class="kpi-title">Doanh Thu Ước Tính</span>
+              <i class="ri-money-dollar-circle-line kpi-icon-subtle"></i>
+            </div>
+            <div class="kpi-main-stat">
+              <span class="kpi-number" id="val-revenue">$629.09</span>
+              <span class="kpi-trend positive" id="trend-revenue">
+                <i class="ri-arrow-up-line"></i> +18.7%
+              </span>
+            </div>
+            <span class="kpi-subtext" id="kpi-subtext-revenue">RPM ~$2.50 / 1K view</span>
+            <canvas class="kpi-sparkline" id="sparkline-revenue" width="90" height="26" style="display: none;"></canvas>
+          </div>
+
+          <!-- 3. Lượt Tương Tác -->
+          <div class="kpi-card" id="kpi-interactions">
+            <div class="kpi-header">
+              <span class="kpi-title">Lượt Tương Tác</span>
+              <i class="ri-thumb-up-line kpi-icon-subtle"></i>
+            </div>
+            <div class="kpi-main-stat">
+              <span class="kpi-number" id="val-interactions">1.201</span>
+              <span class="kpi-trend positive" id="trend-interactions">
+                <i class="ri-arrow-up-line"></i> +6.3%
+              </span>
+            </div>
+            <span class="kpi-subtext" id="kpi-subtext-interactions">Likes & bình luận</span>
+            <canvas class="kpi-sparkline" id="sparkline-interactions" width="90" height="26" style="display: none;"></canvas>
+          </div>
+
+          <!-- 4. Lượt Đăng Ký -->
+          <div class="kpi-card" id="kpi-subscribers">
+            <div class="kpi-header">
+              <span class="kpi-title">Lượt Đăng Ký</span>
+              <i class="ri-user-add-line kpi-icon-subtle"></i>
+            </div>
+            <div class="kpi-main-stat">
+              <span class="kpi-number" id="val-subscribers">+1.320</span>
+              <span class="kpi-trend positive" id="trend-subscribers">
+                <i class="ri-arrow-up-line"></i> +24.8%
+              </span>
+            </div>
+            <span class="kpi-subtext" id="kpi-subtext-subs">Người đăng ký mới</span>
+            <canvas class="kpi-sparkline" id="sparkline-subscribers" width="90" height="26" style="display: none;"></canvas>
+          </div>
+
+          <!-- 5. Thời Lượng Xem -->
+          <div class="kpi-card" id="kpi-watchtime">
+            <div class="kpi-header">
+              <span class="kpi-title">Thời Lượng Xem</span>
+              <i class="ri-time-line kpi-icon-subtle"></i>
+            </div>
+            <div class="kpi-main-stat">
+              <span class="kpi-number" id="val-watchtime">12.581 giờ</span>
+              <span class="kpi-trend positive" id="trend-watchtime">
+                <i class="ri-arrow-up-line"></i> +11.5%
+              </span>
+            </div>
+            <span class="kpi-subtext" id="kpi-subtext-watch">TB 3 phút / lượt xem</span>
+            <canvas class="kpi-sparkline" id="sparkline-watchtime" width="90" height="26" style="display: none;"></canvas>
+          </div>
+        </section>
+
+        <!-- Primary Analytics Section: Master Timeline Chart with View Toggles -->
+        <section class="chart-panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <div class="panel-title-with-pill">
+                <h2 class="panel-title" id="main-chart-heading">Xu Hướng Lượt Xem Kênh</h2>
+                <span class="granularity-badge" id="chart-granularity-badge">Theo Ngày</span>
+              </div>
+            </div>
+
+            <!-- Chart Header Actions: Granularity Switcher & Metric Selector -->
+            <div class="chart-header-actions">
+              <!-- Granularity Switcher (Ngày / Tháng / Quý) -->
+              <div class="granularity-switcher" id="granularity-switcher" role="tablist" aria-label="Chọn loại thời gian phân tích">
+                <button class="gran-pill active" data-gran="day" role="tab" aria-selected="true" title="Xem theo ngày">
+                  <i class="ri-calendar-line"></i> Ngày
+                </button>
+                <button class="gran-pill" data-gran="month" role="tab" aria-selected="false" title="Theo tháng (MoM)">
+                  <i class="ri-bar-chart-grouped-line"></i> Tháng (MoM)
+                </button>
+                <button class="gran-pill" data-gran="quarter" role="tab" aria-selected="false" title="Theo quý (QoQ)">
+                  <i class="ri-pie-chart-2-line"></i> Quý (QoQ)
+                </button>
               </div>
 
-              <!-- Popover Actions -->
-              <div class="date-picker-actions">
-                <button type="button" class="btn-cancel-picker" id="btn-cancel-date-picker">Hủy</button>
-                <button type="button" class="action-btn-primary" id="btn-apply-date-picker">
-                  <i class="ri-check-line"></i>
-                  <span>Áp Dụng</span>
+              <!-- Chart Metric Switcher -->
+              <div class="chart-metric-selector">
+                <button class="selector-pill active" data-metric="views">
+                  <i class="ri-eye-line"></i> Lượt Xem
+                </button>
+                <button class="selector-pill" data-metric="revenue">
+                  <i class="ri-money-dollar-circle-line"></i> Doanh Thu
+                </button>
+                <button class="selector-pill" data-metric="subscribers">
+                  <i class="ri-user-add-line"></i> Đăng Ký
+                </button>
+                <button class="selector-pill" data-metric="watchtime">
+                  <i class="ri-timer-line"></i> Thời Lượng
                 </button>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="toolbar-right">
-          <!-- Compare Period Toggle -->
-          <button class="action-btn-outline" id="btn-toggle-compare">
-            <i class="ri-git-commit-line"></i>
-            <span>So sánh kỳ trước</span>
-            <span class="switch-indicator on"></span>
-          </button>
-
-          <!-- Filter Modal Button -->
-          <button class="action-btn-outline" id="btn-open-filter">
-            <i class="ri-filter-3-line"></i>
-            <span>Bộ Lọc</span>
-          </button>
-
-          <!-- Export Report Button -->
-          <button class="action-btn-primary" id="btn-export-report">
-            <i class="ri-download-2-line"></i>
-            <span>Xuất Báo Cáo</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- KPI Summary Cards Grid (Taste-Skill Redesign of Top Metrics) -->
-      <section class="kpi-grid">
-        <!-- 1. Lượt Xem (Views) -->
-        <div class="kpi-card" id="kpi-views">
-          <div class="kpi-header">
-            <div class="kpi-title-wrap">
-              <span class="kpi-title">Lượt Xem (Views)</span>
-              <i class="ri-information-line kpi-tooltip" title="Tổng 2,938 lượt xem thực tế từ YouTube Data API v3"></i>
+          <!-- Chart Canvas Container -->
+          <div class="chart-canvas-wrapper">
+            <canvas id="mainTrendsChart"></canvas>
+            <div class="chart-loading-overlay" id="chart-loading-overlay">
+              <div class="spinner"></div>
+              <span>Đang tải dữ liệu...</span>
             </div>
-            <div class="kpi-icon-badge icon-cyan">
-              <i class="ri-eye-line"></i>
-            </div>
-          </div>
-          <div class="kpi-main-stat">
-            <span class="kpi-number" id="val-views">251.635</span>
-            <span class="kpi-trend positive" id="trend-views">
-              <i class="ri-arrow-up-line"></i> +14.2%
-            </span>
-          </div>
-          <div class="kpi-footer">
-            <span class="kpi-subtext" id="kpi-subtext-views">Tổng 59 video đã xuất bản</span>
-            <canvas class="kpi-sparkline" id="sparkline-views" width="90" height="26"></canvas>
-          </div>
-        </div>
-
-        <!-- 2. Doanh Thu Ước Tính (Revenue) -->
-        <div class="kpi-card" id="kpi-revenue">
-          <div class="kpi-header">
-            <div class="kpi-title-wrap">
-              <span class="kpi-title">Doanh Thu Ước Tính</span>
-              <i class="ri-information-line kpi-tooltip" title="Doanh thu ước tính theo RPM đối tác YouTube (~$2.50 / 1K views)"></i>
-            </div>
-            <div class="kpi-icon-badge icon-amber">
-              <i class="ri-money-dollar-circle-line"></i>
-            </div>
-          </div>
-          <div class="kpi-main-stat">
-            <span class="kpi-number" id="val-revenue">$629.09</span>
-            <span class="kpi-trend positive" id="trend-revenue">
-              <i class="ri-arrow-up-line"></i> +18.7%
-            </span>
-          </div>
-          <div class="kpi-footer">
-            <span class="kpi-subtext" id="kpi-subtext-revenue">Dự kiến: RPM $2.50 • CPM $4.10</span>
-            <canvas class="kpi-sparkline" id="sparkline-revenue" width="90" height="26"></canvas>
-          </div>
-        </div>
-
-        <!-- 3. Lượt Tương Tác (Interactions: Likes, Comments, Shares) -->
-        <div class="kpi-card" id="kpi-interactions">
-          <div class="kpi-header">
-            <div class="kpi-title-wrap">
-              <span class="kpi-title">Lượt Tương Tác</span>
-              <i class="ri-information-line kpi-tooltip" title="Tổng 31 likes + 19 comments thực tế từ 19 video của kênh"></i>
-            </div>
-            <div class="kpi-icon-badge icon-indigo">
-              <i class="ri-thumb-up-line"></i>
-            </div>
-          </div>
-          <div class="kpi-main-stat">
-            <span class="kpi-number" id="val-interactions">1.201</span>
-            <span class="kpi-trend positive" id="trend-interactions">
-              <i class="ri-arrow-up-line"></i> +6.3%
-            </span>
-          </div>
-          <div class="kpi-footer">
-            <span class="kpi-subtext" id="kpi-subtext-interactions">1.149 lượt thích • 52 bình luận</span>
-            <canvas class="kpi-sparkline" id="sparkline-interactions" width="90" height="26"></canvas>
-          </div>
-        </div>
-
-        <!-- 4. Lượt Đăng Ký (Subscribers Net) -->
-        <div class="kpi-card" id="kpi-subscribers">
-          <div class="kpi-header">
-            <div class="kpi-title-wrap">
-              <span class="kpi-title">Lượt Đăng Ký</span>
-              <i class="ri-information-line kpi-tooltip" title="10 người đăng ký thực tế từ YouTube Data API"></i>
-            </div>
-            <div class="kpi-icon-badge icon-emerald">
-              <i class="ri-user-add-line"></i>
-            </div>
-          </div>
-          <div class="kpi-main-stat">
-            <span class="kpi-number" id="val-subscribers">+1.320</span>
-            <span class="kpi-trend positive" id="trend-subscribers">
-              <i class="ri-arrow-up-line"></i> +24.8%
-            </span>
-          </div>
-          <div class="kpi-footer">
-            <span class="kpi-subtext" id="kpi-subtext-subs">Tổng 1.320 người đăng ký công khai</span>
-            <canvas class="kpi-sparkline" id="sparkline-subscribers" width="90" height="26"></canvas>
-          </div>
-        </div>
-
-        <!-- 5. Thời Lượng Xem (Watch Time in Hours) -->
-        <div class="kpi-card" id="kpi-watchtime">
-          <div class="kpi-header">
-            <div class="kpi-title-wrap">
-              <span class="kpi-title">Thời Lượng Xem (Watch Time)</span>
-              <i class="ri-information-line kpi-tooltip" title="Thời lượng tích lũy dựa trên 19 video âm nhạc marathon dài"></i>
-            </div>
-            <div class="kpi-icon-badge icon-rose">
-              <i class="ri-time-line"></i>
-            </div>
-          </div>
-          <div class="kpi-main-stat">
-            <span class="kpi-number" id="val-watchtime">12.581,8 giờ</span>
-            <span class="kpi-trend positive" id="trend-watchtime">
-              <i class="ri-arrow-up-line"></i> +11.5%
-            </span>
-          </div>
-          <div class="kpi-footer">
-            <span class="kpi-subtext" id="kpi-subtext-watch">754.905 phút • TB: 3p / view</span>
-            <canvas class="kpi-sparkline" id="sparkline-watchtime" width="90" height="26"></canvas>
-          </div>
-        </div>
-      </section>
-
-      <!-- Primary Analytics Section: Master Timeline Chart with View Toggles -->
-      <section class="chart-panel">
-        <div class="panel-header">
-          <div class="panel-title-group">
-            <div class="panel-title-with-pill">
-              <h2 class="panel-title" id="main-chart-heading">Xu Hướng Tăng Trưởng Lượt Xem</h2>
-              <span class="granularity-badge" id="chart-granularity-badge">Theo Ngày</span>
-            </div>
-            <p class="panel-description">Dữ liệu thực tế đối chiếu theo mốc thời gian, loại bỏ hiện tượng chồng chéo nhãn dữ liệu (anti-slop clean design)</p>
           </div>
 
-          <!-- Chart Header Actions: Granularity Switcher & Metric Selector -->
-          <div class="chart-header-actions">
-            <!-- Granularity Switcher (Ngày / Tháng / Quý) -->
-            <div class="granularity-switcher" id="granularity-switcher" role="tablist" aria-label="Chọn loại thời gian phân tích">
-              <button class="gran-pill active" data-gran="day" role="tab" aria-selected="true" title="Xem dữ liệu theo từng ngày">
-                <i class="ri-calendar-line"></i> Ngày
-              </button>
-              <button class="gran-pill" data-gran="month" role="tab" aria-selected="false" title="So sánh giữa các tháng trong năm (MoM)">
-                <i class="ri-bar-chart-grouped-line"></i> Tháng (MoM)
-              </button>
-              <button class="gran-pill" data-gran="quarter" role="tab" aria-selected="false" title="So sánh giữa các quý trong năm (QoQ)">
-                <i class="ri-pie-chart-2-line"></i> Quý (QoQ)
-              </button>
+          <!-- Chart Quick Insight Summary Bar (Clean & Focused) -->
+          <div class="chart-insight-strip">
+            <div class="insight-item">
+              <span class="insight-label">Đỉnh cao:</span>
+              <strong class="insight-val highlight-blue" id="peak-value">20,450 lượt (19 Th09)</strong>
             </div>
-
-            <!-- Chart Metric Switcher -->
-            <div class="chart-metric-selector">
-              <button class="selector-pill active" data-metric="views">
-                <i class="ri-eye-line"></i> Lượt Xem
-              </button>
-              <button class="selector-pill" data-metric="revenue">
-                <i class="ri-money-dollar-circle-line"></i> Doanh Thu
-              </button>
-              <button class="selector-pill" data-metric="subscribers">
-                <i class="ri-user-add-line"></i> Đăng Ký
-              </button>
-              <button class="selector-pill" data-metric="watchtime">
-                <i class="ri-timer-line"></i> Thời Lượng Xem
+            <div class="insight-separator">•</div>
+            <div class="insight-item">
+              <span class="insight-label">Trung bình:</span>
+              <strong class="insight-val" id="avg-daily-value">4,046 lượt / ngày</strong>
+            </div>
+            <!-- Preserved hidden element for JS safety -->
+            <span id="outlier-status" style="display: none;"></span>
+            <div class="insight-item export-mini">
+              <button class="text-link-btn" id="btn-chart-fullscreen" title="Xem biểu đồ toàn màn hình">
+                <i class="ri-fullscreen-line"></i> Toàn màn hình
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Chart Canvas Container -->
-        <div class="chart-canvas-wrapper">
-          <canvas id="mainTrendsChart"></canvas>
-          <div class="chart-loading-overlay" id="chart-loading-overlay">
-            <div class="spinner"></div>
-            <span>Đang nạp dữ liệu YouTube API...</span>
-          </div>
-        </div>
-
-        <!-- Chart Quick Insight Summary Bar -->
-        <div class="chart-insight-strip">
-          <div class="insight-item">
-            <span class="insight-label">Đỉnh Điểm Cao Nhất:</span>
-            <strong class="insight-val highlight-blue" id="peak-value">20,450 lượt (19 Th09)</strong>
-          </div>
-          <div class="insight-item">
-            <span class="insight-label">Trung Bình Hàng Ngày:</span>
-            <strong class="insight-val" id="avg-daily-value">4,046 lượt / ngày</strong>
-          </div>
-          <div class="insight-item">
-            <span class="insight-label">Điểm Bất Thường (Outlier Filter):</span>
-            <span class="insight-status safe" id="outlier-status"><i class="ri-checkbox-circle-fill"></i> Đã làm mịn nhiễu âm (-57.9K anomaly)</span>
-          </div>
-          <div class="insight-item export-mini">
-            <button class="text-link-btn" id="btn-chart-fullscreen" title="Xem biểu đồ toàn màn hình">
-              <i class="ri-fullscreen-line"></i> Toàn màn hình
+        <!-- Structured Details Section: Tabs prevent vertical info overload -->
+        <section class="overview-details-section">
+          <div class="details-tab-bar" role="tablist">
+            <button type="button" class="details-tab-btn active" data-tab="tab-top-videos" role="tab">
+              <i class="ri-movie-2-line"></i>
+              <span>Top Video Xuất Sắc</span>
+            </button>
+            <button type="button" class="details-tab-btn" data-tab="tab-monthly-matrix" role="tab">
+              <i class="ri-calendar-check-line"></i>
+              <span>Đối Chiếu Tháng & Quý (MoM / QoQ)</span>
+            </button>
+            <button type="button" class="details-tab-btn" data-tab="tab-audience-deepdive" role="tab">
+              <i class="ri-pie-chart-line"></i>
+              <span>Tương Tác & Khán Giả</span>
             </button>
           </div>
-        </div>
-      </section>
 
-      <!-- Section: Monthly & Quarterly Performance Comparison Matrix (MoM & QoQ) -->
-      <section class="comparison-matrix-section" id="comparison-matrix-section">
-        <div class="panel-header">
-          <div class="panel-title-group">
-            <div class="panel-title-with-pill">
-              <h2 class="panel-title"><i class="ri-git-merge-line"></i> Đối Chiếu Tăng Trưởng Giữa Các Tháng & Các Quý</h2>
-              <span class="matrix-status-pill"><i class="ri-sparkling-fill"></i> MoM & QoQ Analytics</span>
-            </div>
-            <p class="panel-description">Bảng số liệu đối soát chi tiết Lượt xem, Doanh thu và Tốc độ tăng trưởng giữa các Tháng và Quý trong năm (chuẩn quản trị MCN BgMedia)</p>
-          </div>
+          <!-- Tab 1: Video Performance Table (Default Active) -->
+          <div class="details-tab-pane active" id="tab-top-videos">
+            <div class="table-card">
+              <div class="table-header-bar">
+                <div class="table-title-area">
+                  <h3 class="table-title">Video Hiệu Suất Cao Nhất Trong Kỳ</h3>
+                  <p class="table-desc">Danh sách video được xem nhiều nhất và doanh thu ước tính</p>
+                </div>
 
-          <!-- Switcher between Monthly and Quarterly Tab -->
-          <div class="matrix-tab-controls">
-            <div class="pill-group" id="matrix-period-tabs">
-              <button class="pill-mini-btn active" data-matrix-tab="month">
-                <i class="ri-calendar-todo-line"></i> Đối Chiếu Theo Tháng (MoM)
-              </button>
-              <button class="pill-mini-btn" data-matrix-tab="quarter">
-                <i class="ri-pie-chart-2-line"></i> Đối Chiếu Theo Quý (QoQ)
-              </button>
-            </div>
-            <button class="action-btn-outline" id="btn-export-comparison-table" title="Xuất bảng đối chiếu ra file JSON">
-              <i class="ri-download-2-line"></i> <span>Xuất Bảng Số Liệu</span>
-            </button>
-          </div>
-        </div>
+                <div class="table-actions">
+                  <!-- Search in table -->
+                  <div class="table-search-box">
+                    <i class="ri-search-line"></i>
+                    <input type="text" placeholder="Tìm theo tiêu đề hoặc Video ID..." id="video-search-input">
+                  </div>
 
-        <!-- MoM / QoQ Top Executive KPI Highlights -->
-        <div class="comparison-kpi-row" id="comparison-kpi-summary">
-          <!-- Card 1: MoM Revenue Growth -->
-          <div class="comp-kpi-card">
-            <div class="comp-kpi-header">
-              <span class="comp-kpi-title" id="comp-kpi-title-1">Tăng Trưởng Doanh Thu Tháng (MoM)</span>
-              <span class="comp-kpi-badge positive" id="comp-kpi-badge-1"><i class="ri-arrow-up-line"></i> +18.4%</span>
-            </div>
-            <div class="comp-kpi-value-row">
-              <strong class="comp-kpi-num" id="comp-kpi-val-1">$1,948.50</strong>
-              <span class="comp-kpi-diff text-emerald" id="comp-kpi-diff-1">+$302.20 vs tháng trước</span>
-            </div>
-            <span class="comp-kpi-sub" id="comp-kpi-sub-1">Tháng 10/2026 vs Tháng 09/2026 ($1,646.30)</span>
-          </div>
-
-          <!-- Card 2: Views MoM Growth -->
-          <div class="comp-kpi-card">
-            <div class="comp-kpi-header">
-              <span class="comp-kpi-title" id="comp-kpi-title-2">Tăng Trưởng Lượt Xem (MoM)</span>
-              <span class="comp-kpi-badge positive" id="comp-kpi-badge-2"><i class="ri-arrow-up-line"></i> +21.2%</span>
-            </div>
-            <div class="comp-kpi-value-row">
-              <strong class="comp-kpi-num" id="comp-kpi-val-2">82.450 views</strong>
-              <span class="comp-kpi-diff text-cyan" id="comp-kpi-diff-2">+14.410 views</span>
-            </div>
-            <span class="comp-kpi-sub" id="comp-kpi-sub-2">Giai đoạn cao điểm thu hút người xem mới</span>
-          </div>
-
-          <!-- Card 3: US Geo Share & RPM -->
-          <div class="comp-kpi-card">
-            <div class="comp-kpi-header">
-              <span class="comp-kpi-title" id="comp-kpi-title-3">RPM & Doanh Thu Hoa Kỳ (US)</span>
-              <span class="comp-kpi-badge accent" id="comp-kpi-badge-3">58.0% US Share</span>
-            </div>
-            <div class="comp-kpi-value-row">
-              <strong class="comp-kpi-num" id="comp-kpi-val-3">$1,130.13</strong>
-              <span class="comp-kpi-diff text-amber" id="comp-kpi-diff-3">RPM TB: $2.52</span>
-            </div>
-            <span class="comp-kpi-sub" id="comp-kpi-sub-3">Thị trường có tỷ suất sinh lời quảng cáo cao nhất</span>
-          </div>
-        </div>
-
-        <!-- Table Container for Monthly Breakdown -->
-        <div class="comparison-table-wrapper" id="monthly-comparison-wrapper">
-          <div class="matrix-table-scroll">
-            <table class="data-table matrix-table" id="monthly-matrix-table">
-              <thead>
-                <tr>
-                  <th style="width: 110px;">Tháng</th>
-                  <th class="text-right">Lượt Xem (Views)</th>
-                  <th class="text-right">Tăng Trưởng MoM (View)</th>
-                  <th class="text-right">Doanh Thu Dự Kiến</th>
-                  <th class="text-right">Tăng Trưởng MoM (Tiền)</th>
-                  <th class="text-right">Doanh Thu US (58%)</th>
-                  <th class="text-right">RPM TB</th>
-                  <th class="text-right">Sub Mới</th>
-                  <th class="text-center">Đánh Giá Hiệu Suất</th>
-                </tr>
-              </thead>
-              <tbody id="monthly-table-body">
-                <!-- Dynamically populated rows -->
-              </tbody>
-              <tfoot id="monthly-table-foot">
-                <!-- Highlighted Total row -->
-              </tfoot>
-            </table>
-          </div>
-        </div>
-
-        <!-- Table Container for Quarterly Breakdown -->
-        <div class="comparison-table-wrapper" id="quarterly-comparison-wrapper" style="display: none;">
-          <div class="matrix-table-scroll">
-            <table class="data-table matrix-table" id="quarterly-matrix-table">
-              <thead>
-                <tr>
-                  <th style="width: 130px;">Quý Báo Cáo</th>
-                  <th>Giai Đoạn</th>
-                  <th class="text-right">Tổng Lượt Xem</th>
-                  <th class="text-right">Tăng Trưởng QoQ (View)</th>
-                  <th class="text-right">Tổng Doanh Thu</th>
-                  <th class="text-right">Tăng Trưởng QoQ (Tiền)</th>
-                  <th class="text-right">Doanh Thu US (58%)</th>
-                  <th class="text-right">Lượt Sub Mới</th>
-                  <th>Tỷ Trọng Đóng Góp (%)</th>
-                  <th class="text-center">Đánh Giá Quý</th>
-                </tr>
-              </thead>
-              <tbody id="quarterly-table-body">
-                <!-- Dynamically populated rows -->
-              </tbody>
-              <tfoot id="quarterly-table-foot">
-                <!-- Highlighted Total row -->
-              </tfoot>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- Dual Deep-Dive Analytics Row (Interactions & Revenue Distribution) -->
-      <section class="dual-grid">
-        
-        <!-- Left Deep-Dive: Lượt Tương Tác (Likes, Comments, Shares, Dislikes) -->
-        <div class="deep-dive-card">
-          <div class="card-header-row">
-            <div>
-              <h3 class="card-title">Cơ Cấu Lượt Tương Tác</h3>
-              <span class="card-subtitle">Chi tiết Lượt thích, Bình luận & Chia sẻ theo dòng thời gian</span>
-            </div>
-            <!-- Custom interactive legend checkboxes -->
-            <div class="custom-legend" id="interaction-legend">
-              <span class="legend-badge active" data-series="likes">
-                <span class="legend-color-dot dot-blue"></span> Lượt thích
-              </span>
-              <span class="legend-badge active" data-series="comments">
-                <span class="legend-color-dot dot-amber"></span> Bình luận
-              </span>
-              <span class="legend-badge active" data-series="shares">
-                <span class="legend-color-dot dot-emerald"></span> Chia sẻ
-              </span>
-              <span class="legend-badge" data-series="dislikes">
-                <span class="legend-color-dot dot-rose"></span> Không thích
-              </span>
-            </div>
-          </div>
-
-          <div class="card-body-chart">
-            <canvas id="interactionsChart"></canvas>
-          </div>
-
-          <div class="interaction-stats-grid">
-            <div class="stat-mini-box">
-              <span class="stat-mini-label">Lượt Thích</span>
-              <span class="stat-mini-number text-blue" id="val-total-likes">14,820</span>
-              <span class="stat-mini-sub">79.5% tương tác</span>
-            </div>
-            <div class="stat-mini-box">
-              <span class="stat-mini-label">Bình Luận</span>
-              <span class="stat-mini-number text-amber" id="val-total-comments">2,410</span>
-              <span class="stat-mini-sub">12.9% tương tác</span>
-            </div>
-            <div class="stat-mini-box">
-              <span class="stat-mini-label">Chia Sẻ</span>
-              <span class="stat-mini-number text-emerald" id="val-total-shares">1,420</span>
-              <span class="stat-mini-sub">7.6% tương tác</span>
-            </div>
-            <div class="stat-mini-box">
-              <span class="stat-mini-label">Độ Hài Lòng</span>
-              <span class="stat-mini-number text-purple" id="val-sentiment-score">98.4%</span>
-              <span class="stat-mini-sub">Tỷ lệ like/dislike</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right Deep-Dive: Phân Tích Thu Nhập Theo Địa Lý & Đăng Ký Ròng -->
-        <div class="deep-dive-card">
-          <div class="card-header-row">
-            <div>
-              <h3 class="card-title">Địa Lý Doanh Thu & Thu Phóng Thuê Bao</h3>
-              <span class="card-subtitle">Đối chiếu thị trường US vs Quốc tế & Đăng ký Có được / Mất đi</span>
-            </div>
-            <div class="pill-group-mini" id="geo-sub-tabs">
-              <button class="pill-mini-btn active" data-view="subscribers">Thuê Bao Ròng</button>
-              <button class="pill-mini-btn" data-view="geo-revenue">Thị Trường US</button>
-            </div>
-          </div>
-
-          <!-- View 1: Subscribers Donut & Retention KPIs -->
-          <div class="sub-tab-view active" id="view-subscribers-panel">
-            <div class="donut-and-kpis">
-              <div class="donut-wrapper">
-                <canvas id="subscriberDonutChart"></canvas>
-                <div class="donut-center-label">
-                  <span class="donut-center-val" id="donut-net-subs">+1,240</span>
-                  <span class="donut-center-title">Ròng Mới</span>
+                  <!-- Filter by category or sort -->
+                  <select class="styled-select" id="video-sort-select">
+                    <option value="views-desc">Sắp xếp: Lượt xem giảm dần</option>
+                    <option value="revenue-desc">Sắp xếp: Doanh thu cao nhất</option>
+                    <option value="likes-desc">Sắp xếp: Tương tác nhiều nhất</option>
+                    <option value="date-desc">Mới phát hành gần nhất</option>
+                  </select>
                 </div>
               </div>
-              <div class="donut-legend-breakdown">
-                <div class="legend-row">
-                  <div class="legend-color-tag bg-cyan"></div>
-                  <div class="legend-text-col">
-                    <span class="legend-name">Có Được (Gained)</span>
-                    <strong class="legend-num" id="donut-gained-val">+1,430</strong>
-                  </div>
-                  <span class="legend-pct">88.3%</span>
-                </div>
-                <div class="legend-row">
-                  <div class="legend-color-tag bg-rose"></div>
-                  <div class="legend-text-col">
-                    <span class="legend-name">Mất Đi (Lost)</span>
-                    <strong class="legend-num" id="donut-lost-val">-190</strong>
-                  </div>
-                  <span class="legend-pct">11.7%</span>
-                </div>
 
-                <div class="divider"></div>
+              <!-- Responsive Table Container -->
+              <div class="table-responsive">
+                <table class="modern-data-table" id="youtube-videos-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 44px;">#</th>
+                      <th>Video</th>
+                      <th>Ngày Xuất Bản</th>
+                      <th class="text-right">Lượt Xem</th>
+                      <th class="text-right">Thời Lượng</th>
+                      <th class="text-right">Tương Tác</th>
+                      <th class="text-right">Doanh Thu</th>
+                      <th class="text-center">Thao Tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="videos-table-body">
+                    <!-- Dynamically populated from JS -->
+                  </tbody>
+                </table>
+              </div>
 
-                <div class="retention-score-box">
-                  <div class="score-header">
-                    <span>Tỷ Lệ Giữ Chân Khán Giả</span>
-                    <strong>48.2%</strong>
-                  </div>
-                  <div class="progress-track">
-                    <div class="progress-fill" style="width: 48.2%;"></div>
-                  </div>
-                  <span class="score-hint">Cao hơn 12% so với mức trung bình ngành công nghệ</span>
+              <!-- Table Pagination & Counter -->
+              <div class="table-footer">
+                <span class="table-counter" id="table-counter-text">Hiển thị 1 - 5 của 18 video</span>
+                <div class="pagination-controls">
+                  <button class="page-nav-btn disabled" id="prev-page-btn"><i class="ri-arrow-left-s-line"></i> Trước</button>
+                  <button class="page-nav-btn active">1</button>
+                  <button class="page-nav-btn">2</button>
+                  <button class="page-nav-btn">3</button>
+                  <button class="page-nav-btn" id="next-page-btn">Sau <i class="ri-arrow-right-s-line"></i></button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- View 2: US vs Global Revenue Breakdown -->
-          <div class="sub-tab-view" id="view-georevenue-panel" style="display: none;">
-            <div class="card-body-chart">
-              <canvas id="geoRevenueChart"></canvas>
-            </div>
-            <div class="us-revenue-summary">
-              <div class="us-stat-tag">
-                <span class="tag-label">Doanh thu US (Hoa Kỳ):</span>
-                <strong class="tag-val text-emerald" id="val-us-rev">$812.20 (56.8%)</strong>
-              </div>
-              <div class="us-stat-tag">
-                <span class="tag-label">RPM Trung Bình US:</span>
-                <strong class="tag-val text-amber">$7.40 / 1K view</strong>
-              </div>
-            </div>
-          </div>
+          <!-- Tab 2: Monthly & Quarterly Performance Matrix (MoM & QoQ) -->
+          <div class="details-tab-pane" id="tab-monthly-matrix">
+            <section class="comparison-matrix-section" id="comparison-matrix-section">
+              <div class="panel-header">
+                <div class="panel-title-group">
+                  <h3 class="panel-title">Bảng Đối Chiếu Số Liệu Giữa Các Tháng & Các Quý</h3>
+                </div>
 
-        </div>
-
-      </section>
-
-      <!-- Video Performance Table (Direct mapping with YouTube Data API v3 videos.list) -->
-      <section class="table-section">
-        <div class="table-card">
-          <div class="table-header-bar">
-            <div class="table-title-area">
-              <h3 class="table-title">Video Hiệu Suất Cao Nhất Trong Kỳ</h3>
-              <p class="table-desc">Truy vấn chi tiết từ YouTube Data API v3 <code>videos.list (snippet, statistics, contentDetails)</code></p>
-            </div>
-
-            <div class="table-actions">
-              <!-- Search in table -->
-              <div class="table-search-box">
-                <i class="ri-search-line"></i>
-                <input type="text" placeholder="Tìm theo tiêu đề hoặc Video ID..." id="video-search-input">
+                <!-- Switcher between Monthly and Quarterly Tab -->
+                <div class="matrix-tab-controls">
+                  <div class="pill-group" id="matrix-period-tabs">
+                    <button class="pill-mini-btn active" data-matrix-tab="month">
+                      <i class="ri-calendar-todo-line"></i> Theo Tháng (MoM)
+                    </button>
+                    <button class="pill-mini-btn" data-matrix-tab="quarter">
+                      <i class="ri-pie-chart-2-line"></i> Theo Quý (QoQ)
+                    </button>
+                  </div>
+                  <button class="action-btn-outline" id="btn-export-comparison-table" title="Xuất bảng đối chiếu ra file JSON">
+                    <i class="ri-download-2-line"></i> <span>Xuất Bảng Số Liệu</span>
+                  </button>
+                </div>
               </div>
 
-              <!-- Filter by category or sort -->
-              <select class="styled-select" id="video-sort-select">
-                <option value="views-desc">Sắp xếp: Lượt xem giảm dần</option>
-                <option value="revenue-desc">Sắp xếp: Doanh thu cao nhất</option>
-                <option value="likes-desc">Sắp xếp: Tương tác nhiều nhất</option>
-                <option value="date-desc">Mới phát hành gần nhất</option>
-              </select>
-            </div>
+              <!-- MoM / QoQ Top Highlights -->
+              <div class="comparison-kpi-row" id="comparison-kpi-summary">
+                <div class="comp-kpi-card">
+                  <div class="comp-kpi-header">
+                    <span class="comp-kpi-title" id="comp-kpi-title-1">Tăng Trưởng Doanh Thu Tháng (MoM)</span>
+                    <span class="comp-kpi-badge positive" id="comp-kpi-badge-1"><i class="ri-arrow-up-line"></i> +18.4%</span>
+                  </div>
+                  <div class="comp-kpi-value-row">
+                    <strong class="comp-kpi-num" id="comp-kpi-val-1">$1,948.50</strong>
+                    <span class="comp-kpi-diff text-emerald" id="comp-kpi-diff-1">+$302.20 vs tháng trước</span>
+                  </div>
+                  <span class="comp-kpi-sub" id="comp-kpi-sub-1">Tháng 10/2026 vs Tháng 09/2026</span>
+                </div>
+
+                <div class="comp-kpi-card">
+                  <div class="comp-kpi-header">
+                    <span class="comp-kpi-title" id="comp-kpi-title-2">Tăng Trưởng Lượt Xem (MoM)</span>
+                    <span class="comp-kpi-badge positive" id="comp-kpi-badge-2"><i class="ri-arrow-up-line"></i> +21.2%</span>
+                  </div>
+                  <div class="comp-kpi-value-row">
+                    <strong class="comp-kpi-num" id="comp-kpi-val-2">82.450 views</strong>
+                    <span class="comp-kpi-diff text-cyan" id="comp-kpi-diff-2">+14.410 views</span>
+                  </div>
+                  <span class="comp-kpi-sub" id="comp-kpi-sub-2">Giai đoạn cao điểm thu hút người xem mới</span>
+                </div>
+
+                <div class="comp-kpi-card">
+                  <div class="comp-kpi-header">
+                    <span class="comp-kpi-title" id="comp-kpi-title-3">RPM & Doanh Thu Hoa Kỳ (US)</span>
+                    <span class="comp-kpi-badge accent" id="comp-kpi-badge-3">58.0% US Share</span>
+                  </div>
+                  <div class="comp-kpi-value-row">
+                    <strong class="comp-kpi-num" id="comp-kpi-val-3">$1,130.13</strong>
+                    <span class="comp-kpi-diff text-amber" id="comp-kpi-diff-3">RPM TB: $2.52</span>
+                  </div>
+                  <span class="comp-kpi-sub" id="comp-kpi-sub-3">Thị trường có tỷ suất sinh lời quảng cáo cao nhất</span>
+                </div>
+              </div>
+
+              <!-- Table Container for Monthly Breakdown -->
+              <div class="comparison-table-wrapper" id="monthly-comparison-wrapper">
+                <div class="matrix-table-scroll">
+                  <table class="data-table matrix-table" id="monthly-matrix-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 110px;">Tháng</th>
+                        <th class="text-right">Lượt Xem (Views)</th>
+                        <th class="text-right">Tăng Trưởng MoM</th>
+                        <th class="text-right">Doanh Thu Dự Kiến</th>
+                        <th class="text-right">Tăng Trưởng MoM (Tiền)</th>
+                        <th class="text-right">Doanh Thu US (58%)</th>
+                        <th class="text-right">RPM TB</th>
+                        <th class="text-right">Sub Mới</th>
+                        <th class="text-center">Đánh Giá</th>
+                      </tr>
+                    </thead>
+                    <tbody id="monthly-table-body">
+                      <!-- Dynamically populated rows -->
+                    </tbody>
+                    <tfoot id="monthly-table-foot">
+                      <!-- Highlighted Total row -->
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Table Container for Quarterly Breakdown -->
+              <div class="comparison-table-wrapper" id="quarterly-comparison-wrapper" style="display: none;">
+                <div class="matrix-table-scroll">
+                  <table class="data-table matrix-table" id="quarterly-matrix-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 130px;">Quý Báo Cáo</th>
+                        <th>Giai Đoạn</th>
+                        <th class="text-right">Tổng Lượt Xem</th>
+                        <th class="text-right">Tăng Trưởng QoQ</th>
+                        <th class="text-right">Tổng Doanh Thu</th>
+                        <th class="text-right">Tăng Trưởng QoQ (Tiền)</th>
+                        <th class="text-right">Doanh Thu US (58%)</th>
+                        <th class="text-right">Lượt Sub Mới</th>
+                        <th>Tỷ Trọng (%)</th>
+                        <th class="text-center">Đánh Giá</th>
+                      </tr>
+                    </thead>
+                    <tbody id="quarterly-table-body">
+                      <!-- Dynamically populated rows -->
+                    </tbody>
+                    <tfoot id="quarterly-table-foot">
+                      <!-- Highlighted Total row -->
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </section>
           </div>
 
-          <!-- Responsive Table Container -->
-          <div class="table-responsive">
-            <table class="modern-data-table" id="youtube-videos-table">
-              <thead>
-                <tr>
-                  <th style="width: 44px;">#</th>
-                  <th>Video</th>
-                  <th>Ngày Xuất Bản</th>
-                  <th class="text-right">Lượt Xem</th>
-                  <th class="text-right">Thời Lượng</th>
-                  <th class="text-right">Tương Tác</th>
-                  <th class="text-right">Doanh Thu</th>
-                  <th class="text-center">Thao Tác</th>
-                </tr>
-              </thead>
-              <tbody id="videos-table-body">
-                <!-- Dynamically populated from JS -->
-              </tbody>
-            </table>
-          </div>
+          <!-- Tab 3: Dual Deep-Dive Analytics (Interactions & Geography) -->
+          <div class="details-tab-pane" id="tab-audience-deepdive">
+            <section class="dual-grid">
+              <!-- Left Deep-Dive: Lượt Tương Tác -->
+              <div class="deep-dive-card">
+                <div class="card-header-row">
+                  <div>
+                    <h3 class="card-title">Cơ Cấu Lượt Tương Tác</h3>
+                    <span class="card-subtitle">Chi tiết Lượt thích, Bình luận & Chia sẻ</span>
+                  </div>
+                  <div class="custom-legend" id="interaction-legend">
+                    <span class="legend-badge active" data-series="likes">
+                      <span class="legend-color-dot dot-blue"></span> Thích
+                    </span>
+                    <span class="legend-badge active" data-series="comments">
+                      <span class="legend-color-dot dot-amber"></span> Bình luận
+                    </span>
+                    <span class="legend-badge active" data-series="shares">
+                      <span class="legend-color-dot dot-emerald"></span> Chia sẻ
+                    </span>
+                    <span class="legend-badge" data-series="dislikes">
+                      <span class="legend-color-dot dot-rose"></span> Không thích
+                    </span>
+                  </div>
+                </div>
 
-          <!-- Table Pagination & Counter -->
-          <div class="table-footer">
-            <span class="table-counter" id="table-counter-text">Hiển thị 1 - 5 của 18 video</span>
-            <div class="pagination-controls">
-              <button class="page-nav-btn disabled" id="prev-page-btn"><i class="ri-arrow-left-s-line"></i> Trước</button>
-              <button class="page-nav-btn active">1</button>
-              <button class="page-nav-btn">2</button>
-              <button class="page-nav-btn">3</button>
-              <button class="page-nav-btn" id="next-page-btn">Sau <i class="ri-arrow-right-s-line"></i></button>
-            </div>
+                <div class="card-body-chart">
+                  <canvas id="interactionsChart"></canvas>
+                </div>
+
+                <div class="interaction-stats-grid">
+                  <div class="stat-mini-box">
+                    <span class="stat-mini-label">Lượt Thích</span>
+                    <span class="stat-mini-number text-blue" id="val-total-likes">14,820</span>
+                    <span class="stat-mini-sub">79.5% tương tác</span>
+                  </div>
+                  <div class="stat-mini-box">
+                    <span class="stat-mini-label">Bình Luận</span>
+                    <span class="stat-mini-number text-amber" id="val-total-comments">2,410</span>
+                    <span class="stat-mini-sub">12.9% tương tác</span>
+                  </div>
+                  <div class="stat-mini-box">
+                    <span class="stat-mini-label">Chia Sẻ</span>
+                    <span class="stat-mini-number text-emerald" id="val-total-shares">1,420</span>
+                    <span class="stat-mini-sub">7.6% tương tác</span>
+                  </div>
+                  <div class="stat-mini-box">
+                    <span class="stat-mini-label">Độ Hài Lòng</span>
+                    <span class="stat-mini-number text-purple" id="val-sentiment-score">98.4%</span>
+                    <span class="stat-mini-sub">Tỷ lệ like/dislike</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Deep-Dive: Phân Tích Địa Lý & Thuê Bao -->
+              <div class="deep-dive-card">
+                <div class="card-header-row">
+                  <div>
+                    <h3 class="card-title">Địa Lý Doanh Thu & Thuê Bao</h3>
+                    <span class="card-subtitle">Thị trường US vs Quốc tế & Đăng ký mới</span>
+                  </div>
+                  <div class="pill-group-mini" id="geo-sub-tabs">
+                    <button class="pill-mini-btn active" data-view="subscribers">Thuê Bao Ròng</button>
+                    <button class="pill-mini-btn" data-view="geo-revenue">Thị Trường US</button>
+                  </div>
+                </div>
+
+                <!-- View 1: Subscribers Donut & Retention KPIs -->
+                <div class="sub-tab-view active" id="view-subscribers-panel">
+                  <div class="donut-and-kpis">
+                    <div class="donut-wrapper">
+                      <canvas id="subscriberDonutChart"></canvas>
+                      <div class="donut-center-label">
+                        <span class="donut-center-val" id="donut-net-subs">+1,240</span>
+                        <span class="donut-center-title">Ròng Mới</span>
+                      </div>
+                    </div>
+                    <div class="donut-legend-breakdown">
+                      <div class="legend-row">
+                        <div class="legend-color-tag bg-cyan"></div>
+                        <div class="legend-text-col">
+                          <span class="legend-name">Có Được (Gained)</span>
+                          <strong class="legend-num" id="donut-gained-val">+1,430</strong>
+                        </div>
+                        <span class="legend-pct">88.3%</span>
+                      </div>
+                      <div class="legend-row">
+                        <div class="legend-color-tag bg-rose"></div>
+                        <div class="legend-text-col">
+                          <span class="legend-name">Mất Đi (Lost)</span>
+                          <strong class="legend-num" id="donut-lost-val">-190</strong>
+                        </div>
+                        <span class="legend-pct">11.7%</span>
+                      </div>
+
+                      <div class="divider"></div>
+
+                      <div class="retention-score-box">
+                        <div class="score-header">
+                          <span>Tỷ Lệ Giữ Chân Khán Giả</span>
+                          <strong>48.2%</strong>
+                        </div>
+                        <div class="progress-track">
+                          <div class="progress-fill" style="width: 48.2%;"></div>
+                        </div>
+                        <span class="score-hint">Tốt hơn mức trung bình phân khúc</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- View 2: US vs Global Revenue Breakdown -->
+                <div class="sub-tab-view" id="view-georevenue-panel" style="display: none;">
+                  <div class="card-body-chart">
+                    <canvas id="geoRevenueChart"></canvas>
+                  </div>
+                  <div class="us-revenue-summary">
+                    <div class="us-stat-tag">
+                      <span class="tag-label">Doanh thu US (Hoa Kỳ):</span>
+                      <strong class="tag-val text-emerald" id="val-us-rev">$812.20 (56.8%)</strong>
+                    </div>
+                    <div class="us-stat-tag">
+                      <span class="tag-label">RPM Trung Bình US:</span>
+                      <strong class="tag-val text-amber">$7.40 / 1K view</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
-        </div>
-      </section>
+        </section>
 
       </div> <!-- /view-report-overview -->
 
@@ -1995,6 +1962,6 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Application Logic -->
-  <script src="app.js?v=7.0_bgmedia_team"></script>
+  <script src="app.js?v=8.0_clean_report"></script>
 </body>
 </html>

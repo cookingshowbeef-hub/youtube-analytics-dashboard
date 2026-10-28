@@ -1924,7 +1924,7 @@
     if (viewsSub) {
       viewsSub.textContent = isAllTime
         ? `Tổng ${formatNumber(state.channelInfo.videoCount || currentData.videos.length)} video đã xuất bản`
-        : `Trong kỳ: ${dayCount} ngày • Toàn kênh: ${formatNumber(state.channelInfo.views || 0)} views`;
+        : `Toàn kênh: ${formatCompactNumber(state.channelInfo.views || 0)} views`;
     }
 
     // 2. Revenue (RPM ~$2.50)
@@ -1937,9 +1937,7 @@
     }
     const revSub = document.getElementById('kpi-subtext-revenue');
     if (revSub) {
-      revSub.textContent = isAllTime
-        ? `Dự kiến: RPM $2.50 • CPM $4.10`
-        : `RPM $2.50 • Dự kiến trong kỳ: ${formatCurrency(periodRevenueUSD)}`;
+      revSub.textContent = `RPM ~$2.50 / 1K view`;
     }
 
     // 3. Interactions (Likes + Comments)
@@ -1956,7 +1954,7 @@
     }
     const interSub = document.getElementById('kpi-subtext-interactions');
     if (interSub) {
-      interSub.textContent = `${formatNumber(displayLikes)} lượt thích • ${formatNumber(displayComments)} bình luận`;
+      interSub.textContent = `${formatNumber(displayLikes)} thích • ${formatNumber(displayComments)} bình luận`;
     }
 
     // 4. Subscribers
@@ -1964,13 +1962,13 @@
     const displaySubs = isAllTime ? (state.channelInfo.subscribers || 0) : periodSubs;
     elements.valSubscribers.textContent = `+${formatNumber(displaySubs)}`;
     if (elements.trendSubscribers) {
-      elements.trendSubscribers.innerHTML = `<i class="ri-arrow-right-up-line"></i> +11.8%`;
+      elements.trendSubscribers.innerHTML = `<i class="ri-arrow-right-up-line"></i> +24.8%`;
     }
     const subsSub = document.getElementById('kpi-subtext-subs');
     if (subsSub) {
       subsSub.textContent = isAllTime
-        ? `Tổng ${formatNumber(state.channelInfo.subscribers || 0)} người đăng ký công khai`
-        : `+${formatNumber(periodSubs)} người đăng ký mới trong ${dayCount} ngày`;
+        ? `Tổng ${formatNumber(state.channelInfo.subscribers || 0)} người đăng ký`
+        : `Người đăng ký mới trong kỳ`;
     }
 
     // 5. Watch Time
@@ -1983,7 +1981,7 @@
     }
     const watchSub = document.getElementById('kpi-subtext-watch');
     if (watchSub) {
-      watchSub.textContent = `${formatNumber(Math.round(displayWatchHours * 60))} phút • TB: 3p / view`;
+      watchSub.textContent = `TB 3 phút / lượt xem`;
     }
 
     // Sub-stats inside deep dive
@@ -2568,8 +2566,8 @@
       chartType = 'line';
       if (state.activeMetric === 'views') {
         primaryLabel = `Lượt xem (${state.channelInfo.title})`;
-        primaryColor = '#00F2FE';
-        gradientStart = 'rgba(0, 242, 254, 0.25)';
+        primaryColor = '#38BDF8';
+        gradientStart = 'rgba(56, 189, 248, 0.15)';
         primaryData = currentData.timeline.views;
         baselineData = currentData.timeline.viewsPrevious;
         elements.mainChartHeading.textContent = `Xu Hướng Lượt Xem Kênh ${state.channelInfo.title}`;
@@ -2732,13 +2730,13 @@
         backgroundColor: barBg,
         borderRadius: chartType === 'bar' ? 8 : 0,
         fill: chartType === 'line',
-        tension: 0.38,
-        pointRadius: chartType === 'line' ? 4 : 0,
-        pointHoverRadius: chartType === 'line' ? 8 : 0,
-        pointHitRadius: 18,
+        tension: 0.35,
+        pointRadius: chartType === 'line' ? (labels.length > 20 ? 1.5 : 3) : 0,
+        pointHoverRadius: chartType === 'line' ? 6 : 0,
+        pointHitRadius: 15,
         pointBackgroundColor: primaryColor,
-        pointBorderColor: '#FFFFFF',
-        pointBorderWidth: 1.5,
+        pointBorderColor: isDark ? '#0F172A' : '#FFFFFF',
+        pointBorderWidth: 2,
       }
     ];
 
@@ -2842,9 +2840,8 @@
                 return null;
               },
               footer: function () {
-                if (isDay) return '👉 Bấm vào điểm này để xem báo cáo chi tiết ngày';
-                if (isMonth) return '👉 Đối chiếu chi tiết trong Bảng Số Liệu bên dưới';
-                if (isQuarter) return '👉 Bấm để xem tỷ trọng doanh thu quý';
+                if (isDay) return 'Bấm vào điểm để xem chi tiết';
+                return null;
               }
             }
           }
@@ -4238,6 +4235,34 @@
               elements.viewGeorevenuePanel.style.display = 'block';
               renderGeoRevenueChart();
             }
+          }
+        });
+      });
+    }
+
+    // Overview Details Section Tab Switching
+    const detailsTabBtns = document.querySelectorAll('.details-tab-btn');
+    const detailsTabPanes = document.querySelectorAll('.details-tab-pane');
+    if (detailsTabBtns.length > 0) {
+      detailsTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-tab');
+          detailsTabBtns.forEach(b => b.classList.remove('active'));
+          detailsTabPanes.forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          const targetPane = document.getElementById(targetId);
+          if (targetPane) {
+            targetPane.classList.add('active');
+          }
+          if (targetId === 'tab-audience-deepdive') {
+            setTimeout(() => {
+              renderInteractionsChart();
+              renderSubscriberDonutChart();
+            }, 60);
+          } else if (targetId === 'tab-top-videos') {
+            renderVideosTable();
+          } else if (targetId === 'tab-monthly-matrix') {
+            renderComparisonMatrix();
           }
         });
       });

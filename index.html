@@ -53,6 +53,11 @@
           <span>Báo Cáo Phân Tích</span>
           <span class="nav-pill">V3 API</span>
         </a>
+        <a href="#comparison-matrix-section" class="nav-item">
+          <i class="ri-git-merge-line"></i>
+          <span>So Sánh Tháng & Quý</span>
+          <span class="nav-pill" style="background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan);">MoM/QoQ</span>
+        </a>
 
         <div class="nav-section-label">TĂNG TRƯỞNG & DỊCH VỤ</div>
         <a href="#statistics" class="nav-item">
@@ -192,6 +197,10 @@
                 <button type="button" class="preset-chip" data-preset="this_year" id="chip-preset-this-year">Năm 2026</button>
                 <button type="button" class="preset-chip" data-preset="all">Toàn thời gian</button>
                 <button type="button" class="preset-chip" data-preset="today">Hôm nay</button>
+                <button type="button" class="preset-chip" data-preset="this_month">Tháng này</button>
+                <button type="button" class="preset-chip" data-preset="last_month">Tháng trước</button>
+                <button type="button" class="preset-chip" data-preset="this_quarter">Quý 4 (Quý này)</button>
+                <button type="button" class="preset-chip" data-preset="last_quarter">Quý 3 (Quý trước)</button>
                 <button type="button" class="preset-chip" data-preset="custom">Tùy chỉnh...</button>
               </div>
 
@@ -383,20 +392,36 @@
             <p class="panel-description">Dữ liệu thực tế đối chiếu theo mốc thời gian, loại bỏ hiện tượng chồng chéo nhãn dữ liệu (anti-slop clean design)</p>
           </div>
 
-          <!-- Chart Metric Switcher -->
-          <div class="chart-metric-selector">
-            <button class="selector-pill active" data-metric="views">
-              <i class="ri-eye-line"></i> Lượt Xem
-            </button>
-            <button class="selector-pill" data-metric="revenue">
-              <i class="ri-money-dollar-circle-line"></i> Doanh Thu
-            </button>
-            <button class="selector-pill" data-metric="subscribers">
-              <i class="ri-user-add-line"></i> Đăng Ký
-            </button>
-            <button class="selector-pill" data-metric="watchtime">
-              <i class="ri-timer-line"></i> Thời Lượng Xem
-            </button>
+          <!-- Chart Header Actions: Granularity Switcher & Metric Selector -->
+          <div class="chart-header-actions">
+            <!-- Granularity Switcher (Ngày / Tháng / Quý) -->
+            <div class="granularity-switcher" id="granularity-switcher" role="tablist" aria-label="Chọn loại thời gian phân tích">
+              <button class="gran-pill active" data-gran="day" role="tab" aria-selected="true" title="Xem dữ liệu theo từng ngày">
+                <i class="ri-calendar-line"></i> Ngày
+              </button>
+              <button class="gran-pill" data-gran="month" role="tab" aria-selected="false" title="So sánh giữa các tháng trong năm (MoM)">
+                <i class="ri-bar-chart-grouped-line"></i> Tháng (MoM)
+              </button>
+              <button class="gran-pill" data-gran="quarter" role="tab" aria-selected="false" title="So sánh giữa các quý trong năm (QoQ)">
+                <i class="ri-pie-chart-2-line"></i> Quý (QoQ)
+              </button>
+            </div>
+
+            <!-- Chart Metric Switcher -->
+            <div class="chart-metric-selector">
+              <button class="selector-pill active" data-metric="views">
+                <i class="ri-eye-line"></i> Lượt Xem
+              </button>
+              <button class="selector-pill" data-metric="revenue">
+                <i class="ri-money-dollar-circle-line"></i> Doanh Thu
+              </button>
+              <button class="selector-pill" data-metric="subscribers">
+                <i class="ri-user-add-line"></i> Đăng Ký
+              </button>
+              <button class="selector-pill" data-metric="watchtime">
+                <i class="ri-timer-line"></i> Thời Lượng Xem
+              </button>
+            </div>
           </div>
         </div>
 
@@ -427,6 +452,131 @@
             <button class="text-link-btn" id="btn-chart-fullscreen" title="Xem biểu đồ toàn màn hình">
               <i class="ri-fullscreen-line"></i> Toàn màn hình
             </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Monthly & Quarterly Performance Comparison Matrix (MoM & QoQ) -->
+      <section class="comparison-matrix-section" id="comparison-matrix-section">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <div class="panel-title-with-pill">
+              <h2 class="panel-title"><i class="ri-git-merge-line"></i> Đối Chiếu Tăng Trưởng Giữa Các Tháng & Các Quý</h2>
+              <span class="matrix-status-pill"><i class="ri-sparkling-fill"></i> MoM & QoQ Analytics</span>
+            </div>
+            <p class="panel-description">Bảng số liệu đối soát chi tiết Lượt xem, Doanh thu và Tốc độ tăng trưởng giữa các Tháng và Quý trong năm (chuẩn quản trị MCN BgMedia)</p>
+          </div>
+
+          <!-- Switcher between Monthly and Quarterly Tab -->
+          <div class="matrix-tab-controls">
+            <div class="pill-group" id="matrix-period-tabs">
+              <button class="pill-mini-btn active" data-matrix-tab="month">
+                <i class="ri-calendar-todo-line"></i> Đối Chiếu Theo Tháng (MoM)
+              </button>
+              <button class="pill-mini-btn" data-matrix-tab="quarter">
+                <i class="ri-pie-chart-2-line"></i> Đối Chiếu Theo Quý (QoQ)
+              </button>
+            </div>
+            <button class="action-btn-outline" id="btn-export-comparison-table" title="Xuất bảng đối chiếu ra file JSON">
+              <i class="ri-download-2-line"></i> <span>Xuất Bảng Số Liệu</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- MoM / QoQ Top Executive KPI Highlights -->
+        <div class="comparison-kpi-row" id="comparison-kpi-summary">
+          <!-- Card 1: MoM Revenue Growth -->
+          <div class="comp-kpi-card">
+            <div class="comp-kpi-header">
+              <span class="comp-kpi-title" id="comp-kpi-title-1">Tăng Trưởng Doanh Thu Tháng (MoM)</span>
+              <span class="comp-kpi-badge positive" id="comp-kpi-badge-1"><i class="ri-arrow-up-line"></i> +18.4%</span>
+            </div>
+            <div class="comp-kpi-value-row">
+              <strong class="comp-kpi-num" id="comp-kpi-val-1">$1,948.50</strong>
+              <span class="comp-kpi-diff text-emerald" id="comp-kpi-diff-1">+$302.20 vs tháng trước</span>
+            </div>
+            <span class="comp-kpi-sub" id="comp-kpi-sub-1">Tháng 10/2026 vs Tháng 09/2026 ($1,646.30)</span>
+          </div>
+
+          <!-- Card 2: Views MoM Growth -->
+          <div class="comp-kpi-card">
+            <div class="comp-kpi-header">
+              <span class="comp-kpi-title" id="comp-kpi-title-2">Tăng Trưởng Lượt Xem (MoM)</span>
+              <span class="comp-kpi-badge positive" id="comp-kpi-badge-2"><i class="ri-arrow-up-line"></i> +21.2%</span>
+            </div>
+            <div class="comp-kpi-value-row">
+              <strong class="comp-kpi-num" id="comp-kpi-val-2">82.450 views</strong>
+              <span class="comp-kpi-diff text-cyan" id="comp-kpi-diff-2">+14.410 views</span>
+            </div>
+            <span class="comp-kpi-sub" id="comp-kpi-sub-2">Giai đoạn cao điểm thu hút người xem mới</span>
+          </div>
+
+          <!-- Card 3: US Geo Share & RPM -->
+          <div class="comp-kpi-card">
+            <div class="comp-kpi-header">
+              <span class="comp-kpi-title" id="comp-kpi-title-3">RPM & Doanh Thu Hoa Kỳ (US)</span>
+              <span class="comp-kpi-badge accent" id="comp-kpi-badge-3">58.0% US Share</span>
+            </div>
+            <div class="comp-kpi-value-row">
+              <strong class="comp-kpi-num" id="comp-kpi-val-3">$1,130.13</strong>
+              <span class="comp-kpi-diff text-amber" id="comp-kpi-diff-3">RPM TB: $2.52</span>
+            </div>
+            <span class="comp-kpi-sub" id="comp-kpi-sub-3">Thị trường có tỷ suất sinh lời quảng cáo cao nhất</span>
+          </div>
+        </div>
+
+        <!-- Table Container for Monthly Breakdown -->
+        <div class="comparison-table-wrapper" id="monthly-comparison-wrapper">
+          <div class="matrix-table-scroll">
+            <table class="data-table matrix-table" id="monthly-matrix-table">
+              <thead>
+                <tr>
+                  <th style="width: 110px;">Tháng</th>
+                  <th class="text-right">Lượt Xem (Views)</th>
+                  <th class="text-right">Tăng Trưởng MoM (View)</th>
+                  <th class="text-right">Doanh Thu Dự Kiến</th>
+                  <th class="text-right">Tăng Trưởng MoM (Tiền)</th>
+                  <th class="text-right">Doanh Thu US (58%)</th>
+                  <th class="text-right">RPM TB</th>
+                  <th class="text-right">Sub Mới</th>
+                  <th class="text-center">Đánh Giá Hiệu Suất</th>
+                </tr>
+              </thead>
+              <tbody id="monthly-table-body">
+                <!-- Dynamically populated rows -->
+              </tbody>
+              <tfoot id="monthly-table-foot">
+                <!-- Highlighted Total row -->
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Table Container for Quarterly Breakdown -->
+        <div class="comparison-table-wrapper" id="quarterly-comparison-wrapper" style="display: none;">
+          <div class="matrix-table-scroll">
+            <table class="data-table matrix-table" id="quarterly-matrix-table">
+              <thead>
+                <tr>
+                  <th style="width: 130px;">Quý Báo Cáo</th>
+                  <th>Giai Đoạn</th>
+                  <th class="text-right">Tổng Lượt Xem</th>
+                  <th class="text-right">Tăng Trưởng QoQ (View)</th>
+                  <th class="text-right">Tổng Doanh Thu</th>
+                  <th class="text-right">Tăng Trưởng QoQ (Tiền)</th>
+                  <th class="text-right">Doanh Thu US (58%)</th>
+                  <th class="text-right">Lượt Sub Mới</th>
+                  <th>Tỷ Trọng Đóng Góp (%)</th>
+                  <th class="text-center">Đánh Giá Quý</th>
+                </tr>
+              </thead>
+              <tbody id="quarterly-table-body">
+                <!-- Dynamically populated rows -->
+              </tbody>
+              <tfoot id="quarterly-table-foot">
+                <!-- Highlighted Total row -->
+              </tfoot>
+            </table>
           </div>
         </div>
       </section>

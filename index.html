@@ -18,7 +18,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css?v=2.2">
+  <link rel="stylesheet" href="styles.css?v=2.3">
 </head>
 <body>
   <!-- Layout Container -->
@@ -1313,20 +1313,180 @@
         </section>
       </div>
 
-      <!-- VIEW 5: BÁO CÁO THEO TEAM -->
+      <!-- VIEW 5: BÁO CÁO THEO TEAM / NHÓM (Chuẩn BgMedia bgmusic.group/report/team) -->
       <div class="dashboard-view" id="view-report-team">
         <section class="team-report-section">
-          <div class="section-title-wrap" style="margin-bottom: 20px;">
-            <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-              <i class="ri-team-line" style="color: #F53F3F;"></i>
-              Báo Cáo Theo Nhóm / Team Sản Xuất
-            </h2>
-            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
-              Đối chiếu sản lượng nội dung và doanh thu giữa Team Jazz & Lo-fi và Team Disco & Synthwave
-            </p>
+          <!-- Page Header matching screenshot -->
+          <div class="section-title-wrap" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+            <div>
+              <h2 style="font-size: 20px; font-weight: 800; color: #F53F3F; display: flex; align-items: center; gap: 8px;">
+                <i class="ri-team-line"></i>
+                Báo cáo theo nhóm
+              </h2>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                Theo dõi và đối chiếu xu hướng lượt xem, doanh thu giữa các team sản xuất nội dung BgMedia
+              </p>
+            </div>
+            <button id="team-refresh-btn" class="icon-btn" title="Làm mới dữ liệu biểu đồ" style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-card); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 17px; transition: var(--trans-fast);">
+              <i class="ri-refresh-line"></i>
+            </button>
           </div>
 
-          <div class="chart-panel">
+          <!-- BgMedia Filter Bar (Identical to screenshot) -->
+          <div class="bgmedia-filter-bar team-filter-bar">
+            <!-- 1. Chọn team -->
+            <div class="filter-field">
+              <label><i class="ri-team-line"></i> Chọn team</label>
+              <div class="filter-input-wrap">
+                <select id="team-filter-select">
+                  <option value="all" selected>Toàn bộ dữ liệu</option>
+                  <optgroup label="2 Kênh Trọng Điểm">
+                    <option value="team-jazz">Team Jazz & Lo-fi Retro (Lunavia)</option>
+                    <option value="team-disco">Team Disco & Electronic Wave (80s Groove)</option>
+                  </optgroup>
+                  <optgroup label="Các Team & Phòng Ban BgMedia">
+                    <option value="team-ngocquynh">Team Ngọc Quỳnh</option>
+                    <option value="team-nguyenhoa">Team Nguyễn Hoa</option>
+                    <option value="team-thaichung">Team Thái Chung</option>
+                    <option value="team-xuannam">Team Xuân Nam</option>
+                    <option value="team-lethuy">Team Lê Thúy</option>
+                    <option value="team-cmmedia">CM MEDIA</option>
+                    <option value="team-bgmedia">BG MEDIA</option>
+                    <option value="team-viethoang">Team Việt Hoàng</option>
+                    <option value="team-danghoang">Team Đặng Hoàng</option>
+                    <option value="team-hoangtrung">Team Hoàng Trung</option>
+                    <option value="team-nhacanphu">Nhạc anh Phú</option>
+                    <option value="team-huuthang">Team Hữu Thắng</option>
+                    <option value="team-ttmedia">TT MEDIA</option>
+                    <option value="team-tongcongty">Tổng công ty</option>
+                    <option value="team-haimy">Team Hải My</option>
+                    <option value="team-tuanthanh">Team Tuấn Thành</option>
+                    <option value="team-tuananh">Team Tuấn Anh</option>
+                    <option value="team-huyentrang">Team Huyền Trang</option>
+                    <option value="team-vuhieu">Team Vũ Hiếu</option>
+                    <option value="team-hoangcuong">Team Hoàng Cương</option>
+                    <option value="team-phamhuy">Team Phạm Huy</option>
+                    <option value="team-rd">Phòng R&D</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+
+            <!-- 2. Loại thời gian -->
+            <div class="filter-field">
+              <label>Loại thời gian</label>
+              <div class="filter-input-wrap">
+                <select id="team-filter-type">
+                  <option value="day" selected>Ngày</option>
+                  <option value="week">Tuần</option>
+                  <option value="month">Tháng</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 3. Ngày bắt đầu -->
+            <div class="filter-field">
+              <label>Ngày bắt đầu</label>
+              <div class="filter-input-wrap">
+                <i class="ri-calendar-line"></i>
+                <input type="date" id="team-filter-start" value="2026-09-28">
+              </div>
+            </div>
+
+            <!-- 4. Ngày kết thúc -->
+            <div class="filter-field">
+              <label>Ngày kết thúc</label>
+              <div class="filter-input-wrap">
+                <i class="ri-calendar-line"></i>
+                <input type="date" id="team-filter-end" value="2026-10-29">
+              </div>
+            </div>
+
+            <!-- 5. Xem biểu đồ (2) -->
+            <div class="filter-field" style="margin-left: auto;">
+              <label>Xem biểu đồ (<span id="team-chart-count">2</span>)</label>
+              <div class="metric-toggle-group" id="team-chart-toggles">
+                <button type="button" class="metric-pill-btn active" data-chart="views">
+                  <i class="ri-check-line"></i> Lượt xem
+                </button>
+                <button type="button" class="metric-pill-btn active" data-chart="revenue">
+                  <i class="ri-check-line"></i> Doanh thu
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stacked Charts Stack (Matching screenshot bgmusic.group/report/team) -->
+          <div class="staff-charts-stack" style="gap: 24px;">
+            <!-- 1. Biểu đồ Lượt xem -->
+            <div class="staff-chart-card" id="card-team-views">
+              <div class="staff-chart-header" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px; margin-bottom: 8px;">
+                <div class="staff-chart-title" style="font-size: 15px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                  <span style="display: inline-block; width: 4px; height: 16px; background: #38BDF8; border-radius: 2px;"></span>
+                  Lượt xem
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 14px;">
+                  <span>Toàn bộ dữ liệu: <strong id="team-views-sum-display" style="color: #38BDF8;">641.055</strong> lượt</span>
+                </div>
+              </div>
+              <div class="staff-chart-canvas-wrap" style="height: 290px; position: relative;">
+                <canvas id="teamChartViews"></canvas>
+              </div>
+              <!-- Toolbar -->
+              <div class="team-legend-toolbar">
+                <span style="color: var(--text-dim); font-size: 11px;">Nhấp vào tên team bên dưới để bật/tắt đường hiển thị:</span>
+                <div>
+                  <button type="button" class="team-legend-action-btn" id="team-views-show-all">Hiện tất cả</button>
+                  <span style="color: var(--border-medium);">|</span>
+                  <button type="button" class="team-legend-action-btn" id="team-views-focus-main">Chỉ 2 kênh chính</button>
+                </div>
+              </div>
+              <!-- Multi-team Interactive Legend matching screenshot -->
+              <div class="team-interactive-legend" id="team-legend-views"></div>
+            </div>
+
+            <!-- 2. Biểu đồ Doanh thu -->
+            <div class="staff-chart-card" id="card-team-revenue">
+              <div class="staff-chart-header" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px; margin-bottom: 8px;">
+                <div class="staff-chart-title" style="font-size: 15px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                  <span style="display: inline-block; width: 4px; height: 16px; background: #F53F3F; border-radius: 2px;"></span>
+                  Doanh thu
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 14px;">
+                  <span>Toàn bộ dữ liệu: <strong id="team-revenue-sum-display" style="color: #F53F3F;">$1.923,10</strong></span>
+                </div>
+              </div>
+              <div class="staff-chart-canvas-wrap" style="height: 290px; position: relative;">
+                <canvas id="teamChartRevenue"></canvas>
+              </div>
+              <!-- Toolbar -->
+              <div class="team-legend-toolbar">
+                <span style="color: var(--text-dim); font-size: 11px;">Nhấp vào tên team bên dưới để bật/tắt đường hiển thị:</span>
+                <div>
+                  <button type="button" class="team-legend-action-btn" id="team-rev-show-all">Hiện tất cả</button>
+                  <span style="color: var(--border-medium);">|</span>
+                  <button type="button" class="team-legend-action-btn" id="team-rev-focus-main">Chỉ 2 kênh chính</button>
+                </div>
+              </div>
+              <!-- Multi-team Interactive Legend matching screenshot -->
+              <div class="team-interactive-legend" id="team-legend-revenue"></div>
+            </div>
+          </div>
+
+          <!-- Bảng Tổng Hợp Chi Tiết Số Liệu Theo Team -->
+          <div class="chart-panel" style="margin-top: 24px;">
+            <div class="chart-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+              <div>
+                <h3 style="font-size: 16px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                  <i class="ri-table-line" style="color: #F53F3F;"></i>
+                  Bảng Tổng Hợp Sản Lượng & Doanh Thu Chi Tiết Các Team
+                </h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                  Số liệu đối chiếu hiệu suất phân bổ nguồn lực và tỷ trọng doanh thu thực tế
+                </p>
+              </div>
+            </div>
+
             <div class="table-responsive">
               <table class="matrix-table">
                 <thead>
@@ -1335,44 +1495,116 @@
                     <th>Trưởng Nhóm</th>
                     <th>Kênh Vận Hành</th>
                     <th class="text-right">Nhân Sự</th>
-                    <th class="text-right">Video</th>
-                    <th class="text-right">Lượt Xem</th>
+                    <th class="text-right">Số Video</th>
+                    <th class="text-right">Tổng Lượt Xem</th>
                     <th class="text-right">Doanh Thu</th>
                     <th class="text-center">Tỷ Trọng Doanh Thu</th>
+                    <th class="text-center">Đạt KPI</th>
+                    <th class="text-center">Xếp Loại</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td><strong>Team Jazz & Lo-fi Retro</strong></td>
+                  <tr style="background: rgba(56, 189, 248, 0.04);">
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #38BDF8;"></span>
+                        <strong>Team Jazz & Lo-fi Retro</strong>
+                      </div>
+                    </td>
                     <td>Nguyễn Văn An</td>
-                    <td><span style="color: var(--accent-cyan);">Lunavia</span></td>
-                    <td class="text-right">3 người</td>
-                    <td class="text-right">59 video</td>
-                    <td class="text-right">251.635</td>
-                    <td class="text-right cell-team-rev1" style="color: var(--accent-amber); font-weight: 700;">$754.90</td>
+                    <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8;">@lunaviavintagemelodies</span></td>
+                    <td class="text-right font-mono">3</td>
+                    <td class="text-right font-mono">59</td>
+                    <td class="text-right font-mono">251.635</td>
+                    <td class="text-right cell-team-rev1 font-mono" style="color: var(--accent-amber); font-weight: 700;">$754.90</td>
                     <td class="text-center">
                       <div class="quarter-share-bar" style="justify-content: center;">
-                        <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: 39.2%;"></div></div>
+                        <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: 39.2%; background: #38BDF8;"></div></div>
                         <span>39.2%</span>
                       </div>
                     </td>
+                    <td class="text-center"><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">104.8%</span></td>
+                    <td class="text-center"><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8;">Xuất sắc</span></td>
                   </tr>
-                  <tr>
-                    <td><strong>Team Disco & Electronic</strong></td>
+                  <tr style="background: rgba(245, 63, 63, 0.04);">
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #F53F3F;"></span>
+                        <strong>Team Disco & Electronic Wave</strong>
+                      </div>
+                    </td>
                     <td>Trần Minh Bình</td>
-                    <td><span style="color: #F53F3F;">80s Groove Machine</span></td>
-                    <td class="text-right">4 người</td>
-                    <td class="text-right">34 video</td>
-                    <td class="text-right">389.420</td>
-                    <td class="text-right cell-team-rev2" style="color: var(--accent-amber); font-weight: 700;">$1.168.20</td>
+                    <td><span class="badge" style="background: rgba(245, 63, 63, 0.15); color: #F53F3F;">@the80sgroovemachine</span></td>
+                    <td class="text-right font-mono">4</td>
+                    <td class="text-right font-mono">34</td>
+                    <td class="text-right font-mono">389.420</td>
+                    <td class="text-right cell-team-rev2 font-mono" style="color: var(--accent-amber); font-weight: 700;">$1.168.20</td>
                     <td class="text-center">
                       <div class="quarter-share-bar" style="justify-content: center;">
-                        <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: 60.8%; background: linear-gradient(90deg, #F53F3F, #ff7875);"></div></div>
+                        <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: 60.8%; background: #F53F3F;"></div></div>
                         <span>60.8%</span>
                       </div>
                     </td>
+                    <td class="text-center"><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">116.8%</span></td>
+                    <td class="text-center"><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">Xuất sắc</span></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #ec4899;"></span>
+                        Team Ngọc Quỳnh
+                      </div>
+                    </td>
+                    <td>Lê Ngọc Quỳnh</td>
+                    <td><span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted);">Acoustic Pop</span></td>
+                    <td class="text-right font-mono">2</td>
+                    <td class="text-right font-mono">28</td>
+                    <td class="text-right font-mono">112.400</td>
+                    <td class="text-right font-mono" style="color: var(--text-muted);">$337.20</td>
+                    <td class="text-center">
+                      <div class="quarter-share-bar" style="justify-content: center;">
+                        <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: 17.5%; background: #ec4899;"></div></div>
+                        <span>17.5%</span>
+                      </div>
+                    </td>
+                    <td class="text-center"><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">101.2%</span></td>
+                    <td class="text-center"><span class="badge" style="background: rgba(255, 255, 255, 0.08); color: var(--text-main);">Tốt</span></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+                        Team Thái Chung
+                      </div>
+                    </td>
+                    <td>Thái Chung</td>
+                    <td><span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted);">Ambient Relax</span></td>
+                    <td class="text-right font-mono">2</td>
+                    <td class="text-right font-mono">22</td>
+                    <td class="text-right font-mono">86.500</td>
+                    <td class="text-right font-mono" style="color: var(--text-muted);">$259.50</td>
+                    <td class="text-center">
+                      <div class="quarter-share-bar" style="justify-content: center;">
+                        <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: 13.5%; background: #10b981;"></div></div>
+                        <span>13.5%</span>
+                      </div>
+                    </td>
+                    <td class="text-center"><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">98.5%</span></td>
+                    <td class="text-center"><span class="badge" style="background: rgba(255, 255, 255, 0.08); color: var(--text-main);">Đạt</span></td>
                   </tr>
                 </tbody>
+                <tfoot>
+                  <tr style="font-weight: 800; background: rgba(245, 63, 63, 0.06);">
+                    <td colspan="3"><strong>TỔNG CỘNG 2 KÊNH TRỌNG ĐIỂM (NETWORK)</strong></td>
+                    <td class="text-right font-mono">7</td>
+                    <td class="text-right font-mono">93</td>
+                    <td class="text-right font-mono" style="color: #38BDF8;">641.055</td>
+                    <td class="text-right font-mono cell-staff-total-rev" style="color: #F53F3F; font-size: 14px;">$1.923.10</td>
+                    <td class="text-center"><strong>100%</strong></td>
+                    <td class="text-center"><span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-weight: 700;">111.8%</span></td>
+                    <td class="text-center"><span class="badge" style="background: rgba(245, 63, 63, 0.2); color: #F53F3F; font-weight: 700;">Vượt chỉ tiêu</span></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </div>
@@ -1763,6 +1995,6 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Application Logic -->
-  <script src="app.js?v=6.0_lunavia"></script>
+  <script src="app.js?v=7.0_bgmedia_team"></script>
 </body>
 </html>

@@ -1138,6 +1138,12 @@
     staffMetricFilter: { views: true, revenue: true, subs: true, likes: true, comments: true },
     staffUserFilter: 'nguyenvana',
     staffGranularity: 'month',
+    teamFilterSelect: 'all',
+    teamFilterType: 'day',
+    teamFilterStart: '2026-09-28',
+    teamFilterEnd: '2026-10-29',
+    teamHiddenDatasetsViews: new Set(),
+    teamHiddenDatasetsRevenue: new Set(),
     compMetric: 'views',
     comparePrevious: true,
     cleanOutliers: true,
@@ -1170,6 +1176,8 @@
   let staffChartSubs = null;
   let staffChartLikes = null;
   let staffChartComments = null;
+  let teamChartViews = null;
+  let teamChartRevenue = null;
 
   // DOM Elements
   const elements = {
@@ -1297,7 +1305,18 @@
     btnSelectLunaviaView: document.getElementById('btn-select-lunavia-view'),
     btnSelectGrooveView: document.getElementById('btn-select-groove-view'),
     btnSyncBothChannels: document.getElementById('btn-sync-both-channels'),
-    btnExportCompareData: document.getElementById('btn-export-compare-data')
+    btnExportCompareData: document.getElementById('btn-export-compare-data'),
+    // BgMedia Team Report elements
+    teamFilterSelect: document.getElementById('team-filter-select'),
+    teamFilterType: document.getElementById('team-filter-type'),
+    teamFilterStart: document.getElementById('team-filter-start'),
+    teamFilterEnd: document.getElementById('team-filter-end'),
+    teamRefreshBtn: document.getElementById('team-refresh-btn'),
+    teamChartToggles: document.getElementById('team-chart-toggles'),
+    teamViewsShowAll: document.getElementById('team-views-show-all'),
+    teamViewsFocusMain: document.getElementById('team-views-focus-main'),
+    teamRevShowAll: document.getElementById('team-rev-show-all'),
+    teamRevFocusMain: document.getElementById('team-rev-focus-main')
   };
 
   function formatNumber(num) {
@@ -1856,13 +1875,16 @@
     const sidebarAvatar = document.getElementById('sidebar-channel-avatar');
     const sidebarName = document.getElementById('sidebar-channel-name');
     const sidebarHandle = document.getElementById('sidebar-channel-handle');
-    if (sidebarAvatar && state.channelInfo.avatar) sidebarAvatar.src = state.channelInfo.avatar;
-    if (sidebarName && state.channelInfo.title) sidebarName.textContent = state.channelInfo.title;
-    if (sidebarHandle && state.channelInfo.handle) sidebarHandle.textContent = state.channelInfo.handle;
+    if (sidebarAvatar && state.channelInfo && state.channelInfo.avatar) sidebarAvatar.src = state.channelInfo.avatar;
+    if (sidebarName && state.channelInfo && state.channelInfo.title) sidebarName.textContent = state.channelInfo.title;
+    if (sidebarHandle && state.channelInfo && state.channelInfo.handle) sidebarHandle.textContent = state.channelInfo.handle;
 
     // 2. Top Header Badge
-    elements.dataSourceLabel.textContent = `Dữ Liệu Thật: ${state.channelInfo.title}`;
-    elements.apiStatusIndicator.classList.add('connected');
+    if (elements.dataSourceLabel && state.channelInfo) {
+      elements.dataSourceLabel.textContent = `Dữ Liệu Thật: ${state.channelInfo.title || 'BgMedia'}`;
+    }
+    if (elements.apiStatusIndicator) elements.apiStatusIndicator.classList.add('connected');
+    if (elements.dataSourceBadge) elements.dataSourceBadge.classList.add('connected');
 
     // 3. KPI Cards
     updateKpiCards();
@@ -3251,6 +3273,8 @@
       renderChannelCompareView();
     } else if (viewId === 'view-report-staff-chart') {
       renderStaffCharts();
+    } else if (viewId === 'view-report-team') {
+      renderTeamReportView();
     } else if (viewId === 'view-report-staff-data') {
       updateOtherViewsCurrency();
     } else if (viewId === 'view-report-overview') {
@@ -3499,6 +3523,282 @@
   }
 
   /**
+   * BgMedia Team Report Data & Multi-line Charts (matching bgmusic.group/report/team)
+   */
+  const BG_TEAMS_METRICS = [
+    { id: 'team-total', name: 'Tổng', shortName: 'Tổng', color: '#8b5cf6', isTotal: true, dash: [4, 4], width: 2.5 },
+    { id: 'team-disco', name: 'Team Disco & Electronic Wave (80s Groove)', shortName: 'Team Disco', color: '#F53F3F', isMain: true, width: 2.2 },
+    { id: 'team-jazz', name: 'Team Jazz & Lo-fi Retro (Lunavia)', shortName: 'Team Jazz', color: '#38BDF8', isMain: true, width: 2.2 },
+    { id: 'team-ngocquynh', name: 'Team Ngọc Quỳnh', shortName: 'Team Ngọc Quỳnh', color: '#ec4899', width: 1.5 },
+    { id: 'team-nguyenhoa', name: 'Team Nguyễn Hoa', shortName: 'Team Nguyễn Hoa', color: '#f97316', width: 1.5 },
+    { id: 'team-thaichung', name: 'Team Thái Chung', shortName: 'Team Thái Chung', color: '#10b981', width: 1.5 },
+    { id: 'team-xuannam', name: 'Team Xuân Nam', shortName: 'Team Xuân Nam', color: '#06b6d4', width: 1.5 },
+    { id: 'team-lethuy', name: 'Team Lê Thúy', shortName: 'Team Lê Thúy', color: '#d946ef', width: 1.5 },
+    { id: 'team-cmmedia', name: 'CM MEDIA', shortName: 'CM MEDIA', color: '#3b82f6', width: 1.5 },
+    { id: 'team-bgmedia', name: 'BG MEDIA', shortName: 'BG MEDIA', color: '#eab308', width: 1.5 },
+    { id: 'team-viethoang', name: 'Team Việt Hoàng', shortName: 'Team Việt Hoàng', color: '#14b8a6', width: 1.5 },
+    { id: 'team-danghoang', name: 'Team Đặng Hoàng', shortName: 'Team Đặng Hoàng', color: '#84cc16', width: 1.5 },
+    { id: 'team-hoangtrung', name: 'Team Hoàng Trung', shortName: 'Team Hoàng Trung', color: '#a855f7', width: 1.5 },
+    { id: 'team-nhacanphu', name: 'Nhạc anh Phú', shortName: 'Nhạc anh Phú', color: '#6366f1', width: 1.5 },
+    { id: 'team-huuthang', name: 'Team Hữu Thắng', shortName: 'Team Hữu Thắng', color: '#0ea5e9', width: 1.5 },
+    { id: 'team-ttmedia', name: 'TT MEDIA', shortName: 'TT MEDIA', color: '#f43f5e', width: 1.5 },
+    { id: 'team-tongcongty', name: 'Tổng công ty', shortName: 'Tổng công ty', color: '#64748b', width: 1.5 },
+    { id: 'team-haimy', name: 'Team Hải My', shortName: 'Team Hải My', color: '#fb923c', width: 1.5 },
+    { id: 'team-tuanthanh', name: 'Team Tuấn Thành', shortName: 'Team Tuấn Thành', color: '#e879f9', width: 1.5 },
+    { id: 'team-tuananh', name: 'Team Tuấn Anh', shortName: 'Team Tuấn Anh', color: '#2dd4bf', width: 1.5 },
+    { id: 'team-huyentrang', name: 'Team Huyền Trang', shortName: 'Team Huyền Trang', color: '#a3e635', width: 1.5 },
+    { id: 'team-vuhieu', name: 'Team Vũ Hiếu', shortName: 'Team Vũ Hiếu', color: '#38bdf8', width: 1.5 },
+    { id: 'team-hoangcuong', name: 'Team Hoàng Cương', shortName: 'Team Hoàng Cương', color: '#f472b6', width: 1.5 },
+    { id: 'team-phamhuy', name: 'Team Phạm Huy', shortName: 'Team Phạm Huy', color: '#fbbf24', width: 1.5 },
+    { id: 'team-rd', name: 'Phòng R&D', shortName: 'Phòng R&D', color: '#94a3b8', width: 1.5 }
+  ];
+
+  const TEAM_RAW_CURVES = {
+    'team-disco':    [9200, 9900, 10800, 2600, 2500, 2900, 3900, 5800, 7700, 8300, 2700, 2300, 2500, 2400, 2600, 2800],
+    'team-jazz':     [5800, 6300, 6800,  1600, 1500, 1750, 2400, 3600, 4800, 5200, 1700, 1450, 1600, 1550, 1650, 1800],
+    'team-ngocquynh':[1200, 1350, 1450,  350,  320,  380,  520,  780, 1050, 1120,  360,  310,  340,  330,  350,  380],
+    'team-nguyenhoa':[950,  1050, 1150,  280,  260,  300,  410,  620,  830,  890,  290,  250,  270,  260,  280,  300],
+    'team-thaichung':[800,   890,  980,  240,  220,  250,  350,  520,  700,  750,  240,  210,  230,  220,  240,  260],
+    'team-xuannam':  [650,   720,  790,  190,  180,  200,  280,  420,  560,  600,  200,  170,  190,  180,  190,  210],
+    'team-lethuy':   [520,   580,  630,  150,  140,  160,  220,  340,  450,  480,  160,  140,  150,  140,  150,  170],
+    'team-cmmedia':  [750,   830,  910,  220,  210,  240,  330,  490,  650,  700,  230,  200,  220,  210,  220,  240],
+    'team-bgmedia':  [880,   980, 1070,  260,  240,  280,  380,  570,  760,  820,  270,  230,  250,  240,  260,  280],
+    'team-viethoang':[420,   470,  510,  120,  110,  130,  180,  270,  360,  390,  130,  110,  120,  110,  120,  130],
+    'team-danghoang':[380,   420,  460,  110,  100,  120,  160,  250,  330,  350,  120,  100,  110,  100,  110,  120],
+    'team-hoangtrung':[350,  390,  430,  100,   90,  110,  150,  230,  300,  330,  110,   90,  100,   90,  100,  110],
+    'team-nhacanphu':[480,   530,  580,  140,  130,  150,  210,  310,  420,  450,  150,  130,  140,  130,  140,  150],
+    'team-huuthang': [320,   360,  390,   90,   80,  100,  140,  210,  280,  300,  100,   80,   90,   80,   90,  100],
+    'team-ttmedia':  [550,   610,  670,  160,  150,  170,  240,  360,  480,  510,  170,  140,  160,  150,  160,  180],
+    'team-tongcongty':[600,  660,  730,  170,  160,  190,  260,  390,  520,  560,  180,  160,  170,  160,  170,  190],
+    'team-haimy':    [310,   340,  380,   90,   80,  100,  130,  200,  270,  290,  100,   80,   90,   80,   90,  100],
+    'team-tuanthanh':[290,   320,  350,   80,   80,   90,  120,  190,  250,  270,   90,   80,   80,   80,   80,   90],
+    'team-tuananh':  [270,   300,  330,   80,   70,   80,  110,  170,  230,  250,   80,   70,   80,   70,   80,   90],
+    'team-huyentrang':[330,  370,  400,  100,   90,  100,  140,  210,  280,  310,  100,   90,   90,   90,  100,  110],
+    'team-vuhieu':   [360,   400,  440,  110,  100,  110,  150,  230,  310,  340,  110,  100,  100,  100,  110,  120],
+    'team-hoangcuong':[280,  310,  340,   80,   70,   90,  120,  180,  240,  260,   90,   70,   80,   80,   80,   90],
+    'team-phamhuy':  [260,   290,  320,   80,   70,   80,  110,  170,  230,  250,   80,   70,   70,   70,   80,   80],
+    'team-rd':       [220,   240,  270,   60,   60,   70,   90,  140,  190,  210,   70,   60,   60,   60,   70,   70]
+  };
+
+  function getTeamDates() {
+    const type = state.teamFilterType || 'day';
+    if (type === 'month') {
+      return ['Th01', 'Th02', 'Th03', 'Th04', 'Th05', 'Th06', 'Th07', 'Th08', 'Th09', 'Th10', 'Th11', 'Th12'];
+    } else if (type === 'week') {
+      return ['Tuần 39', 'Tuần 40', 'Tuần 41', 'Tuần 42', 'Tuần 43'];
+    }
+    return ['09-28', '09-30', '10-02', '10-04', '10-06', '10-08', '10-10', '10-12', '10-14', '10-16', '10-18', '10-20', '10-22', '10-24', '10-26', '10-28'];
+  }
+
+  function getTeamSeriesData(teamId, isCurrency = false) {
+    const type = state.teamFilterType || 'day';
+    const rate = state.currency === 'VND' ? state.exchangeRate : 1;
+    const rpm = 0.003;
+
+    let base = [];
+    if (teamId === 'team-total') {
+      const teamKeys = Object.keys(TEAM_RAW_CURVES);
+      const len = TEAM_RAW_CURVES['team-disco'].length;
+      base = new Array(len).fill(0);
+      teamKeys.forEach(k => {
+        const arr = TEAM_RAW_CURVES[k];
+        for (let i = 0; i < len; i++) {
+          base[i] += (arr[i] || 0);
+        }
+      });
+    } else {
+      base = TEAM_RAW_CURVES[teamId] || new Array(16).fill(250);
+    }
+
+    if (type === 'week') {
+      base = [
+        Math.round((base[0] + base[1] + base[2]) * 2.3),
+        Math.round((base[3] + base[4] + base[5]) * 2.3),
+        Math.round((base[6] + base[7] + base[8]) * 2.3),
+        Math.round((base[9] + base[10] + base[11]) * 2.3),
+        Math.round((base[12] + base[13] + base[14] + base[15]) * 1.8)
+      ];
+    } else if (type === 'month') {
+      base = [
+        Math.round(base[0] * 3.5), Math.round(base[1] * 3.8), Math.round(base[2] * 4.1),
+        Math.round(base[3] * 4.3), Math.round(base[4] * 4.7), Math.round(base[5] * 4.5),
+        Math.round(base[6] * 4.2), Math.round(base[7] * 5.4), Math.round(base[8] * 9.2),
+        Math.round(base[9] * 18.5), Math.round(base[10] * 6.2), Math.round(base[11] * 7.1)
+      ];
+    }
+
+    if (isCurrency) {
+      return base.map(v => {
+        const usd = Number((v * rpm).toFixed(2));
+        return state.currency === 'VND' ? Math.round(usd * rate) : usd;
+      });
+    }
+    return base;
+  }
+
+  function renderTeamInteractiveLegend(containerId, chartInstance, hiddenSet) {
+    const container = document.getElementById(containerId);
+    if (!container || !chartInstance) return;
+    container.innerHTML = '';
+
+    BG_TEAMS_METRICS.forEach((team, idx) => {
+      const isHidden = hiddenSet.has(team.id);
+      const isMain = team.isMain || team.isTotal;
+      const item = document.createElement('div');
+      item.className = `team-legend-item ${isHidden ? 'dimmed' : ''} ${isMain ? 'highlight-main' : ''}`;
+      item.setAttribute('data-team-id', team.id);
+      item.innerHTML = `
+        <span class="team-legend-bullet" style="background:${team.color}; ${team.dash ? 'border-top: 2px dashed ' + team.color + '; height: 0; background: none;' : ''}"></span>
+        <span>${team.name}</span>
+      `;
+
+      item.addEventListener('click', () => {
+        if (hiddenSet.has(team.id)) {
+          hiddenSet.delete(team.id);
+          chartInstance.setDatasetVisibility(idx, true);
+          item.classList.remove('dimmed');
+        } else {
+          hiddenSet.add(team.id);
+          chartInstance.setDatasetVisibility(idx, false);
+          item.classList.add('dimmed');
+        }
+        chartInstance.update();
+      });
+
+      container.appendChild(item);
+    });
+  }
+
+  function renderTeamReportView() {
+    const labels = getTeamDates();
+    const isDark = state.theme === 'dark';
+    const filterSelect = state.teamFilterSelect || 'all';
+
+    // 1. Build Views Datasets
+    const viewsDatasets = BG_TEAMS_METRICS.map((team) => {
+      let isVisible = true;
+      if (filterSelect !== 'all') {
+        isVisible = (team.id === filterSelect || team.id === 'team-total');
+      } else {
+        isVisible = !state.teamHiddenDatasetsViews.has(team.id);
+      }
+
+      return {
+        label: team.name,
+        data: getTeamSeriesData(team.id, false),
+        borderColor: team.color,
+        backgroundColor: team.color + '15',
+        borderWidth: team.width || 1.5,
+        borderDash: team.dash || [],
+        tension: 0.35,
+        fill: false,
+        pointRadius: team.isTotal ? 3.5 : (team.isMain ? 3 : 2),
+        pointHoverRadius: 6,
+        hidden: !isVisible
+      };
+    });
+
+    // 2. Build Revenue Datasets
+    const revDatasets = BG_TEAMS_METRICS.map((team) => {
+      let isVisible = true;
+      if (filterSelect !== 'all') {
+        isVisible = (team.id === filterSelect || team.id === 'team-total');
+      } else {
+        isVisible = !state.teamHiddenDatasetsRevenue.has(team.id);
+      }
+
+      return {
+        label: team.name,
+        data: getTeamSeriesData(team.id, true),
+        borderColor: team.color,
+        backgroundColor: team.color + '15',
+        borderWidth: team.width || 1.5,
+        borderDash: team.dash || [],
+        tension: 0.35,
+        fill: false,
+        pointRadius: team.isTotal ? 3.5 : (team.isMain ? 3 : 2),
+        pointHoverRadius: 6,
+        hidden: !isVisible
+      };
+    });
+
+    const commonScales = (isCurrency) => ({
+      x: {
+        grid: { display: false },
+        ticks: { color: isDark ? '#64748B' : '#94A3B8', font: { family: 'JetBrains Mono', size: 10 } }
+      },
+      y: {
+        grid: { color: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' },
+        ticks: {
+          color: isDark ? '#64748B' : '#94A3B8',
+          font: { family: 'JetBrains Mono', size: 10 },
+          callback: (v) => isCurrency ? (state.currency === 'VND' ? (v / 1000000).toFixed(1) + 'M₫' : '$' + formatCompactNumber(v)) : formatCompactNumber(v)
+        }
+      }
+    });
+
+    const commonTooltip = (isCurrency) => ({
+      backgroundColor: isDark ? '#111726' : '#FFFFFF',
+      titleColor: isDark ? '#F1F5F9' : '#0F172A',
+      bodyColor: isDark ? '#CBD5E1' : '#334155',
+      borderColor: 'rgba(255, 255, 255, 0.1)',
+      borderWidth: 1,
+      padding: 10,
+      callbacks: {
+        label: (ctx) => {
+          const val = ctx.raw;
+          const formatted = isCurrency ? (state.currency === 'VND' ? formatCurrency(val / state.exchangeRate) : formatCurrency(val)) : formatNumber(val);
+          return ` ${ctx.dataset.label}: ${formatted}`;
+        }
+      }
+    });
+
+    // Destroy old instances
+    if (teamChartViews) teamChartViews.destroy();
+    if (teamChartRevenue) teamChartRevenue.destroy();
+
+    const canvasViews = document.getElementById('teamChartViews');
+    if (canvasViews) {
+      teamChartViews = new Chart(canvasViews.getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets: viewsDatasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: commonTooltip(false)
+          },
+          scales: commonScales(false)
+        }
+      });
+      renderTeamInteractiveLegend('team-legend-views', teamChartViews, state.teamHiddenDatasetsViews);
+    }
+
+    const canvasRev = document.getElementById('teamChartRevenue');
+    if (canvasRev) {
+      teamChartRevenue = new Chart(canvasRev.getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets: revDatasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: commonTooltip(true)
+          },
+          scales: commonScales(true)
+        }
+      });
+      renderTeamInteractiveLegend('team-legend-revenue', teamChartRevenue, state.teamHiddenDatasetsRevenue);
+    }
+
+    // Update Header Display Sums
+    const totalRevEl = document.getElementById('team-revenue-sum-display');
+    if (totalRevEl) totalRevEl.textContent = formatCurrency(1923.10);
+  }
+
+  /**
    * Update currency in other views when USD/VND is toggled
    */
   function updateOtherViewsCurrency() {
@@ -3525,9 +3825,10 @@
     // Network View
     document.querySelectorAll('.cell-net-total-rev').forEach(el => el.textContent = formatCurrency(1923.10));
 
-    // Re-render Channel Compare & Staff charts if active
+    // Re-render Channel Compare, Staff & Team charts if active
     if (state.activeView === 'view-report-channel') renderChannelCompareView();
     if (state.activeView === 'view-report-staff-chart') renderStaffCharts();
+    if (state.activeView === 'view-report-team') renderTeamReportView();
   }
 
   /**
@@ -3870,103 +4171,126 @@
       }
     }
 
-    elements.btnToggleCompare.addEventListener('click', () => {
-      state.comparePrevious = !state.comparePrevious;
-      const indicator = elements.btnToggleCompare.querySelector('.switch-indicator');
-      if (state.comparePrevious) {
-        indicator.classList.add('on');
-        showToast('Bật chế độ đối chiếu kỳ trước');
-      } else {
-        indicator.classList.remove('on');
-        showToast('Tắt đối chiếu kỳ trước');
-      }
-      renderMainChart();
-    });
-
-    elements.btnChartFullscreen.addEventListener('click', () => {
-      const chartWrapper = document.querySelector('.chart-canvas-wrapper');
-      if (!document.fullscreenElement) {
-        chartWrapper.requestFullscreen().catch(() => {});
-      } else {
-        document.exitFullscreen().catch(() => {});
-      }
-    });
-
-    elements.interactionLegend.querySelectorAll('.legend-badge').forEach(badge => {
-      badge.addEventListener('click', () => {
-        const seriesName = badge.getAttribute('data-series');
-        const seriesMap = { likes: 0, comments: 1, shares: 2 };
-        const idx = seriesMap[seriesName];
-
-        if (interactionsChart && idx !== undefined) {
-          const isVisible = interactionsChart.isDatasetVisible(idx);
-          if (isVisible) {
-            interactionsChart.hide(idx);
-            badge.classList.remove('active');
+    if (elements.btnToggleCompare) {
+      elements.btnToggleCompare.addEventListener('click', () => {
+        state.comparePrevious = !state.comparePrevious;
+        const indicator = elements.btnToggleCompare.querySelector('.switch-indicator');
+        if (indicator) {
+          if (state.comparePrevious) {
+            indicator.classList.add('on');
+            showToast('Bật chế độ đối chiếu kỳ trước');
           } else {
-            interactionsChart.show(idx);
-            badge.classList.add('active');
+            indicator.classList.remove('on');
+            showToast('Tắt đối chiếu kỳ trước');
+          }
+        }
+        renderMainChart();
+      });
+    }
+
+    if (elements.btnChartFullscreen) {
+      elements.btnChartFullscreen.addEventListener('click', () => {
+        const chartWrapper = document.querySelector('.chart-canvas-wrapper');
+        if (chartWrapper) {
+          if (!document.fullscreenElement) {
+            chartWrapper.requestFullscreen().catch(() => {});
+          } else {
+            document.exitFullscreen().catch(() => {});
           }
         }
       });
-    });
+    }
 
-    elements.geoSubTabs.querySelectorAll('.pill-mini-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        elements.geoSubTabs.querySelectorAll('.pill-mini-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const view = btn.getAttribute('data-view');
-        if (view === 'subscribers') {
-          elements.viewSubscribersPanel.style.display = 'block';
-          elements.viewGeorevenuePanel.style.display = 'none';
-          renderSubscriberDonutChart();
-        } else {
-          elements.viewSubscribersPanel.style.display = 'none';
-          elements.viewGeorevenuePanel.style.display = 'block';
-          renderGeoRevenueChart();
+    if (elements.interactionLegend) {
+      elements.interactionLegend.querySelectorAll('.legend-badge').forEach(badge => {
+        badge.addEventListener('click', () => {
+          const seriesName = badge.getAttribute('data-series');
+          const seriesMap = { likes: 0, comments: 1, shares: 2 };
+          const idx = seriesMap[seriesName];
+
+          if (interactionsChart && idx !== undefined) {
+            const isVisible = interactionsChart.isDatasetVisible(idx);
+            if (isVisible) {
+              interactionsChart.hide(idx);
+              badge.classList.remove('active');
+            } else {
+              interactionsChart.show(idx);
+              badge.classList.add('active');
+            }
+          }
+        });
+      });
+    }
+
+    if (elements.geoSubTabs) {
+      elements.geoSubTabs.querySelectorAll('.pill-mini-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          elements.geoSubTabs.querySelectorAll('.pill-mini-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const view = btn.getAttribute('data-view');
+          if (elements.viewSubscribersPanel && elements.viewGeorevenuePanel) {
+            if (view === 'subscribers') {
+              elements.viewSubscribersPanel.style.display = 'block';
+              elements.viewGeorevenuePanel.style.display = 'none';
+              renderSubscriberDonutChart();
+            } else {
+              elements.viewSubscribersPanel.style.display = 'none';
+              elements.viewGeorevenuePanel.style.display = 'block';
+              renderGeoRevenueChart();
+            }
+          }
+        });
+      });
+    }
+
+    if (elements.videoSearchInput) {
+      elements.videoSearchInput.addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        state.tablePage = 1;
+        renderVideosTable();
+      });
+    }
+
+    if (elements.videoSortSelect) {
+      elements.videoSortSelect.addEventListener('change', (e) => {
+        state.sortBy = e.target.value;
+        renderVideosTable();
+      });
+    }
+
+    if (elements.prevPageBtn) {
+      elements.prevPageBtn.addEventListener('click', () => {
+        if (state.tablePage > 1) {
+          state.tablePage--;
+          renderVideosTable();
         }
       });
-    });
+    }
 
-    elements.videoSearchInput.addEventListener('input', (e) => {
-      state.searchQuery = e.target.value;
-      state.tablePage = 1;
-      renderVideosTable();
-    });
-
-    elements.videoSortSelect.addEventListener('change', (e) => {
-      state.sortBy = e.target.value;
-      renderVideosTable();
-    });
-
-    elements.prevPageBtn.addEventListener('click', () => {
-      if (state.tablePage > 1) {
-        state.tablePage--;
-        renderVideosTable();
-      }
-    });
-
-    elements.nextPageBtn.addEventListener('click', () => {
-      const totalPages = Math.ceil(currentData.videos.length / state.tablePageSize);
-      if (state.tablePage < totalPages) {
-        state.tablePage++;
-        renderVideosTable();
-      }
-    });
+    if (elements.nextPageBtn) {
+      elements.nextPageBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(currentData.videos.length / state.tablePageSize);
+        if (state.tablePage < totalPages) {
+          state.tablePage++;
+          renderVideosTable();
+        }
+      });
+    }
 
     const openModalHandler = (e) => {
       if (e) e.preventDefault();
-      elements.apiKeyInput.value = state.apiKey;
-      elements.channelIdInput.value = state.channelInput;
-      elements.radioLive.checked = true;
-      elements.optLiveMode.classList.add('active');
-      elements.optMockMode.classList.remove('active');
-      elements.apiAlertBox.style.display = 'none';
+      if (!elements.apiModal) return;
+      if (elements.apiKeyInput) elements.apiKeyInput.value = state.apiKey;
+      if (elements.channelIdInput) elements.channelIdInput.value = state.channelInput;
+      if (elements.radioLive) elements.radioLive.checked = true;
+      if (elements.optLiveMode) elements.optLiveMode.classList.add('active');
+      if (elements.optMockMode) elements.optMockMode.classList.remove('active');
+      if (elements.apiAlertBox) elements.apiAlertBox.style.display = 'none';
       elements.apiModal.classList.add('active');
-      setTimeout(() => elements.channelIdInput.focus(), 100);
+      if (elements.channelIdInput) setTimeout(() => elements.channelIdInput.focus(), 100);
     };
 
-    elements.btnOpenApiModal.addEventListener('click', openModalHandler);
+    if (elements.btnOpenApiModal) elements.btnOpenApiModal.addEventListener('click', openModalHandler);
     const quickSwitchBtn = document.getElementById('btn-quick-switch-channel');
     if (quickSwitchBtn) quickSwitchBtn.addEventListener('click', openModalHandler);
     const sidebarChannelCard = document.querySelector('.sidebar-channel-card');
@@ -3979,186 +4303,222 @@
         e.preventDefault();
         e.stopPropagation();
         const ch = chip.getAttribute('data-channel');
-        if (ch) {
+        if (ch && elements.channelIdInput && elements.btnSaveApi) {
           elements.channelIdInput.value = ch;
           elements.btnSaveApi.click();
         }
       });
     });
 
-    elements.channelIdInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        elements.btnSaveApi.click();
-      }
-    });
+    if (elements.channelIdInput) {
+      elements.channelIdInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (elements.btnSaveApi) elements.btnSaveApi.click();
+        }
+      });
+    }
 
-    elements.modalCloseBtn.addEventListener('click', () => {
-      elements.apiModal.classList.remove('active');
-    });
+    if (elements.modalCloseBtn && elements.apiModal) {
+      elements.modalCloseBtn.addEventListener('click', () => {
+        elements.apiModal.classList.remove('active');
+      });
+    }
 
-    elements.apiModal.addEventListener('click', (e) => {
-      if (e.target === elements.apiModal) elements.apiModal.classList.remove('active');
-    });
+    if (elements.apiModal) {
+      elements.apiModal.addEventListener('click', (e) => {
+        if (e.target === elements.apiModal) elements.apiModal.classList.remove('active');
+      });
+    }
 
-    elements.btnToggleKeyVisibility.addEventListener('click', () => {
-      const type = elements.apiKeyInput.type === 'password' ? 'text' : 'password';
-      elements.apiKeyInput.type = type;
-      elements.btnToggleKeyVisibility.innerHTML = type === 'password' ? '<i class="ri-eye-line"></i>' : '<i class="ri-eye-off-line"></i>';
-    });
+    if (elements.btnToggleKeyVisibility && elements.apiKeyInput) {
+      elements.btnToggleKeyVisibility.addEventListener('click', () => {
+        const type = elements.apiKeyInput.type === 'password' ? 'text' : 'password';
+        elements.apiKeyInput.type = type;
+        elements.btnToggleKeyVisibility.innerHTML = type === 'password' ? '<i class="ri-eye-line"></i>' : '<i class="ri-eye-off-line"></i>';
+      });
+    }
 
-    elements.optMockMode.addEventListener('click', () => {
-      elements.radioMock.checked = true;
-      elements.optMockMode.classList.add('active');
-      elements.optLiveMode.classList.remove('active');
-    });
+    if (elements.optMockMode && elements.radioMock && elements.optLiveMode) {
+      elements.optMockMode.addEventListener('click', () => {
+        elements.radioMock.checked = true;
+        elements.optMockMode.classList.add('active');
+        elements.optLiveMode.classList.remove('active');
+      });
+    }
 
-    elements.optLiveMode.addEventListener('click', () => {
-      elements.radioLive.checked = true;
-      elements.optLiveMode.classList.add('active');
-      elements.optMockMode.classList.remove('active');
-    });
+    if (elements.optLiveMode && elements.radioLive && elements.optMockMode) {
+      elements.optLiveMode.addEventListener('click', () => {
+        elements.radioLive.checked = true;
+        elements.optLiveMode.classList.add('active');
+        elements.optMockMode.classList.remove('active');
+      });
+    }
 
-    elements.btnSaveApi.addEventListener('click', async () => {
-      const apiKey = elements.apiKeyInput.value.trim() || state.apiKey;
-      const channelInput = elements.channelIdInput.value.trim();
+    if (elements.btnSaveApi) {
+      elements.btnSaveApi.addEventListener('click', async () => {
+        const apiKey = elements.apiKeyInput ? elements.apiKeyInput.value.trim() : state.apiKey;
+        const channelInput = elements.channelIdInput ? elements.channelIdInput.value.trim() : '';
 
-      if (!channelInput) {
-        elements.apiAlertBox.style.display = 'flex';
-        elements.apiAlertBox.className = 'api-alert error';
-        elements.apiAlertText.textContent = 'Vui lòng nhập Link Kênh, Handle (@tenkenh) hoặc Channel ID!';
-        return;
-      }
+        if (!channelInput) {
+          if (elements.apiAlertBox && elements.apiAlertText) {
+            elements.apiAlertBox.style.display = 'flex';
+            elements.apiAlertBox.className = 'api-alert error';
+            elements.apiAlertText.textContent = 'Vui lòng nhập Link Kênh, Handle (@tenkenh) hoặc Channel ID!';
+          }
+          return;
+        }
 
-      const originalBtnHtml = elements.btnSaveApi.innerHTML;
-      elements.btnSaveApi.disabled = true;
-      elements.btnSaveApi.innerHTML = '<i class="ri-loader-4-line spin"></i> <span>Đang tải dữ liệu...</span>';
-      elements.apiAlertBox.style.display = 'flex';
-      elements.apiAlertBox.className = 'api-alert info';
-      elements.apiAlertText.textContent = `Đang kết nối YouTube API v3 và tải dữ liệu cho "${channelInput}"...`;
+        const originalBtnHtml = elements.btnSaveApi.innerHTML;
+        elements.btnSaveApi.disabled = true;
+        elements.btnSaveApi.innerHTML = '<i class="ri-loader-4-line spin"></i> <span>Đang tải dữ liệu...</span>';
+        if (elements.apiAlertBox && elements.apiAlertText) {
+          elements.apiAlertBox.style.display = 'flex';
+          elements.apiAlertBox.className = 'api-alert info';
+          elements.apiAlertText.textContent = `Đang kết nối YouTube API v3 và tải dữ liệu cho "${channelInput}"...`;
+        }
 
-      try {
-        const liveResult = await fetchLiveYouTubeData(apiKey, channelInput);
+        try {
+          const liveResult = await fetchLiveYouTubeData(apiKey, channelInput);
 
-        state.apiKey = apiKey;
-        state.channelInput = channelInput;
-        state.channelInfo = liveResult.channel;
-        currentData.videos = liveResult.videos;
-        currentData.timeline = liveResult.timeline;
-        state.tablePage = 1;
+          state.apiKey = apiKey;
+          state.channelInput = channelInput;
+          state.channelInfo = liveResult.channel;
+          currentData.videos = liveResult.videos;
+          currentData.timeline = liveResult.timeline;
+          state.tablePage = 1;
 
-        localStorage.setItem('tubepulse_api_key', apiKey);
-        localStorage.setItem('tubepulse_channel_input', channelInput);
-        localStorage.setItem('tubepulse_channel_cache', JSON.stringify(liveResult));
+          localStorage.setItem('tubepulse_api_key', apiKey);
+          localStorage.setItem('tubepulse_channel_input', channelInput);
+          localStorage.setItem('tubepulse_channel_cache', JSON.stringify(liveResult));
 
-        applyChannelDataToUI();
+          applyChannelDataToUI();
 
-        elements.apiAlertBox.className = 'api-alert success';
-        elements.apiAlertText.textContent = `✓ Đã kết nối kênh: ${state.channelInfo.title} (${formatNumber(state.channelInfo.subscribers)} subs, ${formatNumber(state.channelInfo.views)} views, ${liveResult.videos.length} videos)`;
-        showToast(`Đã đồng bộ thành công kênh: ${state.channelInfo.title}`);
+          if (elements.apiAlertBox && elements.apiAlertText) {
+            elements.apiAlertBox.className = 'api-alert success';
+            elements.apiAlertText.textContent = `✓ Đã kết nối kênh: ${state.channelInfo.title} (${formatNumber(state.channelInfo.subscribers)} subs, ${formatNumber(state.channelInfo.views)} views, ${liveResult.videos.length} videos)`;
+          }
+          showToast(`Đã đồng bộ thành công kênh: ${state.channelInfo.title}`);
 
-        setTimeout(() => {
-          elements.apiModal.classList.remove('active');
+          setTimeout(() => {
+            if (elements.apiModal) elements.apiModal.classList.remove('active');
+            elements.btnSaveApi.disabled = false;
+            elements.btnSaveApi.innerHTML = originalBtnHtml;
+          }, 1200);
+
+        } catch (err) {
+          if (elements.apiAlertBox && elements.apiAlertText) {
+            elements.apiAlertBox.className = 'api-alert error';
+            elements.apiAlertText.textContent = `❌ ${err.message || 'Không thể kết nối API'}`;
+          }
+          showToast(`Lỗi: ${err.message}`, 'ri-error-warning-fill');
           elements.btnSaveApi.disabled = false;
           elements.btnSaveApi.innerHTML = originalBtnHtml;
-        }, 1200);
+        }
+      });
+    }
 
-      } catch (err) {
-        elements.apiAlertBox.className = 'api-alert error';
-        elements.apiAlertText.textContent = `❌ ${err.message || 'Không thể kết nối API'}`;
-        showToast(`Lỗi: ${err.message}`, 'ri-error-warning-fill');
-        elements.btnSaveApi.disabled = false;
-        elements.btnSaveApi.innerHTML = originalBtnHtml;
-      }
-    });
+    if (elements.btnResetSample) {
+      elements.btnResetSample.addEventListener('click', () => {
+        state.channelInfo = { ...REAL_CHANNEL_DATA.channel };
+        currentData.timeline = { ...REAL_CHANNEL_DATA.timeline };
+        currentData.videos = [...REAL_CHANNEL_DATA.videos];
+        state.channelInput = 'https://www.youtube.com/@LunaviaVintageMelodies';
+        localStorage.removeItem('tubepulse_channel_cache');
+        localStorage.setItem('tubepulse_channel_input', state.channelInput);
 
-    elements.btnResetSample.addEventListener('click', () => {
-      state.channelInfo = { ...REAL_CHANNEL_DATA.channel };
-      currentData.timeline = { ...REAL_CHANNEL_DATA.timeline };
-      currentData.videos = [...REAL_CHANNEL_DATA.videos];
-      state.channelInput = 'https://www.youtube.com/@LunaviaVintageMelodies';
-      localStorage.removeItem('tubepulse_channel_cache');
-      localStorage.setItem('tubepulse_channel_input', state.channelInput);
+        applyChannelDataToUI();
+        if (elements.apiModal) elements.apiModal.classList.remove('active');
+        showToast('Đang hiển thị kênh mặc định: Lunavia');
+      });
+    }
 
-      applyChannelDataToUI();
-      elements.apiModal.classList.remove('active');
-      showToast('Đang hiển thị kênh mặc định: Lunavia');
-    });
+    if (elements.btnOpenFilter && elements.filterModal) {
+      elements.btnOpenFilter.addEventListener('click', () => {
+        elements.filterModal.classList.add('active');
+      });
+    }
 
-    elements.btnOpenFilter.addEventListener('click', () => {
-      elements.filterModal.classList.add('active');
-    });
+    if (elements.filterCloseBtn && elements.filterModal) {
+      elements.filterCloseBtn.addEventListener('click', () => {
+        elements.filterModal.classList.remove('active');
+      });
+    }
 
-    elements.filterCloseBtn.addEventListener('click', () => {
-      elements.filterModal.classList.remove('active');
-    });
+    if (elements.filterModal) {
+      elements.filterModal.addEventListener('click', (e) => {
+        if (e.target === elements.filterModal) elements.filterModal.classList.remove('active');
+      });
+    }
 
-    elements.filterModal.addEventListener('click', (e) => {
-      if (e.target === elements.filterModal) elements.filterModal.classList.remove('active');
-    });
+    if (elements.btnApplyFilter && elements.filterModal) {
+      elements.btnApplyFilter.addEventListener('click', () => {
+        state.cleanOutliers = elements.toggleCleanOutliers ? elements.toggleCleanOutliers.checked : true;
+        const sVal = elements.filterStartDate ? elements.filterStartDate.value : state.startDate;
+        const eVal = elements.filterEndDate ? elements.filterEndDate.value : state.endDate;
+        applyDateRange(sVal, eVal, 'custom', true);
+        elements.filterModal.classList.remove('active');
+      });
+    }
 
-    elements.btnApplyFilter.addEventListener('click', () => {
-      state.cleanOutliers = elements.toggleCleanOutliers.checked;
-      const sVal = elements.filterStartDate.value;
-      const eVal = elements.filterEndDate.value;
-      applyDateRange(sVal, eVal, 'custom', true);
-      elements.filterModal.classList.remove('active');
-    });
+    if (elements.btnResetFilter && elements.filterModal) {
+      elements.btnResetFilter.addEventListener('click', () => {
+        if (elements.toggleCleanOutliers) elements.toggleCleanOutliers.checked = true;
+        state.cleanOutliers = true;
+        const def = getPresetDates('30');
+        applyDateRange(def.startDate, def.endDate, '30', false);
+        elements.filterModal.classList.remove('active');
+        showToast('Đã đặt lại bộ lọc mặc định (30 ngày)');
+      });
+    }
 
-    elements.btnResetFilter.addEventListener('click', () => {
-      elements.toggleCleanOutliers.checked = true;
-      state.cleanOutliers = true;
-      const def = getPresetDates('30');
-      applyDateRange(def.startDate, def.endDate, '30', false);
-      elements.filterModal.classList.remove('active');
-      showToast('Đã đặt lại bộ lọc mặc định (30 ngày)');
-    });
+    if (elements.btnExportReport) {
+      elements.btnExportReport.addEventListener('click', () => {
+        const periodViews = currentData.timeline.views.reduce((a, b) => a + b, 0);
+        const periodRev = currentData.timeline.revenue.reduce((a, b) => a + b, 0);
+        const reportPayload = {
+          exportDate: new Date().toISOString(),
+          channel: state.channelInfo,
+          currency: state.currency,
+          reportingPeriod: {
+            startDate: state.startDate,
+            endDate: state.endDate,
+            daysCount: state.periodDays,
+            displayLabel: elements.dateRangeDisplay ? elements.dateRangeDisplay.textContent : `${state.startDate} – ${state.endDate}`
+          },
+          periodStatistics: {
+            periodViews: periodViews,
+            periodRevenueUSD: periodRev,
+            subscribersGained: currentData.timeline.subscribersGained.reduce((a, b) => a + b, 0),
+            watchTimeHours: Number(currentData.timeline.watchTimeHours.reduce((a, b) => a + Number(b), 0).toFixed(1)),
+            likes: currentData.timeline.interactions.likes.reduce((a, b) => a + b, 0),
+            comments: currentData.timeline.interactions.comments.reduce((a, b) => a + b, 0),
+          },
+          channelLifetimeStatistics: {
+            views: state.channelInfo.views,
+            subscribers: state.channelInfo.subscribers,
+            videoCount: state.channelInfo.videoCount,
+            totalLikes: currentData.videos.reduce((s, v) => s + (v.likes || 0), 0),
+            totalComments: currentData.videos.reduce((s, v) => s + (v.comments || 0), 0),
+            estimatedRevenueUSD: (state.channelInfo.views * 0.0025).toFixed(2),
+          },
+          timeline: currentData.timeline,
+          videos: currentData.videos
+        };
 
-    elements.btnExportReport.addEventListener('click', () => {
-      const periodViews = currentData.timeline.views.reduce((a, b) => a + b, 0);
-      const periodRev = currentData.timeline.revenue.reduce((a, b) => a + b, 0);
-      const reportPayload = {
-        exportDate: new Date().toISOString(),
-        channel: state.channelInfo,
-        currency: state.currency,
-        reportingPeriod: {
-          startDate: state.startDate,
-          endDate: state.endDate,
-          daysCount: state.periodDays,
-          displayLabel: elements.dateRangeDisplay ? elements.dateRangeDisplay.textContent : `${state.startDate} – ${state.endDate}`
-        },
-        periodStatistics: {
-          periodViews: periodViews,
-          periodRevenueUSD: periodRev,
-          subscribersGained: currentData.timeline.subscribersGained.reduce((a, b) => a + b, 0),
-          watchTimeHours: Number(currentData.timeline.watchTimeHours.reduce((a, b) => a + Number(b), 0).toFixed(1)),
-          likes: currentData.timeline.interactions.likes.reduce((a, b) => a + b, 0),
-          comments: currentData.timeline.interactions.comments.reduce((a, b) => a + b, 0),
-        },
-        channelLifetimeStatistics: {
-          views: state.channelInfo.views,
-          subscribers: state.channelInfo.subscribers,
-          videoCount: state.channelInfo.videoCount,
-          totalLikes: currentData.videos.reduce((s, v) => s + (v.likes || 0), 0),
-          totalComments: currentData.videos.reduce((s, v) => s + (v.comments || 0), 0),
-          estimatedRevenueUSD: (state.channelInfo.views * 0.0025).toFixed(2),
-        },
-        timeline: currentData.timeline,
-        videos: currentData.videos
-      };
+        const blob = new Blob([JSON.stringify(reportPayload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `YouTube_Report_${state.channelInfo.title.replace(/\s+/g, '_')}_${state.startDate}_to_${state.endDate}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
 
-      const blob = new Blob([JSON.stringify(reportPayload, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `YouTube_Report_${state.channelInfo.title.replace(/\s+/g, '_')}_${state.startDate}_to_${state.endDate}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      showToast(`Đã xuất báo cáo kỳ (${state.startDate} Đến ${state.endDate}) thành công!`);
-    });
+        showToast(`Đã xuất báo cáo kỳ (${state.startDate} Đến ${state.endDate}) thành công!`);
+      });
+    }
 
     // Daily Deep-Dive Report Modal Listeners
     if (elements.dailyReportCloseBtn) {
@@ -4357,7 +4717,91 @@
       });
     }
 
-    // 6. Browser Hashchange Navigation (Support Back/Forward)
+    // 6. Team Report Filters & Actions (BgMedia Style)
+    if (elements.teamFilterSelect) {
+      elements.teamFilterSelect.addEventListener('change', (e) => {
+        state.teamFilterSelect = e.target.value;
+        renderTeamReportView();
+      });
+    }
+
+    if (elements.teamFilterType) {
+      elements.teamFilterType.addEventListener('change', (e) => {
+        state.teamFilterType = e.target.value;
+        renderTeamReportView();
+      });
+    }
+
+    if (elements.teamFilterStart) {
+      elements.teamFilterStart.addEventListener('change', (e) => {
+        state.teamFilterStart = e.target.value;
+        renderTeamReportView();
+      });
+    }
+
+    if (elements.teamFilterEnd) {
+      elements.teamFilterEnd.addEventListener('change', (e) => {
+        state.teamFilterEnd = e.target.value;
+        renderTeamReportView();
+      });
+    }
+
+    if (elements.teamRefreshBtn) {
+      elements.teamRefreshBtn.addEventListener('click', () => {
+        showToast('Đã làm mới dữ liệu báo cáo theo nhóm');
+        renderTeamReportView();
+      });
+    }
+
+    if (elements.teamChartToggles) {
+      elements.teamChartToggles.addEventListener('click', (e) => {
+        const btn = e.target.closest('.metric-pill-btn');
+        if (btn) {
+          btn.classList.toggle('active');
+          const chartType = btn.getAttribute('data-chart');
+          const card = document.getElementById(`card-team-${chartType}`);
+          if (card) {
+            card.style.display = btn.classList.contains('active') ? 'flex' : 'none';
+          }
+          const activeCount = elements.teamChartToggles.querySelectorAll('.metric-pill-btn.active').length;
+          const countEl = document.getElementById('team-chart-count');
+          if (countEl) countEl.textContent = activeCount;
+        }
+      });
+    }
+
+    if (elements.teamViewsShowAll) {
+      elements.teamViewsShowAll.addEventListener('click', () => {
+        state.teamHiddenDatasetsViews.clear();
+        renderTeamReportView();
+      });
+    }
+    if (elements.teamViewsFocusMain) {
+      elements.teamViewsFocusMain.addEventListener('click', () => {
+        state.teamHiddenDatasetsViews.clear();
+        BG_TEAMS_METRICS.forEach(t => {
+          if (!t.isMain && !t.isTotal) state.teamHiddenDatasetsViews.add(t.id);
+        });
+        renderTeamReportView();
+      });
+    }
+    if (elements.teamRevShowAll) {
+      elements.teamRevShowAll.addEventListener('click', () => {
+        state.teamHiddenDatasetsRevenue.clear();
+        renderTeamReportView();
+      });
+    }
+    if (elements.teamRevFocusMain) {
+      elements.teamRevFocusMain.addEventListener('click', () => {
+        state.teamHiddenDatasetsRevenue.clear();
+        BG_TEAMS_METRICS.forEach(t => {
+          if (!t.isMain && !t.isTotal) state.teamHiddenDatasetsRevenue.add(t.id);
+        });
+        renderTeamReportView();
+      });
+    }
+
+    // 7. Browser Hashchange Navigation (Support Back/Forward)
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.replace('#', '');
       if (hash && document.getElementById(hash)) {

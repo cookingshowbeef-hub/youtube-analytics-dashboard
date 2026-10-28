@@ -18,7 +18,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css?v=2.4_clean">
+  <link rel="stylesheet" href="styles.css?v=3.0_multichannel">
 </head>
 <body>
   <!-- Layout Container -->
@@ -152,20 +152,48 @@
         </div>
 
         <div class="topbar-right">
-          <!-- Channel Selector (BgMedia Enterprise Multi-Channel) -->
-          <div class="channel-selector-container" id="channel-selector-container">
-            <button type="button" class="channel-selector-btn" data-channel="network" id="btn-chan-network" title="Tổng hợp toàn bộ 2 kênh">
-              <i class="ri-global-line"></i>
-              <span>Toàn Bộ Network</span>
+          <!-- Channel Picker Dropdown (Scalable Multi-Channel Architecture) -->
+          <div class="channel-picker-wrapper" id="channel-picker-wrapper">
+            <button type="button" class="channel-picker-trigger" id="channel-picker-trigger" aria-haspopup="listbox" aria-expanded="false" title="Chọn kênh báo cáo">
+              <div class="active-chan-badge">
+                <img src="https://yt3.ggpht.com/0Gn6D9_lYPEyA_wH_uz3_Hjv8Hyl7o1i8dtePT5L6GltvVSa9JDosEc8w8PYbmmci8N55t8ifw=s240-c-k-c0x00ffffff-no-rj" id="topbar-active-avatar" class="channel-mini-avatar" alt="Lunavia">
+                <div class="active-chan-info">
+                  <span class="active-chan-label">Kênh đang xem</span>
+                  <span class="active-chan-title" id="topbar-active-title">Lunavia Vintage Melodies</span>
+                </div>
+              </div>
+              <i class="ri-arrow-down-s-line picker-caret"></i>
             </button>
-            <button type="button" class="channel-selector-btn active" data-channel="lunavia" id="btn-chan-lunavia" title="Kênh Lunavia Vintage Melodies">
-              <img src="https://yt3.ggpht.com/0Gn6D9_lYPEyA_wH_uz3_Hjv8Hyl7o1i8dtePT5L6GltvVSa9JDosEc8w8PYbmmci8N55t8ifw=s240-c-k-c0x00ffffff-no-rj" class="channel-mini-avatar" alt="Lunavia">
-              <span>Lunavia</span>
-            </button>
-            <button type="button" class="channel-selector-btn" data-channel="80sgroove" id="btn-chan-80sgroove" title="Kênh 80s Groove Machine">
-              <img src="https://yt3.ggpht.com/YIWwPKtcGGulhJUMARzpxGAQRHfj6vM64VUu8Ikk4OWiD133V2zYFfmoDIJE9aomsjbyayDmww=s240-c-k-c0x00ffffff-no-rj" class="channel-mini-avatar" alt="80s Groove Machine">
-              <span>80s Groove</span>
-            </button>
+
+            <!-- Floating Popover Dropdown -->
+            <div class="channel-picker-dropdown" id="channel-picker-dropdown" role="listbox">
+              <div class="picker-search-bar">
+                <i class="ri-search-line"></i>
+                <input type="text" id="picker-search-input" placeholder="Tìm kênh, @handle, team..." autocomplete="off">
+                <button type="button" class="picker-clear-search" id="picker-clear-search" style="display:none;"><i class="ri-close-line"></i></button>
+              </div>
+              <div class="picker-filter-chips" id="picker-filter-chips">
+                <button type="button" class="picker-chip active" data-category="all">Tất cả (<span id="picker-total-count">8</span>)</button>
+                <button type="button" class="picker-chip" data-category="Jazz & Lo-fi">Jazz & Lo-fi</button>
+                <button type="button" class="picker-chip" data-category="Disco & EDM">Disco & EDM</button>
+                <button type="button" class="picker-chip" data-category="Acoustic">Acoustic</button>
+                <button type="button" class="picker-chip" data-category="Ambient & Focus">Ambient</button>
+                <button type="button" class="picker-chip" data-category="Classical Piano">Piano</button>
+              </div>
+              <!-- Scrollable channel items list -->
+              <div class="picker-channels-list" id="picker-channels-list">
+                <!-- Dynamically populated from CHANNELS_REGISTRY -->
+              </div>
+              <!-- Footer actions -->
+              <div class="picker-dropdown-footer">
+                <button type="button" class="btn-picker-add-chan" id="btn-topbar-add-channel">
+                  <i class="ri-add-circle-line"></i> + Thêm Kênh Mới
+                </button>
+                <a href="#view-mgmt-channel" class="picker-mgmt-link" id="picker-link-mgmt">
+                  <i class="ri-tv-line"></i> Quản Lý Kênh
+                </a>
+              </div>
+            </div>
           </div>
 
           <!-- Live API Indicator / Mode Badge -->
@@ -1699,6 +1727,126 @@
         </section>
       </div>
 
+      <!-- VIEW: QUẢN LÝ HỆ THỐNG KÊNH (DEDICATED MULTI-CHANNEL MANAGEMENT) -->
+      <div class="dashboard-view" id="view-mgmt-channel">
+        <section class="mgmt-channel-section">
+          <!-- Top Page Header -->
+          <div class="section-title-wrap" style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+              <div>
+                <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                  <i class="ri-tv-line" style="color: #F53F3F;"></i>
+                  Quản Lý Hệ Thống Kênh MCN BgMedia
+                </h2>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                  Quản lý tập trung toàn bộ danh mục kênh YouTube, phân công phụ trách, theo dõi trạng thái kết nối API và số liệu tăng trưởng
+                </p>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" class="action-btn-primary" id="btn-open-add-channel-modal">
+                  <i class="ri-add-line"></i>
+                  <span>+ Thêm Kênh Mới</span>
+                </button>
+                <button type="button" class="action-btn-outline" id="btn-export-channels-csv">
+                  <i class="ri-download-2-line"></i>
+                  <span>Xuất Danh Sách</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top KPI Summary Cards (4 Cards) -->
+          <div class="mgmt-kpi-summary-grid">
+            <div class="comp-kpi-card">
+              <span class="comp-kpi-label">Tổng Số Kênh Trực Thuộc</span>
+              <div class="comp-kpi-value text-emerald" id="mgmt-stat-total-channels">8 Kênh</div>
+              <span class="comp-kpi-sub" id="mgmt-stat-active-channels">8/8 Kênh đang hoạt động</span>
+            </div>
+            <div class="comp-kpi-card">
+              <span class="comp-kpi-label">Tổng Khán Giả (Subscribers)</span>
+              <div class="comp-kpi-value text-cyan" id="mgmt-stat-total-subs">2.45M người</div>
+              <span class="comp-kpi-sub">+18.4% tăng trưởng ròng</span>
+            </div>
+            <div class="comp-kpi-card">
+              <span class="comp-kpi-label">Tổng Lượt Xem (30 Ngày)</span>
+              <div class="comp-kpi-value text-sky" id="mgmt-stat-total-views">141.2M lượt</div>
+              <span class="comp-kpi-sub">Bình quân 17.65M / kênh</span>
+            </div>
+            <div class="comp-kpi-card">
+              <span class="comp-kpi-label">Doanh Thu 30 Ngày Hợp Nhất</span>
+              <div class="comp-kpi-value text-amber" id="mgmt-stat-total-rev">$35,463.10</div>
+              <span class="comp-kpi-sub">RPM trung bình mạng lưới $2.51</span>
+            </div>
+          </div>
+
+          <!-- Filter & Search Toolbar -->
+          <div class="mgmt-filter-toolbar">
+            <div class="mgmt-search-box">
+              <i class="ri-search-line"></i>
+              <input type="text" id="mgmt-channel-search" placeholder="Tìm theo tên kênh, handle, PIC, team...">
+            </div>
+            <div class="mgmt-filter-selects">
+              <select id="mgmt-filter-team" class="mgmt-select">
+                <option value="all">Tất cả Team</option>
+              </select>
+              <select id="mgmt-filter-category" class="mgmt-select">
+                <option value="all">Tất cả Thể loại</option>
+                <option value="Jazz & Lo-fi">Jazz & Lo-fi</option>
+                <option value="Disco & EDM">Disco & EDM</option>
+                <option value="Acoustic">Acoustic</option>
+                <option value="Ambient & Focus">Ambient & Focus</option>
+                <option value="Classical Piano">Classical Piano</option>
+                <option value="Phonk & Wave">Phonk & Wave</option>
+              </select>
+              <select id="mgmt-filter-status" class="mgmt-select">
+                <option value="all">Tất cả Trạng thái</option>
+                <option value="active">Đang hoạt động</option>
+                <option value="live_api">Đã kết nối Live API</option>
+                <option value="paused">Tạm dừng</option>
+              </select>
+            </div>
+            <!-- View Switcher (Grid vs Table) -->
+            <div class="mgmt-view-toggle">
+              <button type="button" class="view-toggle-btn active" data-view="grid" id="btn-view-grid" title="Xem dạng thẻ (Grid)">
+                <i class="ri-grid-fill"></i> Dạng Thẻ
+              </button>
+              <button type="button" class="view-toggle-btn" data-view="table" id="btn-view-table" title="Xem dạng bảng (Table)">
+                <i class="ri-list-check-2"></i> Dạng Bảng
+              </button>
+            </div>
+          </div>
+
+          <!-- Channel Grid Container -->
+          <div class="channel-cards-grid" id="channel-cards-grid">
+            <!-- Dynamically populated cards -->
+          </div>
+
+          <!-- Channel Table Container (Hidden by default, shown when view mode = table) -->
+          <div class="channel-table-container" id="channel-table-container" style="display: none;">
+            <div class="table-responsive">
+              <table class="matrix-table modern-mgmt-table" id="table-mgmt-channels">
+                <thead>
+                  <tr>
+                    <th>Kênh YouTube</th>
+                    <th>PIC Phụ Trách</th>
+                    <th>Team Quản Lý</th>
+                    <th>Thể Loại</th>
+                    <th class="text-right">Người Đăng Ký</th>
+                    <th class="text-right">Lượt Xem (30N)</th>
+                    <th class="text-right">Doanh Thu (30N)</th>
+                    <th class="text-center">Trạng Thái</th>
+                    <th class="text-center">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="table-mgmt-channels-body">
+                  <!-- Dynamically populated rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
       <!-- VIEW 9: QUẢN LÝ CHUNG (TEAM, KÊNH, VIDEO, NETWORK, DỰ ÁN, CHI PHÍ) -->
       <div class="dashboard-view" id="view-mgmt-general">
         <section class="mgmt-section">
@@ -1785,6 +1933,107 @@
         <button class="action-btn-primary" id="btn-save-api">
           <i class="ri-check-line"></i>
           <span>Lưu & Tải Lại Dữ Liệu</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Thêm Kênh Mới Vào Hệ Thống (Add Channel Modal) -->
+  <div class="modal-backdrop" id="add-channel-modal">
+    <div class="modal-dialog" style="max-width: 580px;">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <i class="ri-youtube-line modal-icon" style="background: rgba(245,63,63,0.15); color: #F53F3F;"></i>
+          <div>
+            <h3 class="modal-title">Thêm Kênh YouTube Mới</h3>
+            <p class="modal-sub">Đưa kênh vào mạng lưới MCN BgMedia để theo dõi & phân tích số liệu</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="btn-close-add-channel-modal" aria-label="Đóng"><i class="ri-close-line"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="form-add-channel">
+          <div class="form-group">
+            <label for="new-chan-url">Link Kênh, Channel ID hoặc @Handle <span class="required">*</span></label>
+            <div class="input-with-action">
+              <input type="text" id="new-chan-url" placeholder="https://www.youtube.com/@tenkenh hoặc @LofiGirl" autocomplete="off" required>
+              <button type="button" class="btn-secondary" id="btn-autofill-channel" style="font-size: 12px; white-space: nowrap;">
+                <i class="ri-magic-line"></i> Tự Động Nhận Diện
+              </button>
+            </div>
+            <span class="field-hint">Dán link YouTube (ví dụ: <code>https://youtube.com/@LofiGirl</code>, <code>@ChillHopMusic</code>)</span>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label for="new-chan-title">Tên Kênh Hiển Thị <span class="required">*</span></label>
+              <input type="text" id="new-chan-title" placeholder="Ví dụ: ChillHop Music" required>
+            </div>
+            <div class="form-group">
+              <label for="new-chan-category">Thể Loại Nội Dung</label>
+              <select id="new-chan-category">
+                <option value="Jazz & Lo-fi">Jazz & Lo-fi</option>
+                <option value="Disco & EDM">Disco & EDM</option>
+                <option value="Acoustic">Acoustic & Chill Pop</option>
+                <option value="Ambient & Focus">Ambient & Deep Focus</option>
+                <option value="Classical Piano">Classical Piano</option>
+                <option value="Phonk & Wave">Phonk & Dark Wave</option>
+                <option value="Podcast & Chill">Podcast & Story</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label for="new-chan-team">Team Quản Lý</label>
+              <select id="new-chan-team">
+                <option value="Team Jazz & Lo-fi">Team Jazz & Lo-fi</option>
+                <option value="Team Disco Wave">Team Disco Wave</option>
+                <option value="Team Ngọc Quỳnh">Team Ngọc Quỳnh</option>
+                <option value="Team Thái Chung">Team Thái Chung</option>
+                <option value="Team Lê Thúy">Team Lê Thúy</option>
+                <option value="Team Nguyễn Hoa">Team Nguyễn Hoa</option>
+                <option value="Team Xuân Nam">Team Xuân Nam</option>
+                <option value="Team CM Media">Team CM Media</option>
+                <option value="Team Khác">Team Khác</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="new-chan-pic">Nhân Viên Phụ Trách (PIC)</label>
+              <input type="text" id="new-chan-pic" placeholder="Ví dụ: Nguyễn Văn C (nguyenvanc)">
+            </div>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label for="new-chan-subs">Số Người Đăng Ký (Ước tính)</label>
+              <input type="number" id="new-chan-subs" placeholder="Ví dụ: 150000" min="0">
+            </div>
+            <div class="form-group">
+              <label for="new-chan-views">Lượt Xem 30 Ngày (Ước tính)</label>
+              <input type="number" id="new-chan-views" placeholder="Ví dụ: 8500000" min="0">
+            </div>
+          </div>
+
+          <!-- Live Preview Card -->
+          <div class="new-chan-preview-box" id="new-chan-preview-box">
+            <div class="preview-box-label"><i class="ri-eye-line"></i> Xem trước hiển thị</div>
+            <div class="preview-box-content">
+              <div class="preview-avatar" id="preview-avatar">C</div>
+              <div class="preview-text">
+                <div class="preview-title" id="preview-title">Tên Kênh Mới</div>
+                <div class="preview-meta" id="preview-meta">@handle • Team Jazz & Lo-fi • 150K subs</div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="btn-cancel-add-channel">Hủy Bỏ</button>
+        <button type="button" class="action-btn-primary" id="btn-submit-add-channel">
+          <i class="ri-check-line"></i> Lưu Kênh Vào Hệ Thống
         </button>
       </div>
     </div>
@@ -1962,6 +2211,6 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Application Logic -->
-  <script src="app.js?v=8.0_clean_report"></script>
+  <script src="app.js?v=9.0_multichannel"></script>
 </body>
 </html>

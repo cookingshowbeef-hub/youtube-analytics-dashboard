@@ -1112,11 +1112,309 @@
     videos: [...REAL_CHANNEL_DATA.videos, ...GROOVE_CHANNEL_DATA.videos].sort((a, b) => (b.views || 0) - (a.views || 0))
   };
 
-  const MULTI_CHANNELS = {
-    lunavia: REAL_CHANNEL_DATA,
-    '80sgroove': GROOVE_CHANNEL_DATA,
-    network: NETWORK_CHANNEL_DATA
-  };
+  // ==========================================================================
+  // ENTERPRISE MULTI-CHANNEL REGISTRY & DYNAMIC CATALOG
+  // ==========================================================================
+  const DEFAULT_CHANNELS_CATALOG = [
+    {
+      id: 'lunavia',
+      title: 'Lunavia Vintage Melodies',
+      handle: '@lunaviavintagemelodies',
+      url: 'https://www.youtube.com/@LunaviaVintageMelodies',
+      avatar: 'https://yt3.ggpht.com/0Gn6D9_lYPEyA_wH_uz3_Hjv8Hyl7o1i8dtePT5L6GltvVSa9JDosEc8w8PYbmmci8N55t8ifw=s240-c-k-c0x00ffffff-no-rj',
+      category: 'Jazz & Lo-fi',
+      team: 'Team Jazz & Lo-fi',
+      pic: 'Nguyễn Văn An (nguyenvana)',
+      subscribers: 1320,
+      views: 251635,
+      videoCount: 59,
+      revenue: 754.90,
+      rpm: 3.00,
+      status: 'live_api',
+      statusText: 'Đã kết nối Live API',
+      dataSource: 'live'
+    },
+    {
+      id: '80sgroove',
+      title: '80s Groove Machine',
+      handle: '@the80sgroovemachine',
+      url: 'https://www.youtube.com/@The80sGrooveMachine',
+      avatar: 'https://yt3.ggpht.com/YIWwPKtcGGulhJUMARzpxGAQRHfj6vM64VUu8Ikk4OWiD133V2zYFfmoDIJE9aomsjbyayDmww=s240-c-k-c0x00ffffff-no-rj',
+      category: 'Disco & EDM',
+      team: 'Team Disco Wave',
+      pic: 'Trần Minh Bình (tranminhb)',
+      subscribers: 2450,
+      views: 389420,
+      videoCount: 34,
+      revenue: 1168.20,
+      rpm: 3.00,
+      status: 'live_api',
+      statusText: 'Đã kết nối Live API',
+      dataSource: 'live'
+    },
+    {
+      id: 'chillcoffee',
+      title: 'Chill Coffee Beats',
+      handle: '@chillcoffeebeats',
+      url: 'https://www.youtube.com/@chillcoffeebeats',
+      avatar: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=160&h=160&fit=crop',
+      category: 'Jazz & Lo-fi',
+      team: 'Team Ngọc Quỳnh',
+      pic: 'Lê Ngọc Quỳnh (lequynh)',
+      subscribers: 342000,
+      views: 18250000,
+      videoCount: 124,
+      revenue: 4550.00,
+      rpm: 2.45,
+      status: 'active',
+      statusText: 'Đang hoạt động',
+      dataSource: 'curated'
+    },
+    {
+      id: 'retrogaming',
+      title: 'Retro Gaming Wave',
+      handle: '@retrogamingwave',
+      url: 'https://www.youtube.com/@retrogamingwave',
+      avatar: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=160&h=160&fit=crop',
+      category: 'Disco & EDM',
+      team: 'Team Thái Chung',
+      pic: 'Thái Chung (thaichung)',
+      subscribers: 185000,
+      views: 9420000,
+      videoCount: 88,
+      revenue: 2355.00,
+      rpm: 2.50,
+      status: 'active',
+      statusText: 'Đang hoạt động',
+      dataSource: 'curated'
+    },
+    {
+      id: 'pianosanctuary',
+      title: 'Classical Piano Sanctuary',
+      handle: '@pianosanctuary',
+      url: 'https://www.youtube.com/@pianosanctuary',
+      avatar: 'https://images.unsplash.com/photo-1520523839898-507127027c98?w=160&h=160&fit=crop',
+      category: 'Classical Piano',
+      team: 'Team Lê Thúy',
+      pic: 'Lê Thúy (lethuy)',
+      subscribers: 520000,
+      views: 31800000,
+      videoCount: 215,
+      revenue: 7950.00,
+      rpm: 2.50,
+      status: 'active',
+      statusText: 'Đang hoạt động',
+      dataSource: 'curated'
+    },
+    {
+      id: 'acousticsunset',
+      title: 'Acoustic Sunset Vibe',
+      handle: '@acousticsunset',
+      url: 'https://www.youtube.com/@acousticsunset',
+      avatar: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=160&h=160&fit=crop',
+      category: 'Acoustic',
+      team: 'Team Nguyễn Hoa',
+      pic: 'Nguyễn Hoa (nguyenhoa)',
+      subscribers: 98000,
+      views: 4620000,
+      videoCount: 64,
+      revenue: 1150.00,
+      rpm: 2.48,
+      status: 'active',
+      statusText: 'Đang hoạt động',
+      dataSource: 'curated'
+    },
+    {
+      id: 'deepfocus',
+      title: 'Deep Focus Coding Ambient',
+      handle: '@deepfocusambient',
+      url: 'https://www.youtube.com/@deepfocusambient',
+      avatar: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=160&h=160&fit=crop',
+      category: 'Ambient & Focus',
+      team: 'Team Xuân Nam',
+      pic: 'Xuân Nam (xuannam)',
+      subscribers: 410000,
+      views: 22100000,
+      videoCount: 142,
+      revenue: 5520.00,
+      rpm: 2.50,
+      status: 'active',
+      statusText: 'Đang hoạt động',
+      dataSource: 'curated'
+    },
+    {
+      id: 'midnightdrift',
+      title: 'Midnight City Drift',
+      handle: '@midnightdrift',
+      url: 'https://www.youtube.com/@midnightdrift',
+      avatar: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=160&h=160&fit=crop',
+      category: 'Phonk & Wave',
+      team: 'Team CM Media',
+      pic: 'Việt Hoàng (viethoang)',
+      subscribers: 890000,
+      views: 54300000,
+      videoCount: 178,
+      revenue: 13570.00,
+      rpm: 2.50,
+      status: 'active',
+      statusText: 'Đang hoạt động',
+      dataSource: 'curated'
+    }
+  ];
+
+  function loadChannelsRegistry() {
+    let custom = [];
+    try {
+      const saved = localStorage.getItem('tubepulse_custom_channels');
+      if (saved) custom = JSON.parse(saved);
+    } catch (e) {
+      console.warn('Error reading tubepulse_custom_channels from localStorage', e);
+    }
+    return [...DEFAULT_CHANNELS_CATALOG, ...custom];
+  }
+
+  let CHANNELS_REGISTRY = loadChannelsRegistry();
+
+  function generateVideosForChannel(channel) {
+    if (channel.id === 'lunavia') return REAL_CHANNEL_DATA.videos;
+    if (channel.id === '80sgroove') return GROOVE_CHANNEL_DATA.videos;
+
+    const titlesByCat = {
+      'Jazz & Lo-fi': [
+        'Cozy Rainy Night in Tokyo - Chill Lo-Fi Beats',
+        'Coffee Shop Warm Vibes • Relaxing Lo-Fi & Jazz Piano',
+        'Midnight Studying • Deep Focus Chill Lo-Fi Guitar',
+        'Autumn Jazz in Paris • Vintage Acoustic Cafe Sessions',
+        'Late Night Coding Session • Relaxing Beats & Ambient Rain'
+      ],
+      'Disco & EDM': [
+        'Retro Synthwave Drive 1984 • 80s Electro Groove',
+        'Neon Highway Cruising • Retro Electro Beats & Bass',
+        'Cyberpunk Night Ride • Synthwave / Retrowave Melodies',
+        'Miami Sunset 1986 • Vintage Disco Chill Sessions',
+        'Arcade High Score • 80s Electronic Wave Synthesizer'
+      ],
+      'Classical Piano': [
+        'Peaceful Piano Solos for Deep Sleep & Relaxation',
+        'Romantic Piano & Rain • Moonlight Sonata Chill Melodies',
+        'Chopin Nocturnes in the Quiet Forest • Relaxing Piano',
+        'Gentle Morning Piano • Positive Healing Energy Flow',
+        'Sad Emotional Piano Melody • Rainy Afternoon Study Music'
+      ],
+      'Acoustic': [
+        'Sunset Acoustic Guitar • Warm Coffee Breeze Melodies',
+        'Cozy Bedroom Acoustic Pop • Soft Indie Guitar Melodies',
+        'Fireside Acoustic Sessions • Relaxing Folk & Fingerstyle',
+        'Golden Hour Acoustic Guitar • Peaceful Warm Afternoon',
+        'Sweet Sunday Acoustic Melodies for Relaxation'
+      ],
+      'Ambient & Focus': [
+        'Deep Coding Focus Flow • 432Hz Binaural Electronic Ambient',
+        'Binaural Beats for Super Memory & Intense Study Sessions',
+        'Deep Space Ambient Drone • Zero Gravity Coding Focus',
+        'Quiet Rainy Cyber City • 8 Hours Ambient Sleep & Focus',
+        'Productive Mindset • Alpha Wave Coding Soundscape'
+      ],
+      'Phonk & Wave': [
+        'MIDNIGHT TOKYO DRIFT • Aggressive Phonk Bass Boost',
+        'NIGHT SHIFT STREET RACING • Hard Drift Phonk Mix',
+        'DARK WAVE DRIFT • Brazilian & Memphis Phonk Energy',
+        'SHADOW RUNNER • Bass Boosted Phonk Beats 2026',
+        'GHOST DRIFT • Slowed & Reverb Dark Phonk Melodies'
+      ]
+    };
+
+    const titles = titlesByCat[channel.category] || titlesByCat['Jazz & Lo-fi'];
+    const baseViews = Math.round((channel.views || 500000) / 12);
+    const rpm = channel.rpm || 2.5;
+
+    return titles.map((title, idx) => {
+      const views = Math.round(baseViews * (1.6 - idx * 0.15));
+      const rev = Number((views * (rpm / 1000)).toFixed(2));
+      const likes = Math.round(views * 0.048);
+      const comments = Math.round(views * 0.009);
+      const shares = Math.round(views * 0.005);
+      return {
+        id: `vid_${channel.id}_${idx + 1}`,
+        title,
+        publishedAt: `2026-10-${String(24 - idx * 2).padStart(2, '0')}`,
+        duration: '2:15:30',
+        views,
+        revenue: rev,
+        likes,
+        comments,
+        shares,
+        dislikes: 0,
+        thumbnail: channel.avatar
+      };
+    });
+  }
+
+  function getChannelData(channelKey) {
+    if (channelKey === 'lunavia') return REAL_CHANNEL_DATA;
+    if (channelKey === '80sgroove') return GROOVE_CHANNEL_DATA;
+    if (channelKey === 'network') {
+      const allActive = CHANNELS_REGISTRY.filter(c => c.status !== 'paused');
+      const totalSubs = allActive.reduce((sum, c) => sum + (c.subscribers || 0), 0);
+      const totalViews = allActive.reduce((sum, c) => sum + (c.views || 0), 0);
+      const totalRev = Number(allActive.reduce((sum, c) => sum + (c.revenue || (c.views * 0.0025)), 0).toFixed(2));
+      const totalVideosCount = allActive.reduce((sum, c) => sum + (c.videoCount || 40), 0);
+
+      const netChannel = {
+        id: 'network',
+        title: 'Toàn Bộ Network (BgMedia MCN)',
+        handle: `@bgmedia_network (${allActive.length} Kênh)`,
+        avatar: 'https://cdn-icons-png.flaticon.com/512/8140/8140283.png',
+        subscribers: totalSubs,
+        views: totalViews,
+        videoCount: totalVideosCount,
+        revenue: totalRev,
+        rpm: 2.51
+      };
+
+      const videos = allActive.flatMap(c => generateVideosForChannel(c)).sort((a, b) => b.views - a.views).slice(0, 30);
+      const timeline = generateTimelineForRange(netChannel, videos, state.startDate || '2026-09-28', state.endDate || '2026-10-28');
+
+      return {
+        channel: netChannel,
+        videos,
+        timeline
+      };
+    }
+
+    const found = CHANNELS_REGISTRY.find(c => c.id === channelKey) || CHANNELS_REGISTRY[0];
+    const chanInfo = {
+      id: found.id,
+      title: found.title,
+      handle: found.handle,
+      avatar: found.avatar,
+      subscribers: found.subscribers,
+      views: found.views,
+      videoCount: found.videoCount || 50,
+      revenue: found.revenue || Number((found.views * 0.0025).toFixed(2)),
+      rpm: found.rpm || 2.5
+    };
+    const videos = generateVideosForChannel(found);
+    const timeline = generateTimelineForRange(chanInfo, videos, state.startDate || '2026-09-28', state.endDate || '2026-10-28');
+
+    return {
+      channel: chanInfo,
+      videos,
+      timeline
+    };
+  }
+
+  const MULTI_CHANNELS = new Proxy({}, {
+    get: function(target, prop) {
+      if (typeof prop === 'string') {
+        return getChannelData(prop);
+      }
+      return undefined;
+    },
+    has: function(target, prop) {
+      return prop === 'network' || CHANNELS_REGISTRY.some(c => c.id === prop);
+    }
+  });
 
   // Default dates dynamically initialized with ending on current date (today)
   const defaultInitialDates = getPresetDates('30');
@@ -3181,17 +3479,6 @@
     if (!MULTI_CHANNELS[channelKey]) return;
     state.activeChannel = channelKey;
 
-    // Update Topbar buttons
-    if (elements.channelSelectorContainer) {
-      elements.channelSelectorContainer.querySelectorAll('.channel-selector-btn').forEach(btn => {
-        if (btn.getAttribute('data-channel') === channelKey) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
-      });
-    }
-
     const chanData = MULTI_CHANNELS[channelKey];
     state.channelInfo = { ...chanData.channel };
     state.channelInput = chanData.channel.handle || chanData.channel.title;
@@ -3201,6 +3488,34 @@
     currentData.timeline = generateTimelineForRange(chanData.channel, chanData.videos, state.startDate, state.endDate);
     state.tablePage = 1;
 
+    // Update Topbar trigger button
+    const topbarAvatar = document.getElementById('topbar-active-avatar');
+    const topbarTitle = document.getElementById('topbar-active-title');
+    if (topbarTitle) topbarTitle.textContent = chanData.channel.title;
+    if (topbarAvatar) {
+      if (channelKey === 'network') {
+        topbarAvatar.src = 'https://cdn-icons-png.flaticon.com/512/8140/8140283.png';
+      } else {
+        topbarAvatar.src = chanData.channel.avatar;
+      }
+    }
+
+    // Update Live API indicator
+    if (elements.dataSourceLabel) {
+      if (channelKey === 'lunavia' || channelKey === '80sgroove') {
+        elements.dataSourceLabel.textContent = `Dữ Liệu Thật: ${chanData.channel.title}`;
+      } else if (channelKey === 'network') {
+        elements.dataSourceLabel.textContent = `Toàn Bộ Network (${CHANNELS_REGISTRY.length} Kênh)`;
+      } else {
+        elements.dataSourceLabel.textContent = `Hệ Thống MCN: ${chanData.channel.title}`;
+      }
+    }
+
+    // Refresh picker list active states & close popover
+    renderChannelPickerDropdown();
+    const pickerWrapper = document.getElementById('channel-picker-wrapper');
+    if (pickerWrapper) pickerWrapper.classList.remove('open');
+
     // Update UI
     applyChannelDataToUI();
 
@@ -3208,6 +3523,8 @@
       renderChannelCompareView();
     } else if (state.activeView === 'view-report-staff-chart') {
       renderStaffCharts();
+    } else if (state.activeView === 'view-mgmt-channel') {
+      renderChannelManagementView();
     }
 
     showToast(`Đã chuyển kênh: ${chanData.channel.title}`);
@@ -3255,7 +3572,7 @@
         'view-report-network': 'Báo Cáo Toàn Mạng Lưới BgMedia',
         'view-report-guide': 'Hướng Dẫn Sử Dụng Báo Cáo BgMedia',
         'view-mgmt-team': 'Quản Lý Đội Ngũ (Teams)',
-        'view-mgmt-channel': 'Quản Lý Kênh YouTube',
+        'view-mgmt-channel': 'Quản Lý Hệ Thống Kênh YouTube',
         'view-mgmt-video': 'Quản Lý Danh Sách Video',
         'view-mgmt-network': 'Quản Lý Mạng Lưới MCN',
         'view-mgmt-project': 'Quản Lý Dự Án',
@@ -3277,6 +3594,8 @@
     } else if (viewId === 'view-report-overview') {
       if (mainTrendsChart) mainTrendsChart.resize();
       renderAllSparklines();
+    } else if (viewId === 'view-mgmt-channel') {
+      renderChannelManagementView();
     } else if (viewId.startsWith('view-mgmt-')) {
       renderManagementView(viewId);
     }
@@ -3829,7 +4148,576 @@
   }
 
   /**
-   * Render Generic Management Views (Team, Channel, Video, Network, Project, Cost)
+   * Render Topbar Channel Picker Popover List
+   */
+  function renderChannelPickerDropdown() {
+    const listEl = document.getElementById('picker-channels-list');
+    const totalCountEl = document.getElementById('picker-total-count');
+    if (totalCountEl) totalCountEl.textContent = CHANNELS_REGISTRY.length;
+    if (!listEl) return;
+
+    const query = (state.pickerSearchQuery || '').toLowerCase().trim();
+    const catFilter = state.pickerCategoryFilter || 'all';
+
+    let channels = CHANNELS_REGISTRY.filter(c => {
+      const matchCat = catFilter === 'all' || c.category === catFilter;
+      const matchQuery = !query || 
+        c.title.toLowerCase().includes(query) || 
+        c.handle.toLowerCase().includes(query) || 
+        (c.team && c.team.toLowerCase().includes(query)) || 
+        (c.pic && c.pic.toLowerCase().includes(query));
+      return matchCat && matchQuery;
+    });
+
+    let html = '';
+
+    // Show Rollup option when filter is all or query matches network
+    if (catFilter === 'all' && (!query || 'toàn bộ network bgmedia mcn hop nhat'.includes(query))) {
+      const isNetActive = state.activeChannel === 'network';
+      html += `
+        <div class="picker-channel-item ${isNetActive ? 'active' : ''}" data-channel="network" role="option" aria-selected="${isNetActive}">
+          <div class="picker-chan-left">
+            <div class="picker-chan-icon-net"><i class="ri-global-line"></i></div>
+            <div class="picker-chan-meta">
+              <span class="picker-chan-name">Toàn Bộ Network (Hợp Nhất)</span>
+              <span class="picker-chan-sub">${CHANNELS_REGISTRY.length} Kênh trực thuộc MCN</span>
+            </div>
+          </div>
+          <div class="picker-chan-right">
+            <span class="picker-chan-stat-val text-emerald">Rollup</span>
+            <span class="picker-chan-stat-sub">Tổng số liệu</span>
+          </div>
+        </div>
+      `;
+    }
+
+    channels.forEach(ch => {
+      const isActive = state.activeChannel === ch.id;
+      const subsFormatted = ch.subscribers >= 1000000 
+        ? `${(ch.subscribers / 1000000).toFixed(2)}M` 
+        : (ch.subscribers >= 1000 ? `${(ch.subscribers / 1000).toFixed(1)}K` : ch.subscribers);
+
+      html += `
+        <div class="picker-channel-item ${isActive ? 'active' : ''}" data-channel="${ch.id}" role="option" aria-selected="${isActive}">
+          <div class="picker-chan-left">
+            <img src="${ch.avatar}" class="picker-chan-thumb" alt="${ch.title}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1384/1384060.png'">
+            <div class="picker-chan-meta">
+              <span class="picker-chan-name">${ch.title}</span>
+              <span class="picker-chan-sub">${ch.handle} • ${ch.team}</span>
+            </div>
+          </div>
+          <div class="picker-chan-right">
+            <span class="picker-chan-stat-val font-mono">${subsFormatted}</span>
+            <span class="picker-chan-stat-sub">Người đăng ký</span>
+          </div>
+        </div>
+      `;
+    });
+
+    if (channels.length === 0 && (!html || html.trim() === '')) {
+      html = `<div style="padding: 24px; text-align: center; color: var(--text-dim); font-size: 13px;">Không tìm thấy kênh phù hợp với từ khóa "${query}"</div>`;
+    }
+
+    listEl.innerHTML = html;
+  }
+
+  /**
+   * Render Dedicated Multi-Channel Management View (#view-mgmt-channel)
+   */
+  function renderChannelManagementView() {
+    // 1. Calculate & Update Top 4 Summary Cards
+    const totalChannels = CHANNELS_REGISTRY.length;
+    const activeChannels = CHANNELS_REGISTRY.filter(c => c.status !== 'paused').length;
+    const totalSubs = CHANNELS_REGISTRY.reduce((acc, c) => acc + (c.subscribers || 0), 0);
+    const totalViews = CHANNELS_REGISTRY.reduce((acc, c) => acc + (c.views || 0), 0);
+    const totalRev = Number(CHANNELS_REGISTRY.reduce((acc, c) => acc + (c.revenue || (c.views * 0.0025)), 0).toFixed(2));
+
+    const statTotalChannels = document.getElementById('mgmt-stat-total-channels');
+    const statActiveChannels = document.getElementById('mgmt-stat-active-channels');
+    const statTotalSubs = document.getElementById('mgmt-stat-total-subs');
+    const statTotalViews = document.getElementById('mgmt-stat-total-views');
+    const statTotalRev = document.getElementById('mgmt-stat-total-rev');
+
+    if (statTotalChannels) statTotalChannels.textContent = `${totalChannels} Kênh`;
+    if (statActiveChannels) statActiveChannels.textContent = `${activeChannels}/${totalChannels} Kênh đang hoạt động`;
+    if (statTotalSubs) statTotalSubs.textContent = `${formatCompactNumber(totalSubs)} người`;
+    if (statTotalViews) statTotalViews.textContent = `${formatCompactNumber(totalViews)} lượt`;
+    if (statTotalRev) statTotalRev.textContent = formatCurrency(totalRev);
+
+    // 2. Populate Teams Filter Dropdown if not already populated
+    const filterTeam = document.getElementById('mgmt-filter-team');
+    if (filterTeam && filterTeam.options.length <= 1) {
+      const teams = [...new Set(CHANNELS_REGISTRY.map(c => c.team))];
+      teams.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        filterTeam.appendChild(opt);
+      });
+    }
+
+    // 3. Filter channels
+    const searchQuery = (document.getElementById('mgmt-channel-search')?.value || '').toLowerCase().trim();
+    const teamFilter = document.getElementById('mgmt-filter-team')?.value || 'all';
+    const catFilter = document.getElementById('mgmt-filter-category')?.value || 'all';
+    const statusFilter = document.getElementById('mgmt-filter-status')?.value || 'all';
+
+    const filtered = CHANNELS_REGISTRY.filter(c => {
+      const matchSearch = !searchQuery || 
+        c.title.toLowerCase().includes(searchQuery) ||
+        c.handle.toLowerCase().includes(searchQuery) ||
+        (c.pic && c.pic.toLowerCase().includes(searchQuery)) ||
+        (c.team && c.team.toLowerCase().includes(searchQuery));
+      const matchTeam = teamFilter === 'all' || c.team === teamFilter;
+      const matchCat = catFilter === 'all' || c.category === catFilter;
+      const matchStatus = statusFilter === 'all' || 
+        (statusFilter === 'active' && c.status !== 'paused') ||
+        (statusFilter === 'live_api' && c.status === 'live_api') ||
+        (statusFilter === 'paused' && c.status === 'paused');
+      return matchSearch && matchTeam && matchCat && matchStatus;
+    });
+
+    // 4. Render Grid Cards
+    const gridContainer = document.getElementById('channel-cards-grid');
+    if (gridContainer) {
+      if (filtered.length === 0) {
+        gridContainer.innerHTML = `<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-dim);">Không tìm thấy kênh nào phù hợp với bộ lọc hiện tại</div>`;
+      } else {
+        gridContainer.innerHTML = filtered.map(ch => {
+          const isLive = ch.status === 'live_api';
+          const isPaused = ch.status === 'paused';
+          const statusBadge = isPaused
+            ? `<span class="card-status-badge" style="background: rgba(245,63,63,0.15); color: #F53F3F; border: 1px solid rgba(245,63,63,0.3);"><i class="ri-pause-circle-line"></i> Tạm dừng</span>`
+            : (isLive 
+              ? `<span class="card-status-badge live"><i class="ri-pulse-line"></i> Live API</span>`
+              : `<span class="card-status-badge active"><i class="ri-check-line"></i> Hoạt động</span>`);
+
+          return `
+            <div class="channel-manage-card" data-channel-id="${ch.id}">
+              <div class="channel-card-top">
+                <img src="${ch.avatar}" class="channel-card-avatar" alt="${ch.title}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1384/1384060.png'">
+                <div class="channel-card-title-group">
+                  <div class="channel-card-title" title="${ch.title}">${ch.title}</div>
+                  <a href="${ch.url}" target="_blank" rel="noopener noreferrer" class="channel-card-handle">${ch.handle} <i class="ri-external-link-line" style="font-size: 10px;"></i></a>
+                  <div class="channel-card-badge-row">
+                    <span class="card-cat-badge">${ch.category}</span>
+                    ${statusBadge}
+                  </div>
+                </div>
+              </div>
+
+              <div class="channel-card-pic-row">
+                <span>Phụ trách: <strong>${ch.pic || 'Chưa phân công'}</strong></span>
+                <span class="badge" style="background: rgba(255,255,255,0.06); font-size: 11px;">${ch.team}</span>
+              </div>
+
+              <div class="channel-card-metrics">
+                <div class="channel-card-metric-col">
+                  <span class="metric-col-label">Subscribers</span>
+                  <span class="metric-col-val text-cyan">${formatCompactNumber(ch.subscribers)}</span>
+                </div>
+                <div class="channel-card-metric-col">
+                  <span class="metric-col-label">Lượt xem 30N</span>
+                  <span class="metric-col-val text-sky">${formatCompactNumber(ch.views)}</span>
+                </div>
+                <div class="channel-card-metric-col">
+                  <span class="metric-col-label">Doanh thu 30N</span>
+                  <span class="metric-col-val text-amber">${formatCurrency(ch.revenue || (ch.views * 0.0025))}</span>
+                </div>
+              </div>
+
+              <div class="channel-card-footer">
+                <button type="button" class="btn-card-primary" onclick="window.appSwitchChannel('${ch.id}'); window.appSwitchView('view-report-overview');">
+                  <i class="ri-pie-chart-2-line"></i> Xem Báo Cáo
+                </button>
+                <a href="${ch.url}" target="_blank" rel="noopener noreferrer" class="btn-card-outline" title="Mở kênh trên YouTube">
+                  <i class="ri-youtube-line"></i>
+                </a>
+                <button type="button" class="btn-card-outline" title="${isPaused ? 'Kích hoạt lại kênh' : 'Tạm dừng theo dõi'}" onclick="window.appToggleChannelStatus('${ch.id}')">
+                  <i class="${isPaused ? 'ri-play-circle-line text-emerald' : 'ri-pause-circle-line'}"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // 5. Render Table Rows
+    const tableBody = document.getElementById('table-mgmt-channels-body');
+    if (tableBody) {
+      if (filtered.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-dim);">Không có kênh nào phù hợp</td></tr>`;
+      } else {
+        tableBody.innerHTML = filtered.map(ch => {
+          const isLive = ch.status === 'live_api';
+          const isPaused = ch.status === 'paused';
+          const statusTag = isPaused
+            ? `<span class="badge" style="background: rgba(245,63,63,0.15); color: #F53F3F;">Tạm dừng</span>`
+            : (isLive 
+              ? `<span class="badge" style="background: rgba(16,185,129,0.15); color: #10B981;">Live API</span>`
+              : `<span class="badge" style="background: rgba(56,189,248,0.15); color: #38BDF8;">Hoạt động</span>`);
+
+          return `
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="${ch.avatar}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" alt="${ch.title}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1384/1384060.png'">
+                  <div>
+                    <strong style="color: var(--text-main); display: block;">${ch.title}</strong>
+                    <span style="font-size: 11px; color: #38BDF8; font-family: var(--font-mono);">${ch.handle}</span>
+                  </div>
+                </div>
+              </td>
+              <td>${ch.pic || '—'}</td>
+              <td><span class="badge" style="background: rgba(255,255,255,0.06);">${ch.team}</span></td>
+              <td><span style="font-size: 12px; color: var(--text-muted);">${ch.category}</span></td>
+              <td class="text-right font-mono" style="font-weight: 700;">${formatNumber(ch.subscribers)}</td>
+              <td class="text-right font-mono text-sky" style="font-weight: 700;">${formatNumber(ch.views)}</td>
+              <td class="text-right font-mono text-amber" style="font-weight: 700;">${formatCurrency(ch.revenue || (ch.views * 0.0025))}</td>
+              <td class="text-center">${statusTag}</td>
+              <td class="text-center">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="window.appSwitchChannel('${ch.id}'); window.appSwitchView('view-report-overview');">
+                    <i class="ri-pie-chart-2-line"></i> Báo Cáo
+                  </button>
+                  <button type="button" class="btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="window.appToggleChannelStatus('${ch.id}')" title="Bật/Tắt trạng thái">
+                    <i class="${isPaused ? 'ri-play-circle-line text-emerald' : 'ri-pause-circle-line'}"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+  }
+
+  function toggleChannelStatus(channelId) {
+    const ch = CHANNELS_REGISTRY.find(c => c.id === channelId);
+    if (!ch) return;
+    ch.status = ch.status === 'paused' ? 'active' : 'paused';
+    saveCustomChannels();
+    renderChannelManagementView();
+    renderChannelPickerDropdown();
+    showToast(`${ch.title}: Đã chuyển sang trạng thái ${ch.status === 'paused' ? 'Tạm dừng' : 'Đang hoạt động'}`);
+  }
+
+  function saveCustomChannels() {
+    const custom = CHANNELS_REGISTRY.filter(c => !DEFAULT_CHANNELS_CATALOG.some(d => d.id === c.id));
+    try {
+      localStorage.setItem('tubepulse_custom_channels', JSON.stringify(custom));
+    } catch (e) {
+      console.warn('Error saving custom channels to localStorage', e);
+    }
+  }
+
+  function setupAddChannelModal() {
+    const modal = document.getElementById('add-channel-modal');
+    const btnOpen = document.getElementById('btn-open-add-channel-modal');
+    const btnTopbarOpen = document.getElementById('btn-topbar-add-channel');
+    const btnClose = document.getElementById('btn-close-add-channel-modal');
+    const btnCancel = document.getElementById('btn-cancel-add-channel');
+    const btnSubmit = document.getElementById('btn-submit-add-channel');
+    const btnAutofill = document.getElementById('btn-autofill-channel');
+
+    const inputUrl = document.getElementById('new-chan-url');
+    const inputTitle = document.getElementById('new-chan-title');
+    const inputCategory = document.getElementById('new-chan-category');
+    const inputTeam = document.getElementById('new-chan-team');
+    const inputPic = document.getElementById('new-chan-pic');
+    const inputSubs = document.getElementById('new-chan-subs');
+    const inputViews = document.getElementById('new-chan-views');
+
+    const previewAvatar = document.getElementById('preview-avatar');
+    const previewTitle = document.getElementById('preview-title');
+    const previewMeta = document.getElementById('preview-meta');
+
+    function openModal() {
+      if (modal) {
+        modal.classList.add('active');
+      }
+      const pickerWrapper = document.getElementById('channel-picker-wrapper');
+      if (pickerWrapper) pickerWrapper.classList.remove('open');
+    }
+
+    function closeModal() {
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    }
+
+    if (btnOpen) btnOpen.addEventListener('click', openModal);
+    if (btnTopbarOpen) btnTopbarOpen.addEventListener('click', openModal);
+    if (btnClose) btnClose.addEventListener('click', closeModal);
+    if (btnCancel) btnCancel.addEventListener('click', closeModal);
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    }
+
+    function updatePreview() {
+      const urlVal = (inputUrl?.value || '').trim();
+      let handle = urlVal;
+      if (handle.includes('@')) {
+        handle = '@' + handle.split('@')[1].split('/')[0];
+      } else if (!handle.startsWith('@') && handle) {
+        handle = '@' + handle.toLowerCase().replace(/[^a-z0-9]/g, '');
+      }
+
+      const title = (inputTitle?.value || '').trim() || (handle ? handle.replace('@', '') : 'Tên Kênh Mới');
+      const team = inputTeam?.value || 'Team Jazz & Lo-fi';
+      const subs = Number(inputSubs?.value) || 120000;
+      const initial = title.charAt(0).toUpperCase() || 'C';
+
+      if (previewTitle) previewTitle.textContent = title;
+      if (previewMeta) previewMeta.textContent = `${handle || '@kenhmoi'} • ${team} • ${formatCompactNumber(subs)} subs`;
+      if (previewAvatar) previewAvatar.textContent = initial;
+    }
+
+    [inputUrl, inputTitle, inputCategory, inputTeam, inputPic, inputSubs, inputViews].forEach(inp => {
+      if (inp) inp.addEventListener('input', updatePreview);
+      if (inp) inp.addEventListener('change', updatePreview);
+    });
+
+    if (btnAutofill) {
+      btnAutofill.addEventListener('click', () => {
+        const raw = (inputUrl?.value || '').trim();
+        if (!raw) {
+          showToast('Vui lòng dán link kênh hoặc @handle trước!');
+          return;
+        }
+
+        let handle = raw;
+        if (handle.includes('@')) {
+          handle = '@' + handle.split('@')[1].split('/')[0].split('?')[0];
+        } else if (handle.startsWith('http')) {
+          const parts = handle.split('/');
+          handle = '@' + parts[parts.length - 1];
+        } else if (!handle.startsWith('@')) {
+          handle = '@' + handle;
+        }
+
+        const nameClean = handle.replace('@', '').replace(/([A-Z])/g, ' $1').trim();
+        const capitalized = nameClean.charAt(0).toUpperCase() + nameClean.slice(1);
+
+        if (inputTitle) inputTitle.value = capitalized;
+        if (!inputSubs?.value) inputSubs.value = Math.floor(Math.random() * 400000 + 50000);
+        if (!inputViews?.value) inputViews.value = Number(inputSubs.value) * Math.floor(Math.random() * 30 + 15);
+        if (!inputPic?.value) inputPic.value = 'Nguyễn Minh (nguyenminh)';
+
+        updatePreview();
+        showToast(`Đã nhận diện: ${capitalized} (${handle})`);
+      });
+    }
+
+    if (btnSubmit) {
+      btnSubmit.addEventListener('click', () => {
+        const urlVal = (inputUrl?.value || '').trim();
+        const titleVal = (inputTitle?.value || '').trim();
+        if (!urlVal || !titleVal) {
+          showToast('Vui lòng nhập đầy đủ link kênh và tên kênh!');
+          return;
+        }
+
+        let handle = urlVal;
+        if (handle.includes('@')) {
+          handle = '@' + handle.split('@')[1].split('/')[0].split('?')[0];
+        } else if (!handle.startsWith('@')) {
+          handle = '@' + handle.toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        const id = 'chan_' + Date.now();
+        const category = inputCategory?.value || 'Jazz & Lo-fi';
+        const team = inputTeam?.value || 'Team Jazz & Lo-fi';
+        const pic = (inputPic?.value || '').trim() || 'Nhân sự MCN';
+        const subs = Number(inputSubs?.value) || 150000;
+        const views = Number(inputViews?.value) || (subs * 25);
+        const rpm = 2.50;
+        const rev = Number((views * 0.0025).toFixed(2));
+
+        const colors = ['#F53F3F', '#38BDF8', '#10B981', '#FBBF24', '#818CF8', '#EC4899'];
+        const color = colors[CHANNELS_REGISTRY.length % colors.length];
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(titleVal)}&background=${color.replace('#', '')}&color=fff&size=128&bold=true`;
+
+        const newChan = {
+          id,
+          title: titleVal,
+          handle,
+          url: urlVal.startsWith('http') ? urlVal : `https://www.youtube.com/${handle}`,
+          avatar: avatarUrl,
+          category,
+          team,
+          pic,
+          subscribers: subs,
+          views,
+          videoCount: 45,
+          revenue: rev,
+          rpm,
+          status: 'active',
+          statusText: 'Đang hoạt động',
+          dataSource: 'curated'
+        };
+
+        CHANNELS_REGISTRY.push(newChan);
+        saveCustomChannels();
+
+        closeModal();
+        inputUrl.value = '';
+        inputTitle.value = '';
+        if (inputPic) inputPic.value = '';
+        if (inputSubs) inputSubs.value = '';
+        if (inputViews) inputViews.value = '';
+
+        renderChannelPickerDropdown();
+        renderChannelManagementView();
+
+        switchChannel(newChan.id);
+        switchView('view-report-overview');
+
+        showToast(`Đã thêm thành công kênh "${newChan.title}" vào hệ thống!`);
+      });
+    }
+  }
+
+  function setupChannelPickerEvents() {
+    const trigger = document.getElementById('channel-picker-trigger');
+    const wrapper = document.getElementById('channel-picker-wrapper');
+    const searchInput = document.getElementById('picker-search-input');
+    const clearSearchBtn = document.getElementById('picker-clear-search');
+    const chipsContainer = document.getElementById('picker-filter-chips');
+    const listEl = document.getElementById('picker-channels-list');
+
+    if (trigger && wrapper) {
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        wrapper.classList.toggle('open');
+        if (wrapper.classList.contains('open')) {
+          renderChannelPickerDropdown();
+          if (searchInput) searchInput.focus();
+        }
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (wrapper && !wrapper.contains(e.target)) {
+        wrapper.classList.remove('open');
+      }
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        state.pickerSearchQuery = e.target.value;
+        if (clearSearchBtn) {
+          clearSearchBtn.style.display = e.target.value ? 'inline-block' : 'none';
+        }
+        renderChannelPickerDropdown();
+      });
+    }
+
+    if (clearSearchBtn && searchInput) {
+      clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        state.pickerSearchQuery = '';
+        clearSearchBtn.style.display = 'none';
+        renderChannelPickerDropdown();
+        searchInput.focus();
+      });
+    }
+
+    if (chipsContainer) {
+      chipsContainer.addEventListener('click', (e) => {
+        const chip = e.target.closest('.picker-chip');
+        if (chip) {
+          chipsContainer.querySelectorAll('.picker-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          state.pickerCategoryFilter = chip.getAttribute('data-category') || 'all';
+          renderChannelPickerDropdown();
+        }
+      });
+    }
+
+    if (listEl) {
+      listEl.addEventListener('click', (e) => {
+        const item = e.target.closest('.picker-channel-item');
+        if (item) {
+          const chId = item.getAttribute('data-channel');
+          if (chId) {
+            switchChannel(chId);
+          }
+        }
+      });
+    }
+
+    // Channel management toolbar filter events
+    const mgmtSearch = document.getElementById('mgmt-channel-search');
+    const mgmtTeam = document.getElementById('mgmt-filter-team');
+    const mgmtCat = document.getElementById('mgmt-filter-category');
+    const mgmtStatus = document.getElementById('mgmt-filter-status');
+    const btnViewGrid = document.getElementById('btn-view-grid');
+    const btnViewTable = document.getElementById('btn-view-table');
+    const gridContainer = document.getElementById('channel-cards-grid');
+    const tableContainer = document.getElementById('channel-table-container');
+
+    if (mgmtSearch) mgmtSearch.addEventListener('input', () => renderChannelManagementView());
+    if (mgmtTeam) mgmtTeam.addEventListener('change', () => renderChannelManagementView());
+    if (mgmtCat) mgmtCat.addEventListener('change', () => renderChannelManagementView());
+    if (mgmtStatus) mgmtStatus.addEventListener('change', () => renderChannelManagementView());
+
+    if (btnViewGrid && btnViewTable && gridContainer && tableContainer) {
+      btnViewGrid.addEventListener('click', () => {
+        btnViewGrid.classList.add('active');
+        btnViewTable.classList.remove('active');
+        gridContainer.style.display = 'grid';
+        tableContainer.style.display = 'none';
+      });
+
+      btnViewTable.addEventListener('click', () => {
+        btnViewTable.classList.add('active');
+        btnViewGrid.classList.remove('active');
+        gridContainer.style.display = 'none';
+        tableContainer.style.display = 'block';
+      });
+    }
+
+    const btnExportCsv = document.getElementById('btn-export-channels-csv');
+    if (btnExportCsv) {
+      btnExportCsv.addEventListener('click', () => {
+        const csvRows = [
+          ['ID', 'Tên Kênh', 'Handle', 'Thể Loại', 'Team', 'PIC', 'Subscribers', 'Lượt Xem 30N', 'Doanh Thu 30N', 'Trạng Thái', 'URL'].join(',')
+        ];
+        CHANNELS_REGISTRY.forEach(c => {
+          csvRows.push([
+            `"${c.id}"`,
+            `"${c.title}"`,
+            `"${c.handle}"`,
+            `"${c.category}"`,
+            `"${c.team}"`,
+            `"${c.pic || ''}"`,
+            c.subscribers,
+            c.views,
+            c.revenue || (c.views * 0.0025),
+            `"${c.status}"`,
+            `"${c.url}"`
+          ].join(','));
+        });
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `BgMedia_Channels_List_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Đã xuất danh sách kênh ra file CSV!');
+      });
+    }
+  }
+
+  /**
+   * Render Generic Management Views (Team, Video, Network, Project, Cost)
    */
   function renderManagementView(viewId) {
     const container = document.getElementById('mgmt-content-panel');
@@ -3837,84 +4725,22 @@
     const subEl = document.getElementById('mgmt-view-sub');
     if (!container) return;
 
-    if (viewId === 'view-mgmt-channel') {
-      if (titleEl) titleEl.textContent = 'Quản Lý Danh Sách Kênh YouTube';
-      if (subEl) subEl.textContent = 'Theo dõi trạng thái kết nối API, phân quyền và dữ liệu 2 kênh trực thuộc';
-      container.innerHTML = `
-        <div class="table-responsive">
-          <table class="matrix-table">
-            <thead>
-              <tr>
-                <th>Kênh YouTube</th>
-                <th>Handle</th>
-                <th>Nhân Viên Quản Lý</th>
-                <th>Team Phụ Trách</th>
-                <th class="text-right">Người Đăng Ký</th>
-                <th class="text-right">Tổng Lượt Xem</th>
-                <th class="text-center">Trạng Thái API</th>
-                <th class="text-center">Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <img src="${REAL_CHANNEL_DATA.channel.avatar}" style="width: 32px; height: 32px; border-radius: 50%;" alt="Luna">
-                    <strong>Lunavia Vintage Melodies</strong>
-                  </div>
-                </td>
-                <td><code>@lunaviavintagemelodies</code></td>
-                <td>Nguyễn Văn An (nguyenvana)</td>
-                <td>Team Jazz & Lo-fi Retro</td>
-                <td class="text-right" style="font-weight: 700;">1.320</td>
-                <td class="text-right" style="font-weight: 700; color: var(--accent-cyan);">251.635</td>
-                <td class="text-center"><span class="status-tag high-growth">● Đang hoạt động (Live API)</span></td>
-                <td class="text-center">
-                  <button class="btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="window.appSwitchChannel('lunavia'); window.appSwitchView('view-report-overview');">
-                    <i class="ri-dashboard-line"></i> Mở Báo Cáo
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <img src="${GROOVE_CHANNEL_DATA.channel.avatar}" style="width: 32px; height: 32px; border-radius: 50%;" alt="Groove">
-                    <strong>80s Groove Machine</strong>
-                  </div>
-                </td>
-                <td><code>@the80sgroovemachine</code></td>
-                <td>Trần Minh Bình (tranminhb)</td>
-                <td>Team Disco & Electronic</td>
-                <td class="text-right" style="font-weight: 700;">2.450</td>
-                <td class="text-right" style="font-weight: 700; color: #F53F3F;">389.420</td>
-                <td class="text-center"><span class="status-tag high-growth">● Đang hoạt động (Live API)</span></td>
-                <td class="text-center">
-                  <button class="btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="window.appSwitchChannel('80sgroove'); window.appSwitchView('view-report-overview');">
-                    <i class="ri-dashboard-line"></i> Mở Báo Cáo
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else {
-      if (titleEl) titleEl.textContent = 'Danh Mục Quản Trị Hệ Thống BgMedia';
-      if (subEl) subEl.textContent = 'Hệ sinh thái MCN tự động hóa quy trình quản trị đa kênh YouTube';
-      container.innerHTML = `
-        <div style="padding: 24px; text-align: center; color: var(--text-muted);">
-          <i class="ri-checkbox-circle-line" style="font-size: 40px; color: #F53F3F; display: block; margin-bottom: 12px;"></i>
-          <h3 style="font-size: 16px; color: var(--text-main); margin-bottom: 6px;">Phân Hệ Sẵn Sàng Vận Hành</h3>
-          <p style="max-width: 500px; margin: 0 auto 16px auto; font-size: 13px;">Dữ liệu 2 kênh Lunavia và 80s Groove Machine đã được đồng bộ hóa toàn diện vào hệ sinh thái BgMedia.</p>
-          <button class="action-btn-primary" onclick="window.appSwitchView('view-report-channel')"><i class="ri-tv-line"></i> Xem Báo Cáo Đối Đầu 2 Kênh</button>
-        </div>
-      `;
-    }
+    if (titleEl) titleEl.textContent = 'Danh Mục Quản Trị Hệ Thống BgMedia';
+    if (subEl) subEl.textContent = 'Hệ sinh thái MCN tự động hóa quy trình quản trị đa kênh YouTube';
+    container.innerHTML = `
+      <div style="padding: 24px; text-align: center; color: var(--text-muted);">
+        <i class="ri-checkbox-circle-line" style="font-size: 40px; color: #F53F3F; display: block; margin-bottom: 12px;"></i>
+        <h3 style="font-size: 16px; color: var(--text-main); margin-bottom: 6px;">Phân Hệ Sẵn Sàng Vận Hành</h3>
+        <p style="max-width: 500px; margin: 0 auto 16px auto; font-size: 13px;">Hệ sinh thái BgMedia đang quản lý ${CHANNELS_REGISTRY.length} kênh YouTube hoạt động trên toàn hệ thống.</p>
+        <button class="action-btn-primary" onclick="window.appSwitchView('view-mgmt-channel')"><i class="ri-tv-line"></i> Quản Lý ${CHANNELS_REGISTRY.length} Kênh</button>
+      </div>
+    `;
   }
 
   // Expose global helpers for inline buttons
   window.appSwitchChannel = switchChannel;
   window.appSwitchView = switchView;
+  window.appToggleChannelStatus = toggleChannelStatus;
 
   function setupEvents() {
     elements.themeToggleBtn.addEventListener('click', () => {
@@ -4881,6 +5707,9 @@
     applyDateRange(state.startDate, state.endDate, state.timeRange || '30', false);
     applyChannelDataToUI();
     setupEvents();
+    renderChannelPickerDropdown();
+    setupChannelPickerEvents();
+    setupAddChannelModal();
 
     // Check for initial URL hash or default to overview view
     const initialHash = window.location.hash.replace('#', '');

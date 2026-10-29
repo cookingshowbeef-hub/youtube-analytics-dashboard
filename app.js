@@ -511,7 +511,17 @@
   });
 
   // Default dates dynamically initialized with ending on current date (today)
-  const defaultInitialDates = getPresetDates('30');
+  function getInitialViewMode() {
+    const requested = new URLSearchParams(window.location.search).get('mode');
+    if (requested === 'demo' || requested === 'live') return requested;
+    const saved = localStorage.getItem('tubepulse_view_mode');
+    return saved === 'demo' ? 'demo' : 'live';
+  }
+
+  const initialViewMode = getInitialViewMode();
+  const defaultInitialDates = initialViewMode === 'demo'
+    ? { startDate: '2026-10-01', endDate: '2026-10-28' }
+    : getPresetDates('30');
 
   // State Management - Multi-Channel & Multi-View
   const state = {
@@ -539,7 +549,7 @@
     compMetric: 'views',
     compareChannelIds: ['UCL9VCEoz6M6JcUKxlJcr3LQ', 'UCuNF36PtETqVFz_yK6C_v-g', 'UCSJ4gkVC6NrvII8umztf0Ow'],
     compareGranularity: 'day',
-    viewMode: 'live', // 'live' | 'demo'
+    viewMode: initialViewMode, // 'live' | 'demo'
     demoScenario: 'all_demo_ready',
     comparePrevious: true,
     cleanOutliers: true,
@@ -3661,6 +3671,7 @@
   function switchViewMode(mode) {
     if (mode !== 'live' && mode !== 'demo') mode = 'live';
     state.viewMode = mode;
+    localStorage.setItem('tubepulse_view_mode', mode);
 
     const btnLive = document.getElementById('btn-mode-live');
     const btnDemo = document.getElementById('btn-mode-demo');
@@ -5022,12 +5033,35 @@ function switchView(viewId) {
   }
 
   function renderChannelManagementView() {
+    // The registry contains public lifetime counters, not period Analytics.
+    // Resolve the active source once so cards, table and totals agree.
+    const periodMetrics = new Map(CHANNELS_REGISTRY.map(ch => {
+      const report = getEffectiveChannelReport(ch.id, state.startDate, state.endDate, state.currency);
+      const hasPeriod = Boolean(report && report.has_analytics && report.rows && report.rows.length);
+      const totals = hasPeriod ? report.totals : null;
+      return [ch.id, {
+        views: totals && totals.views != null ? Number(totals.views) : null,
+        revenue: totals && report.has_monetary && totals.estimatedRevenue != null
+          ? Number(totals.estimatedRevenue) : null
+      }];
+    }));
+    const reportsWithViews = [...periodMetrics.values()].filter(m => m.views != null);
+    const reportsWithRevenue = [...periodMetrics.values()].filter(m => m.revenue != null);
+    const showPeriodViews = state.viewMode === 'demo' || reportsWithViews.length > 0;
+    const periodLabel = `${state.startDate} – ${state.endDate}`;
+    const viewLabel = showPeriodViews ? 'Lượt xem trong kỳ' : 'Lượt xem cộng dồn';
+    const viewValue = ch => showPeriodViews ? periodMetrics.get(ch.id).views : ch.views;
+    const revenueValue = ch => periodMetrics.get(ch.id).revenue;
+
     // 1. Calculate & Update Top 4 Summary Cards
     const totalChannels = CHANNELS_REGISTRY.length;
     const activeChannels = CHANNELS_REGISTRY.filter(c => c.status !== 'paused').length;
     const totalSubs = CHANNELS_REGISTRY.reduce((acc, c) => acc + (c.subscribers || 0), 0);
-    const totalViews = CHANNELS_REGISTRY.reduce((acc, c) => acc + (c.views || 0), 0);
-    const totalRev = null; // No revenue until authorized via Analytics Monetary API
+    const totalViews = showPeriodViews
+      ? (reportsWithViews.length ? reportsWithViews.reduce((sum, m) => sum + m.views, 0) : null)
+      : CHANNELS_REGISTRY.reduce((sum, c) => sum + (c.views || 0), 0);
+    const totalRev = reportsWithRevenue.length
+      ? Number(reportsWithRevenue.reduce((sum, m) => sum + m.revenue, 0).toFixed(2)) : null;
 
     const statTotalChannels = document.getElementById('mgmt-stat-total-channels');
     const statActiveChannels = document.getElementById('mgmt-stat-active-channels');
@@ -5038,8 +5072,24 @@ function switchView(viewId) {
     if (statTotalChannels) statTotalChannels.textContent = `${totalChannels} Kênh`;
     if (statActiveChannels) statActiveChannels.textContent = `${activeChannels}/${totalChannels} Kênh có snapshot`;
     if (statTotalSubs) statTotalSubs.textContent = `${formatCompactNumber(totalSubs)} người (Công khai)`;
-    if (statTotalViews) statTotalViews.textContent = `${formatCompactNumber(totalViews)} lượt (Lifetime)`;
-    if (statTotalRev) statTotalRev.textContent = '—';
+    if (statTotalViews) statTotalViews.textContent = totalViews == null ? '—' : `${formatCompactNumber(totalViews)} lượt`;
+    if (statTotalRev) statTotalRev.textContent = formatCurrency(totalRev);
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    };
+    setText('mgmt-stat-views-label', showPeriodViews ? 'Tổng lượt xem trong kỳ' : 'Tổng lượt xem cộng dồn');
+    setText('mgmt-stat-subs-note', 'Subscribers công khai · Đã làm tròn');
+    setText('mgmt-stat-views-note', showPeriodViews
+      ? `${reportsWithViews.length}/${totalChannels} kênh có dữ liệu trong kỳ` : 'Bộ đếm công khai tại lần lấy dữ liệu');
+    setText('mgmt-stat-revenue-note', reportsWithRevenue.length
+      ? `${reportsWithRevenue.length < totalChannels ? 'Tổng một phần · ' : ''}${reportsWithRevenue.length}/${totalChannels} kênh có dữ liệu doanh thu`
+      : 'Chưa có dữ liệu doanh thu cho kỳ này');
+    setText('mgmt-table-views-label', viewLabel);
+    setText('mgmt-data-source', state.viewMode === 'demo'
+      ? `Dữ liệu Analytics minh họa · ${periodLabel}` : `Dữ liệu công khai YouTube${reportsWithViews.length ? ` · Analytics: ${periodLabel}` : ''}`);
+    const hint = document.getElementById('mgmt-data-hint');
+    if (hint) hint.hidden = state.viewMode === 'demo' || reportsWithRevenue.length > 0;
 
     // 2. Populate Teams Filter Dropdown if not already populated
     const filterTeam = document.getElementById('mgmt-filter-team');
@@ -5114,14 +5164,15 @@ function switchView(viewId) {
                   <span class="metric-col-val text-cyan">${formatCompactNumber(ch.subscribers)}</span>
                 </div>
                 <div class="channel-card-metric-col">
-                  <span class="metric-col-label">Lượt xem 30N</span>
-                  <span class="metric-col-val text-sky">${formatCompactNumber(ch.views)}</span>
+                  <span class="metric-col-label">${viewLabel}</span>
+                  <span class="metric-col-val text-sky">${viewValue(ch) == null ? '—' : formatCompactNumber(viewValue(ch))}</span>
                 </div>
                 <div class="channel-card-metric-col">
-                  <span class="metric-col-label">Doanh thu 30N</span>
-                  <span class="metric-col-val text-amber">${formatCurrency(ch.revenue)}</span>
+                  <span class="metric-col-label">Doanh thu trong kỳ</span>
+                  <span class="metric-col-val text-amber">${formatCurrency(revenueValue(ch))}</span>
                 </div>
               </div>
+              <div class="channel-card-data-source">${state.viewMode === 'demo' ? 'Analytics minh họa' : 'Public / Analytics được cấp quyền'}</div>
 
               <div class="channel-card-footer">
                 <button type="button" class="btn-card-primary" onclick="window.appSwitchChannel('${ch.id}'); window.appSwitchView('view-report-overview');">
@@ -5170,8 +5221,8 @@ function switchView(viewId) {
               <td><span class="badge" style="background: rgba(255,255,255,0.06);">${ch.team}</span></td>
               <td><span style="font-size: 12px; color: var(--text-muted);">${ch.category}</span></td>
               <td class="text-right font-mono" style="font-weight: 700;">${formatNumber(ch.subscribers)}</td>
-              <td class="text-right font-mono text-sky" style="font-weight: 700;">${formatNumber(ch.views)}</td>
-              <td class="text-right font-mono text-amber" style="font-weight: 700;">${formatCurrency(ch.revenue)}</td>
+              <td class="text-right font-mono text-sky" style="font-weight: 700;">${viewValue(ch) == null ? '—' : formatNumber(viewValue(ch))}</td>
+              <td class="text-right font-mono text-amber" style="font-weight: 700;">${formatCurrency(revenueValue(ch))}</td>
               <td class="text-center">${statusTag}</td>
               <td class="text-center">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
@@ -6611,6 +6662,7 @@ function switchView(viewId) {
     } else {
       switchView('view-report-overview');
     }
+    if (initialViewMode === 'demo') switchViewMode('demo');
   }
 
 

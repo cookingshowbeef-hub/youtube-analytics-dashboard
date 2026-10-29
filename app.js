@@ -1301,12 +1301,46 @@
     if (sidebarName && state.channelInfo && state.channelInfo.title) sidebarName.textContent = state.channelInfo.title;
     if (sidebarHandle && state.channelInfo && state.channelInfo.handle) sidebarHandle.textContent = state.channelInfo.handle;
 
-    // 2. Top Header Badge
+    // 2. Top Header Badge & Source Status (Issue 1 Fix)
     if (elements.dataSourceLabel && state.channelInfo) {
-      elements.dataSourceLabel.textContent = `Dữ Liệu Thật: ${state.channelInfo.title || 'BgMedia'}`;
+      if (state.viewMode === 'demo') {
+        elements.dataSourceLabel.textContent = `Xem Minh Họa: ${state.channelInfo.title || '15 Kênh'}`;
+        elements.dataSourceLabel.style.color = '#F59E0B';
+        if (elements.apiStatusIndicator) {
+          elements.apiStatusIndicator.classList.remove('connected');
+          elements.apiStatusIndicator.style.background = '#F59E0B';
+        }
+        if (elements.dataSourceBadge) {
+          elements.dataSourceBadge.classList.remove('connected');
+          elements.dataSourceBadge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+        }
+      } else {
+        const isOAuth = state.oauthConnected === true;
+        if (isOAuth) {
+          elements.dataSourceLabel.textContent = `Dữ Liệu Thật (OAuth): ${state.channelInfo.title || 'BgMedia'}`;
+          elements.dataSourceLabel.style.color = '#10B981';
+          if (elements.apiStatusIndicator) {
+            elements.apiStatusIndicator.classList.add('connected');
+            elements.apiStatusIndicator.style.background = '#10B981';
+          }
+          if (elements.dataSourceBadge) {
+            elements.dataSourceBadge.classList.add('connected');
+            elements.dataSourceBadge.style.borderColor = '';
+          }
+        } else {
+          elements.dataSourceLabel.textContent = `Dữ Liệu Công Khai (Snapshot): ${state.channelInfo.title || 'BgMedia'}`;
+          elements.dataSourceLabel.style.color = '#94A3B8';
+          if (elements.apiStatusIndicator) {
+            elements.apiStatusIndicator.classList.remove('connected');
+            elements.apiStatusIndicator.style.background = '#64748B';
+          }
+          if (elements.dataSourceBadge) {
+            elements.dataSourceBadge.classList.remove('connected');
+            elements.dataSourceBadge.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          }
+        }
+      }
     }
-    if (elements.apiStatusIndicator) elements.apiStatusIndicator.classList.add('connected');
-    if (elements.dataSourceBadge) elements.dataSourceBadge.classList.add('connected');
 
     // 3. KPI Cards
     updateKpiCards();
@@ -2818,7 +2852,93 @@
   let videoRetentionChartInstance = null;
   let pivotExpandedChannels = new Set(['lunavia', '80sgroove']);
 
-  // --- 1. MULTI-CHANNEL PIVOT TABLE (VIEW 1 OVERVIEW) ---
+    // =========================================================================
+  // PIVOT & TIMELINE HELPERS (Guaranteed Mathematical Consistency)
+  // =========================================================================
+  function generatePeriodBuckets(startDateStr, endDateStr, granularity = 'day') {
+    const buckets = [];
+    const start = new Date(startDateStr || '2026-10-01');
+    const end = new Date(endDateStr || '2026-10-28');
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return buckets;
+
+    if (granularity === 'month') {
+      let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+      const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+      while (cur <= endMonth) {
+        const yyyy = cur.getFullYear();
+        const mm = String(cur.getMonth() + 1).padStart(2, '0');
+        buckets.push({
+          key: `${yyyy}-${mm}`,
+          label: `Tháng ${cur.getMonth() + 1}`,
+          type: 'month',
+          year: yyyy,
+          month: cur.getMonth() + 1
+        });
+        cur.setMonth(cur.getMonth() + 1);
+      }
+    } else if (granularity === 'week') {
+      let cur = new Date(start);
+      let wIdx = 1;
+      while (cur <= end) {
+        const curEnd = new Date(cur);
+        curEnd.setDate(curEnd.getDate() + 6);
+        const actualEnd = curEnd > end ? end : curEnd;
+        const mm = String(cur.getMonth() + 1).padStart(2, '0');
+        const dd = String(cur.getDate()).padStart(2, '0');
+        buckets.push({
+          key: cur.toISOString().split('T')[0],
+          startKey: cur.toISOString().split('T')[0],
+          endKey: actualEnd.toISOString().split('T')[0],
+          label: `T${wIdx} (${dd}/${mm})`,
+          type: 'week'
+        });
+        cur.setDate(cur.getDate() + 7);
+        wIdx++;
+      }
+    } else {
+      let cur = new Date(start);
+      while (cur <= end) {
+        const yyyy = cur.getFullYear();
+        const mm = String(cur.getMonth() + 1).padStart(2, '0');
+        const dd = String(cur.getDate()).padStart(2, '0');
+        buckets.push({
+          key: `${yyyy}-${mm}-${dd}`,
+          label: `${dd}-${mm}`,
+          type: 'day'
+        });
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+    return buckets;
+  }
+
+  function extractRowMetricValue(row, metric) {
+    if (!row) return null;
+    if (metric === 'revenue') {
+      return (row.estimatedRevenue !== undefined && row.estimatedRevenue !== null) ? Number(row.estimatedRevenue) : null;
+    }
+    if (metric === 'views') return row.views !== undefined ? row.views : 0;
+    if (metric === 'watchtime') return (row.estimatedMinutesWatched !== undefined) ? Number((row.estimatedMinutesWatched / 60).toFixed(2)) : 0;
+    if (metric === 'subs') return (row.subscribersGained || 0) - (row.subscribersLost || 0);
+    if (metric === 'likes') return row.likes !== undefined ? row.likes : 0;
+    if (metric === 'comments') return row.comments !== undefined ? row.comments : 0;
+    if (metric === 'proxy') {
+      const rev = (row.estimatedRevenue !== undefined && row.estimatedRevenue !== null) ? Number(row.estimatedRevenue) : null;
+      const views = row.views || 0;
+      return (rev !== null && views > 0) ? (rev / (views / 1000)) : null;
+    }
+    return 0;
+  }
+
+  function formatMetricValue(val, metric, isNull = false) {
+    if (isNull || val === null || val === undefined) return '—';
+    if (metric === 'revenue' || metric === 'proxy') return formatCurrency(val);
+    if (metric === 'watchtime') return formatNumber(Number(val.toFixed(1))) + 'h';
+    if (metric === 'subs') return (val >= 0 ? '+' : '') + formatNumber(val);
+    return formatNumber(Math.round(val));
+  }
+
+  // --- 1. MULTI-CHANNEL PIVOT TABLE (VIEW 1 OVERVIEW - Issue 3 & 4 Fix) ---
   function renderOverviewPivotTable() {
     const tableHead = document.getElementById('pivot-table-head');
     const tableBody = document.getElementById('pivot-table-body');
@@ -2828,33 +2948,8 @@
     const metricFilter = state.pivotMetricFilter || 'revenue';
     const channels = CHANNELS_REGISTRY;
 
-    // Generate date columns
-    const dates = [];
-    const numCols = gran === 'day' ? 14 : (gran === 'week' ? 6 : 4);
-    const endDate = new Date(state.endDate || '2026-10-28');
-
-    for (let i = numCols - 1; i >= 0; i--) {
-      const d = new Date(endDate);
-      if (gran === 'day') {
-        d.setDate(d.getDate() - i);
-        dates.push({
-          key: d.toISOString().split('T')[0],
-          label: `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}`
-        });
-      } else if (gran === 'week') {
-        d.setDate(d.getDate() - i * 7);
-        dates.push({
-          key: `w_${i}`,
-          label: `T${numCols - i} (${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')})`
-        });
-      } else {
-        d.setMonth(d.getMonth() - i);
-        dates.push({
-          key: `m_${i}`,
-          label: `Tháng ${d.getMonth() + 1}`
-        });
-      }
-    }
+    // Generate dynamic date buckets adhering to active date range (Issue 4 Fix)
+    const dates = generatePeriodBuckets(state.startDate || '2026-10-01', state.endDate || '2026-10-28', gran);
 
     // Build Table Header
     let theadHtml = `<tr>
@@ -2869,9 +2964,9 @@
     theadHtml += `</tr>`;
     tableHead.innerHTML = theadHtml;
 
-    // Metrics definitions
+    // Metrics definitions with currency support (Issue 7 Fix)
     const allMetrics = [
-      { id: 'revenue', name: 'Doanh thu ước tính ($)', isCurr: true, color: 'var(--accent-amber)' },
+      { id: 'revenue', name: `Doanh thu ước tính (${state.currency === 'VND' ? '₫' : '$'})`, isCurr: true, color: 'var(--accent-amber)' },
       { id: 'views', name: 'Lượt xem (Views)', isCurr: false, color: 'var(--accent-emerald)' },
       { id: 'watchtime', name: 'Giờ xem (Hours)', isCurr: false, color: '#A78BFA' },
       { id: 'subs', name: 'Subscribers ròng', isCurr: false, color: 'var(--accent-cyan)' }
@@ -2881,69 +2976,98 @@
       ? allMetrics 
       : allMetrics.filter(m => m.id === metricFilter);
 
+    // Pre-calculate effective reports for all 15 channels
+    const channelReports = channels.map(ch => ({
+      ch,
+      report: getEffectiveChannelReport(ch.id, state.startDate, state.endDate, state.currency)
+    }));
+
+    // Calculate system totals per bucket with 100% mathematical consistency (Issue 3 Fix)
+    const primaryMet = activeMetrics[0] || allMetrics[0];
+    let totalConnectedPrimary = 0;
+    let hasAnyConnected = false;
+    const bucketTotals = dates.map(d => {
+      let sum = 0;
+      let hasData = false;
+      channelReports.forEach(({ report }) => {
+        if (report && report.has_analytics && report.rows) {
+          const r = report.rows.find(row => {
+            if (d.type === 'month') return row.day && row.day.startsWith(d.key);
+            if (d.type === 'week') return row.day && row.day >= d.startKey && row.day <= d.endKey;
+            return row.day === d.key;
+          });
+          if (r) {
+            const val = extractRowMetricValue(r, primaryMet.id);
+            if (val !== null) {
+              sum += val;
+              hasData = true;
+            }
+          }
+        }
+      });
+      if (hasData) {
+        totalConnectedPrimary += sum;
+        hasAnyConnected = true;
+      }
+      return hasData ? sum : null;
+    });
+
     let tbodyHtml = '';
 
     // Overall System Total Row
-    let totalConnectedRev = 0;
-    let hasAnyConnected = false;
-    channels.forEach(ch => {
-      const report = getEffectiveChannelReport(ch.id, state.startDate, state.endDate, state.currency);
-      if (report && report.has_analytics && report.totals && report.totals.estimatedRevenue != null) {
-        hasAnyConnected = true;
-        totalConnectedRev += Number(report.totals.estimatedRevenue);
-      }
-    });
-
     tbodyHtml += `<tr class="pivot-total-summary-row">
       <td class="col-freeze-1">★</td>
       <td class="col-freeze-2"><strong>TỔNG HỢP HỆ THỐNG</strong></td>
-      <td class="col-freeze-3" style="color:var(--accent-amber);">Doanh thu ước tính ($)</td>
-      <td class="col-freeze-4" style="color:var(--accent-amber); font-weight:700;">${hasAnyConnected ? formatCurrency(totalConnectedRev) : '— (Chưa có dữ liệu)'}</td>
+      <td class="col-freeze-3" style="color:${primaryMet.color};">${primaryMet.name}</td>
+      <td class="col-freeze-4" style="color:${primaryMet.color}; font-weight:700;">${hasAnyConnected ? formatMetricValue(totalConnectedPrimary, primaryMet.id) : '— (Chưa có dữ liệu)'}</td>
     `;
-    dates.forEach(() => {
-      tbodyHtml += `<td class="timeline-data-cell" style="color:var(--text-dim); text-align:right;">—</td>`;
+    bucketTotals.forEach(val => {
+      const formatted = (val !== null && hasAnyConnected) ? formatMetricValue(val, primaryMet.id) : '—';
+      tbodyHtml += `<td class="timeline-data-cell" style="color:${formatted === '—' ? 'var(--text-dim)' : 'inherit'}; text-align:right; font-weight:700;">${formatted}</td>`;
     });
     tbodyHtml += `</tr>`;
 
     // Channel Rows
-    channels.forEach((ch, chIdx) => {
-      const report = getEffectiveChannelReport(ch.id, state.startDate, state.endDate, state.currency);
+    channelReports.forEach(({ ch, report }, chIdx) => {
       const hasAnalytics = report && report.has_analytics && report.rows && report.rows.length > 0;
-      const totals = hasAnalytics ? (report.totals || {}) : {};
 
       activeMetrics.forEach((met, metIdx) => {
-        let totalValStr = '— · Chưa kết nối';
-        let rowValues = [];
+        let rowSum = 0;
+        let hasAnyRowVal = false;
 
-        if (hasAnalytics) {
-          if (met.id === 'revenue') {
-            totalValStr = totals.estimatedRevenue != null ? formatCurrency(totals.estimatedRevenue) : '— (Chưa cấp quyền)';
-          } else if (met.id === 'views') {
-            totalValStr = formatNumber(totals.views || 0);
-          } else if (met.id === 'watchtime') {
-            totalValStr = formatNumber(Number(((totals.estimatedMinutesWatched || 0) / 60).toFixed(1))) + 'h';
-          } else if (met.id === 'subs') {
-            const net = (totals.subscribersGained || 0) - (totals.subscribersLost || 0);
-            totalValStr = (net >= 0 ? '+' : '') + formatNumber(net);
+        const cellValues = dates.map(d => {
+          if (!hasAnalytics) return '—';
+          let matchedRows = [];
+          if (d.type === 'month') {
+            matchedRows = report.rows.filter(r => r.day && r.day.startsWith(d.key));
+          } else if (d.type === 'week') {
+            matchedRows = report.rows.filter(r => r.day && r.day >= d.startKey && r.day <= d.endKey);
+          } else {
+            const r = report.rows.find(r => r.day === d.key);
+            if (r) matchedRows.push(r);
           }
 
-          dates.forEach(d => {
-            const rowMatch = report.rows.find(r => r.day === d.key);
-            if (rowMatch) {
-              if (met.id === 'revenue') rowValues.push(rowMatch.estimatedRevenue != null ? formatCurrency(rowMatch.estimatedRevenue) : '—');
-              else if (met.id === 'views') rowValues.push(formatNumber(rowMatch.views || 0));
-              else if (met.id === 'watchtime') rowValues.push(formatNumber(Number(((rowMatch.estimatedMinutesWatched || 0) / 60).toFixed(1))) + 'h');
-              else if (met.id === 'subs') {
-                const net = (rowMatch.subscribersGained || 0) - (rowMatch.subscribersLost || 0);
-                rowValues.push((net >= 0 ? '+' : '') + formatNumber(net));
-              }
-            } else {
-              rowValues.push('—');
+          if (!matchedRows.length) return '—';
+
+          let valSum = 0;
+          let hasVal = false;
+          matchedRows.forEach(r => {
+            const v = extractRowMetricValue(r, met.id);
+            if (v !== null) {
+              valSum += v;
+              hasVal = true;
             }
           });
-        } else {
-          dates.forEach(() => rowValues.push('—'));
-        }
+
+          if (!hasVal) return '—';
+          rowSum += valSum;
+          hasAnyRowVal = true;
+          return formatMetricValue(valSum, met.id);
+        });
+
+        const totalValStr = hasAnalytics
+          ? (hasAnyRowVal ? formatMetricValue(rowSum, met.id) : '— (Chưa cấp quyền)')
+          : '— · Chưa kết nối';
 
         tbodyHtml += `<tr>`;
         if (metIdx === 0) {
@@ -2954,7 +3078,7 @@
                 <img src="${ch.avatar || ch.thumbnailUrl || ''}" style="width:26px; height:26px; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'">
                 <div>
                   <div style="font-weight:700; color:var(--text-main); font-size:12px;">${escapeHtml(ch.title)}</div>
-                  <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(ch.team || 'BgMedia')} • ${escapeHtml(ch.picName || '')}</div>
+                  <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(ch.team || 'BgMedia')} • ${escapeHtml(ch.picName || ch.pic || '')}</div>
                 </div>
               </div>
             </td>
@@ -2969,7 +3093,7 @@
           <td class="col-freeze-4" style="color:${met.color}; font-size:12px;">${totalValStr}</td>
         `;
 
-        rowValues.forEach(val => {
+        cellValues.forEach(val => {
           tbodyHtml += `<td class="timeline-data-cell" style="color: ${val === '—' ? 'var(--text-dim)' : 'inherit'}; text-align:right;">${val}</td>`;
         });
 
@@ -2979,22 +3103,48 @@
 
     tableBody.innerHTML = tbodyHtml;
   }
-  // --- 2. STAFF DATA PIVOT VIEW (VIEW 7 - Matching 20261028-111441.jpg) ---
+
+  // --- 2. STAFF DATA PIVOT VIEW (VIEW 7 - Issue 2 & 3 Fix) ---
   function renderStaffDataPivotView() {
     const tableHead = document.getElementById('staff-pivot-thead');
     const tableBody = document.getElementById('staff-pivot-tbody');
     const summaryBody = document.getElementById('staff-summary-tbody');
     if (!tableHead || !tableBody) return;
 
-    const employees = DATA_STORE.employees;
+    // Read Filter Controls (Issue 2 Fix)
+    const selEmp = document.getElementById('staff-data-filter-user') || document.getElementById('staff-data-filter-employee');
+    const inputStart = document.getElementById('staff-data-filter-start');
+    const inputEnd = document.getElementById('staff-data-filter-end');
+    const selGran = document.getElementById('staff-data-filter-granularity');
+    const selMetric = document.getElementById('staff-data-metric-select');
 
-    // 1. Summary Table Body (15 employees from DATA_STORE)
+    const selectedEmpId = selEmp ? selEmp.value : 'all';
+    const startDate = (inputStart && inputStart.value) ? inputStart.value : (state.startDate || '2026-10-01');
+    const endDate = (inputEnd && inputEnd.value) ? inputEnd.value : (state.endDate || '2026-10-28');
+    const gran = (selGran && selGran.value) ? selGran.value : 'day';
+    const metric = (selMetric && selMetric.value) ? selMetric.value : (state.staffDataMetric || 'revenue');
+    state.staffDataMetric = metric;
+
+    // Filter employees: all or single selection (Issue 2 Fix)
+    let employees = DATA_STORE.employees;
+    if (selectedEmpId && selectedEmpId !== 'all') {
+      const numSelected = parseInt(String(selectedEmpId).replace(/[^0-9]/g, ''), 10);
+      employees = employees.filter(e => {
+        if (e.id === selectedEmpId || e.username === selectedEmpId) return true;
+        const num = parseInt(String(e.id).replace(/[^0-9]/g, ''), 10);
+        if (!isNaN(num) && !isNaN(numSelected) && num === numSelected) return true;
+        const normId = `NV-${String(num).padStart(2, '0')}`;
+        return normId === selectedEmpId;
+      });
+    }
+
+    // 1. Summary Table Body
     if (summaryBody) {
       let summaryHtml = '';
       employees.forEach(emp => {
         const ch = DATA_STORE.channelMap.get(emp.channelId) || {};
         const team = DATA_STORE.teamMap.get(emp.teamId) || {};
-        const report = getEffectiveChannelReport(emp.channelId, state.startDate, state.endDate, state.currency);
+        const report = getEffectiveChannelReport(emp.channelId, startDate, endDate, state.currency);
         const hasAnalytics = report && report.has_analytics;
         const totals = hasAnalytics ? (report.totals || {}) : {};
 
@@ -3005,7 +3155,7 @@
         summaryHtml += `
           <tr>
             <td><code>${emp.id}</code></td>
-            <td><strong>${escapeHtml(emp.name)}</strong> (${escapeHtml(emp.username)})</td>
+            <td><strong>${escapeHtml(emp.name)}</strong></td>
             <td>${escapeHtml(team.name || 'BgMedia')}</td>
             <td><span style="color:var(--accent-cyan); font-weight:600;">${escapeHtml(ch.title || emp.channelId)}</span></td>
             <td class="text-right font-mono">${formatNumber(ch.videoCount || 0)} video</td>
@@ -3016,7 +3166,7 @@
             <td class="text-right font-mono" style="color:var(--accent-cyan); font-weight:700;">${formatNumber(ch.subscriberCount || 0)}</td>
             <td class="text-center">
               ${hasAnalytics 
-                ? '<span class="badge" style="background:rgba(16,185,129,0.15); color:#10B981; font-size:11px;">LIVE OAuth</span>' 
+                ? (state.viewMode === 'demo' ? '<span class="badge" style="background:rgba(245,158,11,0.15); color:#F59E0B; font-size:11px;"><i class="ri-sparkling-fill"></i> DEMO Analytics</span>' : '<span class="badge" style="background:rgba(16,185,129,0.15); color:#10B981; font-size:11px;">LIVE OAuth</span>')
                 : '<span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-dim); font-size:11px;">Chưa kết nối</span>'}
             </td>
             <td class="text-center font-mono">28/10/2026</td>
@@ -3026,23 +3176,21 @@
       summaryBody.innerHTML = summaryHtml;
     }
 
-    // 2. Staff Pivot Table (15 employees across timeline)
-    const numDays = 14;
-    const endDate = new Date(state.endDate || '2026-10-28');
-    const dates = [];
-    for (let i = numDays - 1; i >= 0; i--) {
-      const d = new Date(endDate);
-      d.setDate(d.getDate() - i);
-      dates.push({
-        key: d.toISOString().split('T')[0],
-        label: `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}`
-      });
-    }
+    // 2. Staff Pivot Table (Generated based on selected range and metric - Issue 2 & 3 Fix)
+    const dates = generatePeriodBuckets(startDate, endDate, gran);
+
+    let metricName = `Doanh thu ước tính (${state.currency === 'VND' ? '₫' : '$'})`;
+    if (metric === 'views') metricName = 'Lượt xem (Views)';
+    else if (metric === 'watchtime') metricName = 'Giờ xem (Hours)';
+    else if (metric === 'subs') metricName = 'Subscribers ròng';
+    else if (metric === 'likes') metricName = 'Lượt thích (Likes)';
+    else if (metric === 'comments') metricName = 'Lượt bình luận (Comments)';
+    else if (metric === 'proxy') metricName = `Doanh thu API/1.000 views (${state.currency === 'VND' ? '₫' : '$'})`;
 
     let theadHtml = `<tr>
       <th class="sp-freeze-1">TT</th>
       <th class="sp-freeze-2">Tên nhân viên / Kênh</th>
-      <th class="sp-freeze-3">Tổng kỳ</th>
+      <th class="sp-freeze-3">Tổng kỳ (${metricName})</th>
     `;
     dates.forEach(d => {
       theadHtml += `<th class="timeline-data-cell" style="text-align:right;">${d.label}</th>`;
@@ -3050,39 +3198,134 @@
     theadHtml += `</tr>`;
     tableHead.innerHTML = theadHtml;
 
-    let tbodyHtml = '';
-    employees.forEach((emp, idx) => {
-      const ch = DATA_STORE.channelMap.get(emp.channelId) || {};
-        const report = getEffectiveChannelReport(emp.channelId, state.startDate, state.endDate, state.currency);
-      const hasAnalytics = report && report.has_analytics && report.rows;
-      const totals = hasAnalytics ? (report.totals || {}) : {};
+    // Pre-calculate reports for displayed employees
+    const staffReports = employees.map(emp => ({
+      emp,
+      ch: DATA_STORE.channelMap.get(emp.channelId) || {},
+      report: getEffectiveChannelReport(emp.channelId, startDate, endDate, state.currency)
+    }));
 
-      const totalStr = (hasAnalytics && totals.estimatedRevenue != null) ? formatCurrency(totals.estimatedRevenue) : '—';
+    // Calculate system totals per bucket for staff with 100% mathematical consistency (Issue 3 Fix)
+    let totalAllStaff = 0;
+    let hasAnyStaffData = false;
+    const bucketTotals = dates.map(d => {
+      let sum = 0;
+      let hasData = false;
+      staffReports.forEach(({ report }) => {
+        if (report && report.has_analytics && report.rows) {
+          let matchedRows = [];
+          if (d.type === 'month') {
+            matchedRows = report.rows.filter(row => row.day && row.day.startsWith(d.key));
+          } else if (d.type === 'week') {
+            matchedRows = report.rows.filter(row => row.day && row.day >= d.startKey && row.day <= d.endKey);
+          } else {
+            const r = report.rows.find(row => row.day === d.key);
+            if (r) matchedRows.push(r);
+          }
+          matchedRows.forEach(r => {
+            const v = extractRowMetricValue(r, metric);
+            if (v !== null) {
+              sum += v;
+              hasData = true;
+            }
+          });
+        }
+      });
+      if (hasData) {
+        totalAllStaff += sum;
+        hasAnyStaffData = true;
+      }
+      return hasData ? sum : null;
+    });
+
+    let tbodyHtml = '';
+
+    // Total Summary Row for Staff Pivot
+    tbodyHtml += `<tr class="staff-pivot-total-row">
+      <td class="sp-freeze-1">★</td>
+      <td class="sp-freeze-2"><strong>TỔNG CỘNG (${employees.length} NHÂN VIÊN)</strong></td>
+      <td class="sp-freeze-3" style="font-weight:800;">${hasAnyStaffData ? formatMetricValue(totalAllStaff, metric) : '—'}</td>
+    `;
+    bucketTotals.forEach(val => {
+      const formatted = (val !== null && hasAnyStaffData) ? formatMetricValue(val, metric) : '—';
+      tbodyHtml += `<td class="timeline-data-cell" style="text-align:right; font-weight:700;">${formatted}</td>`;
+    });
+    tbodyHtml += `</tr>`;
+
+    // Staff individual rows
+    staffReports.forEach(({ emp, ch, report }, idx) => {
+      const hasAnalytics = report && report.has_analytics && report.rows;
+      let rowSum = 0;
+      let hasAnyRowVal = false;
+
+      const cellValues = dates.map(d => {
+        if (!hasAnalytics) return '—';
+        let matchedRows = [];
+        if (d.type === 'month') {
+          matchedRows = report.rows.filter(r => r.day && r.day.startsWith(d.key));
+        } else if (d.type === 'week') {
+          matchedRows = report.rows.filter(r => r.day && r.day >= d.startKey && r.day <= d.endKey);
+        } else {
+          const r = report.rows.find(r => r.day === d.key);
+          if (r) matchedRows.push(r);
+        }
+
+        if (!matchedRows.length) return '—';
+
+        let valSum = 0;
+        let hasVal = false;
+        matchedRows.forEach(r => {
+          const v = extractRowMetricValue(r, metric);
+          if (v !== null) {
+            valSum += v;
+            hasVal = true;
+          }
+        });
+
+        if (!hasVal) return '—';
+        rowSum += valSum;
+        hasAnyRowVal = true;
+        return formatMetricValue(valSum, metric);
+      });
+
+      const totalStr = hasAnalytics
+        ? (hasAnyRowVal ? formatMetricValue(rowSum, metric) : '— (Chưa cấp quyền)')
+        : '—';
 
       tbodyHtml += `<tr>
         <td class="sp-freeze-1">${idx + 1}</td>
         <td class="sp-freeze-2">
           <strong style="color:var(--text-main);">${escapeHtml(emp.name)}</strong>
-          <div style="font-size:11px; color:var(--text-dim);">${escapeHtml(ch.title || emp.username)}</div>
+          <div style="font-size:11px; color:var(--text-dim);">${escapeHtml(ch.title || emp.id)}</div>
         </td>
         <td class="sp-freeze-3" style="color:var(--accent-amber); font-weight:700;">${totalStr}</td>
       `;
 
-      dates.forEach(d => {
-        let cellStr = '—';
-        if (hasAnalytics) {
-          const row = report.rows.find(r => r.day === d.key);
-          if (row && row.estimatedRevenue != null) {
-            cellStr = formatCurrency(row.estimatedRevenue);
-          }
-        }
-        tbodyHtml += `<td class="timeline-data-cell" style="color:${cellStr === '—' ? 'var(--text-dim)' : 'inherit'}; text-align:right;">${cellStr}</td>`;
+      cellValues.forEach(val => {
+        tbodyHtml += `<td class="timeline-data-cell" style="color:${val === '—' ? 'var(--text-dim)' : 'inherit'}; text-align:right;">${val}</td>`;
       });
       tbodyHtml += `</tr>`;
     });
 
     tableBody.innerHTML = tbodyHtml;
+
+    // Update Footer Text (Issue 7 Fix)
+    const footerEl = document.getElementById('staff-pivot-currency-footer');
+    if (footerEl) {
+      if (metric === 'revenue' || metric === 'proxy') {
+        footerEl.textContent = `Đơn vị: ${state.currency} (${state.currency === 'VND' ? '₫' : '$'}) ước tính`;
+      } else if (metric === 'views') {
+        footerEl.textContent = `Đơn vị: Lượt xem (Views)`;
+      } else if (metric === 'watchtime') {
+        footerEl.textContent = `Đơn vị: Giờ xem (Hours)`;
+      } else if (metric === 'subs') {
+        footerEl.textContent = `Đơn vị: Người đăng ký ròng`;
+      } else {
+        footerEl.textContent = `Đơn vị: ${metricName}`;
+      }
+    }
   }
+
   // --- 3. PROJECT REPORT VIEW (VIEW 3) ---
   function renderProjectReportView() {
     const tableBody = document.getElementById('project-table-body');
@@ -3129,7 +3372,7 @@
     if (!drawer) return;
 
     // Find video data
-    const allVideos = (currentData && currentData.videos) ? currentData.videos : [];
+    const allVideos = (currentData && currentData.videos && currentData.videos.length) ? currentData.videos : (DATA_STORE.videos || []);
     const video = allVideos.find(v => v.id === videoId) || allVideos[0];
     if (!video) return;
 
@@ -3155,18 +3398,19 @@
     const elInter = document.getElementById('drawer-stat-interactions');
     const elLife = document.getElementById('drawer-stat-lifetime');
 
-    const vViews = video.views || 2500;
-    const vRev = video.revenue || (vViews * 0.0025);
-    const vLikes = video.likes || Math.round(vViews * 0.045);
-    const vComm = video.comments || Math.round(vViews * 0.008);
+    // Preserve true zeros and distinguish nulls (Issue 11 Fix)
+    const vViews = (video.views !== undefined && video.views !== null) ? Number(video.views) : 0;
+    const vRev = (video.revenue !== undefined && video.revenue !== null) ? Number(video.revenue) : null;
+    const vLikes = (video.likes !== undefined && video.likes !== null) ? Number(video.likes) : 0;
+    const vComm = (video.comments !== undefined && video.comments !== null) ? Number(video.comments) : 0;
 
     if (elViews) elViews.textContent = formatNumber(vViews);
-    if (elRev) elRev.textContent = formatCurrency(vRev);
-    if (elProxy) elProxy.textContent = `$${(vRev / (vViews / 1000)).toFixed(2)}`;
-    if (elAvd) elAvd.textContent = '2m 54s';
-    if (elAvp) elAvp.textContent = '48.2%';
-    if (elInter) elInter.textContent = `${vLikes} likes • ${vComm} cmt`;
-    if (elLife) elLife.textContent = `${formatNumber(vViews * 3)} views lifetime • ${formatNumber(Math.round(vLikes * 2.8))} likes`;
+    if (elRev) elRev.textContent = vRev != null ? formatCurrency(vRev) : '—';
+    if (elProxy) elProxy.textContent = (vRev != null && vViews > 0) ? formatCurrency(vRev / (vViews / 1000)) : '—';
+    if (elAvd) elAvd.textContent = video.duration || '—';
+    if (elAvp) elAvp.textContent = (video.averageViewPercentage !== undefined && video.averageViewPercentage !== null) ? `${video.averageViewPercentage}%` : '—';
+    if (elInter) elInter.textContent = `${formatNumber(vLikes)} thích • ${formatNumber(vComm)} bình luận`;
+    if (elLife) elLife.textContent = `${formatNumber(vViews)} lượt xem (Công khai)`;
 
     // Render Audience Retention Curve (elapsedVideoTimeRatio vs audienceWatchRatio)
     const ctx = document.getElementById('videoRetentionChart');
@@ -3252,8 +3496,16 @@
   window.appOpenVideoDrawer = openVideoRetentionDrawer;
   window.appCloseVideoDrawer = closeVideoRetentionDrawer;
   window.appOpenProjectVideos = function(channelId) {
-    switchChannel(channelId);
-    switchView('view-report-channel');
+    switchView('view-mgmt-video');
+    renderVideoManagementView();
+    if (channelId) {
+      switchChannel(channelId);
+      const chanSelect = document.getElementById('mgmt-video-filter-channel');
+      if (chanSelect) {
+        chanSelect.value = channelId;
+      }
+      renderVideoManagementView();
+    }
   };
 
   // --- 6. SETUP ENTERPRISE EVENT LISTENERS ---
@@ -3338,34 +3590,41 @@
       });
     }
 
-    // CSV Exports with metadata
+    // Real CSV Exports (Issue 6 Fix)
     const btnExportPivot = document.getElementById('btn-export-pivot-csv');
     if (btnExportPivot) {
-      btnExportPivot.addEventListener('click', () => {
-        showToast('Đang xuất file CSV Bảng Pivot nhiều kênh (Kỳ Analytics Pacific Time)...');
-      });
+      btnExportPivot.addEventListener('click', exportPivotCsv);
     }
 
     const btnExportStaff = document.getElementById('btn-export-staff-csv');
     if (btnExportStaff) {
-      btnExportStaff.addEventListener('click', () => {
-        exportStaffDataCsv();
-      });
+      btnExportStaff.addEventListener('click', exportStaffDataCsv);
     }
 
     const btnExportPrj = document.getElementById('btn-export-project-report');
     if (btnExportPrj) {
-      btnExportPrj.addEventListener('click', () => {
-        showToast('Đang xuất file CSV Báo Cáo Dự Án...');
-      });
+      btnExportPrj.addEventListener('click', exportProjectCsv);
     }
 
     const btnExportNet = document.getElementById('btn-export-network-report');
     if (btnExportNet) {
-      btnExportNet.addEventListener('click', () => {
-        showToast('Đang xuất file CSV Toàn Mạng Lưới BgMedia Network...');
-      });
+      btnExportNet.addEventListener('click', exportNetworkCsv);
     }
+
+    // Staff Data Filters Interactive Binding (Issue 2 Fix)
+    const selStaffEmp = document.getElementById('staff-data-filter-user') || document.getElementById('staff-data-filter-employee');
+    const inputStaffStart = document.getElementById('staff-data-filter-start');
+    const inputStaffEnd = document.getElementById('staff-data-filter-end');
+    const selStaffGran = document.getElementById('staff-data-filter-granularity');
+    const selStaffMetric = document.getElementById('staff-data-metric-select');
+
+    [selStaffEmp, inputStaffStart, inputStaffEnd, selStaffGran, selStaffMetric].forEach(el => {
+      if (el) {
+        el.addEventListener('change', () => {
+          renderStaffDataPivotView();
+        });
+      }
+    });
 
     // Demo Mode Buttons & Scenario Selector
     const btnModeLive = document.getElementById('btn-mode-live');
@@ -3453,6 +3712,22 @@
 
 function switchView(viewId) {
     if (!viewId) return;
+
+    // Handle Guide TOC anchors (e.g. guide-sec-1) without hiding dashboard views
+    if (viewId.startsWith('guide-sec-')) {
+      switchView('view-report-guide');
+      const sec = document.getElementById(viewId);
+      if (sec) {
+        setTimeout(() => sec.scrollIntoView({ behavior: 'smooth' }), 50);
+      }
+      return;
+    }
+
+    const targetEl = document.getElementById(viewId);
+    if (!targetEl || !targetEl.classList.contains('dashboard-view')) {
+      return;
+    }
+
     state.activeView = viewId;
 
     // Hide all views, display target view
@@ -3911,6 +4186,126 @@ function switchView(viewId) {
         }
       });
     }
+  }
+
+  // =========================================================================
+  // REAL CSV EXPORTS (Issue 6 Fix - Full Metadata, UTF-8 BOM, Real Downloads)
+  // =========================================================================
+  function exportPivotCsv() {
+    const gran = state.pivotGranularity || 'day';
+    const metricFilter = state.pivotMetricFilter || 'revenue';
+    const dates = generatePeriodBuckets(state.startDate || '2026-10-01', state.endDate || '2026-10-28', gran);
+    const channels = CHANNELS_REGISTRY;
+
+    let csv = '\uFEFF';
+    csv += `# BAO CAO PIVOT NHIEU KENH\n`;
+    csv += `# Nguon: ${state.viewMode === 'demo' ? 'Du lieu minh hoa (data/demo-analytics)' : 'Du lieu cong khai YouTube'}\n`;
+    csv += `# Pham vi ky: ${state.startDate} den ${state.endDate} (Timezone: America/Los_Angeles)\n`;
+    csv += `# Tien te: ${state.currency}\n`;
+    csv += `# Chi so: ${metricFilter}\n\n`;
+
+    const headers = ['STT', 'Kenh', 'Team', 'PIC', 'Tong_Ky', ...dates.map(d => d.label)];
+    csv += headers.join(',') + '\n';
+
+    channels.forEach((ch, idx) => {
+      const report = getEffectiveChannelReport(ch.id, state.startDate, state.endDate, state.currency);
+      const hasAnalytics = report && report.has_analytics && report.rows;
+      let rowSum = 0;
+      let hasData = false;
+
+      const cells = dates.map(d => {
+        if (!hasAnalytics) return '—';
+        const r = report.rows.find(row => (d.type === 'month' ? row.day && row.day.startsWith(d.key) : row.day === d.key));
+        if (r) {
+          const v = extractRowMetricValue(r, metricFilter === 'all' ? 'revenue' : metricFilter);
+          if (v !== null) {
+            rowSum += v;
+            hasData = true;
+            return v;
+          }
+        }
+        return '—';
+      });
+
+      const row = [
+        idx + 1,
+        `"${ch.title.replace(/"/g, '""')}"`,
+        `"${ch.team || 'BgMedia'}"`,
+        `"${ch.picName || ''}"`,
+        hasData ? rowSum : '—',
+        ...cells
+      ];
+      csv += row.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bao_cao_pivot_tong_hop_${state.startDate}_${state.endDate}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Đã tải xuống file CSV Bảng Pivot nhiều kênh thành công!');
+  }
+
+  function exportProjectCsv() {
+    let csv = '\uFEFF';
+    csv += `# BAO CAO THEO DU AN\n`;
+    csv += `# Nguon: ${state.viewMode === 'demo' ? 'Du lieu minh hoa theo phan cong to chuc' : 'Chua cau hinh'}\n`;
+    csv += `# Ngay xuat: ${new Date().toISOString()}\n\n`;
+    csv += 'Ma_Du_An,Ten_Du_An,Mo_Ta,Team_Phu_Trach,Manager,Kenh_Chinh,Trang_Thai\n';
+
+    const projects = [
+      { id: 'PRJ-01', name: 'Chill Coffee Lofi Project', desc: 'Du an nhac Lo-fi thu gian quan cafe', team: 'Jazz & Lo-fi', mgr: 'Nguyễn Văn An', chan: 'Lunavia', status: 'Dang hoat dong' },
+      { id: 'PRJ-02', name: 'Synthwave Nightride 80s', desc: 'Du an dong nhac dien tu hoai niem thap nien 80', team: 'Retro & Electronic', mgr: 'Phan Bảo Hùng', chan: '80s Groove Machine', status: 'Dang hoat dong' },
+      { id: 'PRJ-03', name: 'Deep Focus Study Beats', desc: 'Series am nhac tang tap trung hoc tap & lam viec', team: 'Indie & Chill', mgr: 'Trần Thị Oanh', chan: 'Lofi Girl', status: 'Dang hoat dong' }
+    ];
+
+    projects.forEach(p => {
+      csv += `"${p.id}","${p.name}","${p.desc}","${p.team}","${p.mgr}","${p.chan}","${p.status}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bao_cao_du_an_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Đã tải xuống file CSV Báo Cáo Dự Án!');
+  }
+
+  function exportNetworkCsv() {
+    let csv = '\uFEFF';
+    csv += `# BAO CAO TOAN MANG LUOI BGMEDIA NETWORK\n`;
+    csv += `# Nguon: ${state.viewMode === 'demo' ? 'Du lieu minh hoa tong hop 15 kenh (data/demo-analytics)' : 'Du lieu cong khai YouTube'}\n`;
+    csv += `# Pham vi ky: ${state.startDate} den ${state.endDate}\n`;
+    csv += `# Tien te: ${state.currency}\n\n`;
+    csv += 'Chi_So,Gia_Tri,Don_Vi,Ghi_Chu\n';
+
+    const totalViews = DATA_STORE.channels.reduce((sum, c) => sum + (c.viewCount || 0), 0);
+    const totalSubs = DATA_STORE.channels.reduce((sum, c) => sum + (c.subscriberCount || 0), 0);
+
+    csv += `"Tong_Kenh_Truc_Thuoc",15,"Kenh","3 Teams x 5 Nhan su"\n`;
+    csv += `"Tong_Doi_Ngu",15,"Nhan su","Phan cong 1:1"\n`;
+    csv += `"Tong_Teams",3,"Team","Jazz & Lo-fi, Retro & Electronic, Indie & Chill"\n`;
+    csv += `"Tong_Luot_Xem_Cong_Khai",${totalViews},"Views","Lifetime YouTube Snapshot"\n`;
+    csv += `"Tong_Subscribers_Cong_Khai",${totalSubs},"Subs","Cong don 15 kenh"\n`;
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bao_cao_toan_mang_luoi_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Đã tải xuống file CSV Báo Cáo Toàn Mạng Lưới!');
   }
 
   function exportChannelCompareCsv() {
@@ -5234,6 +5629,13 @@ function switchView(viewId) {
   window.appToggleChannelStatus = toggleChannelStatus;
   window.DATA_STORE = DATA_STORE;
   window.state = state;
+  window.currentData = currentData;
+  window.renderOverviewPivotTable = renderOverviewPivotTable;
+  window.renderStaffDataPivotView = renderStaffDataPivotView;
+  window.exportPivotCsv = exportPivotCsv;
+  window.exportStaffDataCsv = exportStaffDataCsv;
+  window.exportProjectCsv = exportProjectCsv;
+  window.exportNetworkCsv = exportNetworkCsv;
 
   function setupEvents() {
     elements.themeToggleBtn.addEventListener('click', () => {
@@ -5257,6 +5659,10 @@ function switchView(viewId) {
         renderMainChart();
         renderVideosTable();
         renderComparisonMatrix();
+        renderOverviewPivotTable();
+        renderStaffDataPivotView();
+        renderTeamReportView();
+        renderChannelCompareChartsAndTable();
         updateOtherViewsCurrency();
         showToast(`Đã chuyển đơn vị tiền tệ sang ${state.currency}`);
       });
@@ -6129,10 +6535,17 @@ function switchView(viewId) {
       });
     }
 
-    // 7. Browser Hashchange Navigation (Support Back/Forward)
+    // 7. Browser Hashchange Navigation (Support Back/Forward and Guide Anchors)
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash && document.getElementById(hash)) {
+      if (hash.startsWith('guide-sec-')) {
+        switchView('view-report-guide');
+        const sec = document.getElementById(hash);
+        if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+      const el = document.getElementById(hash);
+      if (el && el.classList.contains('dashboard-view')) {
         switchView(hash);
       }
     });

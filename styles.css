@@ -4202,12 +4202,13 @@ input:checked + .slider:before {
   background: rgba(255, 255, 255, 0.035);
 }
 
-/* Freeze Columns for Pivot */
+/* Freeze Columns for Pivot (Theme-safe with CSS variables & Mobile responsive) */
 .pivot-table .col-freeze-1 {
   position: sticky;
   left: 0;
   z-index: 5;
-  background: #111726;
+  background: var(--bg-card);
+  color: var(--text-main);
   width: 50px;
   min-width: 50px;
   text-align: center;
@@ -4218,7 +4219,8 @@ input:checked + .slider:before {
   position: sticky;
   left: 50px;
   z-index: 5;
-  background: #111726;
+  background: var(--bg-card);
+  color: var(--text-main);
   min-width: 220px;
   max-width: 260px;
   border-right: 1px solid var(--border-subtle);
@@ -4228,7 +4230,8 @@ input:checked + .slider:before {
   position: sticky;
   left: 270px;
   z-index: 5;
-  background: #111726;
+  background: var(--bg-card);
+  color: var(--text-main);
   min-width: 150px;
   border-right: 1px solid var(--border-subtle);
 }
@@ -4237,7 +4240,8 @@ input:checked + .slider:before {
   position: sticky;
   left: 420px;
   z-index: 5;
-  background: #111726;
+  background: var(--bg-card);
+  color: var(--text-main);
   min-width: 140px;
   font-weight: 700;
   text-align: right;
@@ -4249,7 +4253,8 @@ input:checked + .slider:before {
 .pivot-table thead th.col-freeze-3,
 .pivot-table thead th.col-freeze-4 {
   z-index: 15;
-  background: #0f1524;
+  background: var(--bg-card-hover, var(--bg-card));
+  color: var(--text-muted);
 }
 
 .pivot-table .timeline-data-cell {
@@ -4261,7 +4266,7 @@ input:checked + .slider:before {
 }
 
 .pivot-total-summary-row td {
-  background: rgba(245, 63, 63, 0.06) !important;
+  background: rgba(245, 63, 63, 0.08) !important;
   font-weight: 800;
   border-bottom: 2px solid rgba(245, 63, 63, 0.25);
   color: var(--text-main);
@@ -4271,8 +4276,8 @@ input:checked + .slider:before {
 .pivot-total-summary-row .col-freeze-2,
 .pivot-total-summary-row .col-freeze-3,
 .pivot-total-summary-row .col-freeze-4 {
-  background: #191c2b !important;
-  color: #ff6b6b;
+  background: var(--bg-card) !important;
+  color: var(--yt-red, #ff6b6b) !important;
 }
 
 /* Staff Pivot Table (Matching 20261028-111441.jpg) */
@@ -4294,7 +4299,7 @@ input:checked + .slider:before {
 .staff-pivot-table thead th {
   position: sticky;
   top: 0;
-  background: #0f1524;
+  background: var(--bg-card-hover, var(--bg-card));
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 700;
@@ -4308,18 +4313,20 @@ input:checked + .slider:before {
   padding: 10px 14px;
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-card);
+  color: var(--text-main);
   white-space: nowrap;
 }
 
 .staff-pivot-table tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-subtle-hover, rgba(255, 255, 255, 0.03));
 }
 
 .staff-pivot-table .sp-freeze-1 {
   position: sticky;
   left: 0;
   z-index: 5;
-  background: #111726;
+  background: var(--bg-card);
+  color: var(--text-main);
   width: 48px;
   text-align: center;
   border-right: 1px solid var(--border-subtle);
@@ -4329,7 +4336,8 @@ input:checked + .slider:before {
   position: sticky;
   left: 48px;
   z-index: 5;
-  background: #111726;
+  background: var(--bg-card);
+  color: var(--text-main);
   min-width: 160px;
   border-right: 1px solid var(--border-subtle);
 }
@@ -4338,7 +4346,8 @@ input:checked + .slider:before {
   position: sticky;
   left: 208px;
   z-index: 5;
-  background: #111726;
+  background: var(--bg-card);
+  color: var(--text-main);
   min-width: 130px;
   text-align: right;
   border-right: 2px solid var(--border-medium);
@@ -4349,12 +4358,13 @@ input:checked + .slider:before {
 .staff-pivot-table thead th.sp-freeze-2,
 .staff-pivot-table thead th.sp-freeze-3 {
   z-index: 15;
-  background: #0f1524;
+  background: var(--bg-card-hover, var(--bg-card));
+  color: var(--text-muted);
 }
 
 .staff-pivot-total-row td {
   background: rgba(245, 63, 63, 0.08) !important;
-  color: #ff6b6b;
+  color: var(--yt-red, #ff6b6b);
   font-weight: 800;
   border-bottom: 2px solid rgba(245, 63, 63, 0.3);
 }
@@ -4362,8 +4372,56 @@ input:checked + .slider:before {
 .staff-pivot-total-row .sp-freeze-1,
 .staff-pivot-total-row .sp-freeze-2,
 .staff-pivot-total-row .sp-freeze-3 {
-  background: #1c1825 !important;
-  color: #ff6b6b !important;
+  background: var(--bg-card) !important;
+  color: var(--yt-red, #ff6b6b) !important;
+}
+
+/* Mobile Responsive Overrides for Sticky Columns (390px Viewport Support) */
+@media (max-width: 768px) {
+  .pivot-table {
+    min-width: 800px;
+  }
+  .pivot-table .col-freeze-1 {
+    width: 36px;
+    min-width: 36px;
+  }
+  .pivot-table .col-freeze-2 {
+    left: 36px;
+    min-width: 130px;
+    max-width: 140px;
+  }
+  .pivot-table .col-freeze-3,
+  .pivot-table .col-freeze-4,
+  .pivot-table thead th.col-freeze-3,
+  .pivot-table thead th.col-freeze-4,
+  .pivot-total-summary-row .col-freeze-3,
+  .pivot-total-summary-row .col-freeze-4 {
+    position: static !important;
+    left: auto !important;
+    z-index: 1 !important;
+    border-right: 1px solid var(--border-subtle) !important;
+  }
+
+  .staff-pivot-table {
+    min-width: 800px;
+  }
+  .staff-pivot-table .sp-freeze-1 {
+    width: 36px;
+    min-width: 36px;
+  }
+  .staff-pivot-table .sp-freeze-2 {
+    left: 36px;
+    min-width: 120px;
+    max-width: 130px;
+  }
+  .staff-pivot-table .sp-freeze-3,
+  .staff-pivot-table thead th.sp-freeze-3,
+  .staff-pivot-total-row .sp-freeze-3 {
+    position: static !important;
+    left: auto !important;
+    z-index: 1 !important;
+    border-right: 1px solid var(--border-subtle) !important;
+  }
 }
 
 /* Video Retention Drawer */
@@ -4389,7 +4447,8 @@ input:checked + .slider:before {
   width: 100%;
   max-width: 720px;
   height: 100%;
-  background: #0f1422;
+  background: var(--bg-card);
+  color: var(--text-main);
   border-left: 1px solid var(--border-medium);
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6);
   display: flex;

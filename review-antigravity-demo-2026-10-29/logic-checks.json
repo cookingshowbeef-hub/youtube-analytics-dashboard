@@ -1,0 +1,53 @@
+{
+  "baseline_28d": {
+    "views": 20334,
+    "revenue": 20.79,
+    "expected_views": 20334,
+    "expected_revenue": 20.79,
+    "matched": true
+  },
+  "comparison": {
+    "table_contains_positive_revenue": true,
+    "bar_values": [
+      0,
+      0,
+      0
+    ],
+    "line_series_count": 3
+  },
+  "no_monetary": {
+    "adapter_revenue": null,
+    "kpi_display": "$0.00"
+  },
+  "zero_denominator": {
+    "views": 0,
+    "minutes": 185995,
+    "subscribersGained": 42
+  },
+  "delayed_monetary": {
+    "revenue": 19.1,
+    "full_views": 20334,
+    "aligned_views": 18081,
+    "ui_proxy": 0.9393,
+    "expected_proxy": 1.0564
+  },
+  "year_2025": {
+    "row_count": 0,
+    "has_analytics": true,
+    "views": 0
+  },
+  "csv": {
+    "compare_marks_live_oauth": true,
+    "staff_marks_live_oauth": true,
+    "contains_demo_provenance": false
+  },
+  "bundle_integrity": {
+    "bundle_2026_rows_match_canonical": true,
+    "summaries_match_canonical": true,
+    "retention_matches_canonical": true
+  },
+  "demo_fx": {
+    "expected_28d_vnd_daily_conversion": 524722,
+    "ui_fixed_rate_vnd": 529106
+  }
+}

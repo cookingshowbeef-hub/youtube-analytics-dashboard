@@ -484,6 +484,16 @@
     teamRevFocusMain: document.getElementById('team-rev-focus-main')
   };
 
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function formatNumber(num) {
     if (num === null || num === undefined) return '0';
     return new Intl.NumberFormat('vi-VN').format(Math.round(num));
@@ -1176,8 +1186,10 @@
     if (elements.valTotalComments) elements.valTotalComments.textContent = formatNumber(displayComments);
     if (elements.valTotalShares) elements.valTotalShares.textContent = '—';
 
-    const totalUsRevenue = Number((displayRevUSD * 0.58).toFixed(2));
-    if (elements.valUsRev) elements.valUsRev.textContent = `${formatCurrency(totalUsRevenue)} (58.0%)`;
+    if (elements.valUsRev) {
+      const hasRev = hasAnalytics && currentData.timeline.revenue && currentData.timeline.revenue.length > 0;
+      elements.valUsRev.textContent = hasRev ? formatCurrency(currentData.timeline.revenue.reduce((a, b) => a + (b || 0), 0)) : '—';
+    }
 
     renderAllSparklines();
     renderComparisonMatrix();

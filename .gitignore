@@ -3,3 +3,9 @@
 scratch/
 find_me_*.txt
 test.txt
+oauth_token.json
+client_secret*.json
+*.bak
+__pycache__/
+*.pyc
+.pytest_cache/

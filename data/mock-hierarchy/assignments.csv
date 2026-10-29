@@ -1,0 +1,16 @@
+﻿team_id,team_name,employee_id,employee_name,channel_id,channel_title,handle,subscribers_public,views_lifetime,video_count_public,sampled_videos,fetched_at_utc,organization_source,channel_source
+TEAM-01,Jazz & Lo-fi,EMP-001,Nguyễn Văn An,UCL9VCEoz6M6JcUKxlJcr3LQ,Lunavia,@lunaviavintagemelodies,1320,254220,63,10,2026-10-29T01:09:56Z,mock_org,youtube_data_api_v3
+TEAM-01,Jazz & Lo-fi,EMP-002,Lê Minh Anh,UCSJ4gkVC6NrvII8umztf0Ow,Lofi Girl,@lofigirl,15800000,2721600448,477,10,2026-10-29T01:09:56Z,mock_org,youtube_data_api_v3
+TEAM-01,Jazz & Lo-fi,EMP-003,Phạm Hà Linh,UCOxqgCwgOqC2lMqC5PYz_Dg,Chillhop Music,@chillhopmusic,3300000,700520090,1040,10,2026-10-29T01:09:56Z,mock_org,youtube_data_api_v3
+TEAM-01,Jazz & Lo-fi,EMP-004,Đỗ Gia Huy,UCi8wqezBudeAiTdKOX571ug,The Jazz Hop Café,@jazzhopcafe,1120000,144424528,340,10,2026-10-29T01:12:04Z,mock_org,youtube_data_api_v3
+TEAM-01,Jazz & Lo-fi,EMP-005,Trần Ngọc Mai,UCJhjE7wbdYAae1G25m0tHAA,Cafe Music BGM channel,@cafemusicbgmchannel,15000000,1672365823,3478,10,2026-10-29T01:09:58Z,mock_org,youtube_data_api_v3
+TEAM-02,Retro & Electronic,EMP-006,Trần Minh Bình,UCuNF36PtETqVFz_yK6C_v-g,80s Groove Machine,@the80sgroovemachine,10,2946,19,10,2026-10-29T01:09:58Z,mock_org,youtube_data_api_v3
+TEAM-02,Retro & Electronic,EMP-007,Nguyễn Hoàng Nam,UCmYTgpKxd-QOJCPDrmaXuqQ,ThePrimeThanatos,@theprimethanatos,469000,160993567,1259,10,2026-10-29T01:09:58Z,mock_org,youtube_data_api_v3
+TEAM-02,Retro & Electronic,EMP-008,Võ Thanh Tùng,UCD-4g5w1h8xQpLaNS_ghU4g,NewRetroWave,@newretrowave,1400000,780685470,3920,10,2026-10-29T01:09:59Z,mock_org,youtube_data_api_v3
+TEAM-02,Retro & Electronic,EMP-009,Phan Bảo Ngọc,UC6ghlxmJNMd8BE_u1HR-bTg,The '80s Guy,@the80sguy,301000,103194525,3967,10,2026-10-29T01:09:59Z,mock_org,youtube_data_api_v3
+TEAM-02,Retro & Electronic,EMP-010,Đặng Quốc Bảo,UCPzWlhG7QM56Y8MYB3qMVnQ,Electronic Gems,@electronicgems,649000,516983163,1301,10,2026-10-29T01:10:00Z,mock_org,youtube_data_api_v3
+TEAM-03,Indie & Chill,EMP-011,Hoàng Thảo Vy,UC5nc_ZtjKW1htCVZVRxlQAQ,MrSuicideSheep,@mrsuicidesheep,12700000,7507935147,3999,10,2026-10-29T01:10:00Z,mock_org,youtube_data_api_v3
+TEAM-03,Indie & Chill,EMP-012,Trịnh Minh Khang,UCM9KEEuzacwVlkt9JfJad7g,Chill Nation,@chillnation,10800000,4667743517,2808,10,2026-10-29T01:10:00Z,mock_org,youtube_data_api_v3
+TEAM-03,Indie & Chill,EMP-013,Bùi Quỳnh Chi,UCWzZ5TIGoZ6o-KtbGCyhnhg,College Music,@collegemusic,1180000,216618762,1153,10,2026-10-29T01:10:01Z,mock_org,youtube_data_api_v3
+TEAM-03,Indie & Chill,EMP-014,Đinh Tuấn Kiệt,UCEi0EgWJ5m7gVBQ68a1L0TA,alexrainbirdMusic,@alexrainbirdmusic,1430000,718489302,1813,10,2026-10-29T01:10:02Z,mock_org,youtube_data_api_v3
+TEAM-03,Indie & Chill,EMP-015,Dương Khánh An,UCbuK8xxu2P_sqoMnDsoBrrg,WaveMusic,@wavemusic,4880000,2955817312,2776,10,2026-10-29T01:10:02Z,mock_org,youtube_data_api_v3

@@ -7,1401 +7,264 @@
 (function () {
   'use strict';
 
-  // Real YouTube Data API v3 Dataset for 80s Groove Machine
-  const REAL_CHANNEL_DATA = {
-  "channel": {
-    "id": "UCL9VCEoz6M6JcUKxlJcr3LQ",
-    "title": "Lunavia",
-    "handle": "@lunaviavintagemelodies",
-    "avatar": "https://yt3.ggpht.com/0Gn6D9_lYPEyA_wH_uz3_Hjv8Hyl7o1i8dtePT5L6GltvVSa9JDosEc8w8PYbmmci8N55t8ifw=s240-c-k-c0x00ffffff-no-rj",
-    "subscribers": 1320,
-    "views": 251635,
-    "videoCount": 59
-  },
-  "timeline": {
-    "labels": [
-      "10 Th09",
-      "11 Th09",
-      "12 Th09",
-      "13 Th09",
-      "14 Th09",
-      "15 Th09",
-      "16 Th09",
-      "17 Th09",
-      "18 Th09",
-      "19 Th09",
-      "20 Th09",
-      "21 Th09",
-      "22 Th09",
-      "23 Th09",
-      "24 Th09",
-      "25 Th09",
-      "26 Th09",
-      "27 Th09",
-      "28 Th09",
-      "29 Th09",
-      "30 Th09",
-      "01 Th10",
-      "02 Th10",
-      "03 Th10",
-      "04 Th10",
-      "05 Th10",
-      "06 Th10",
-      "07 Th10",
-      "08 Th10",
-      "09 Th10",
-      "10 Th10"
-    ],
-    "views": [
-      414,
-      478,
-      574,
-      861,
-      733,
-      542,
-      606,
-      893,
-      510,
-      1052,
-      446,
-      574,
-      797,
-      670,
-      478,
-      542,
-      701,
-      606,
-      765,
-      829,
-      670,
-      574,
-      733,
-      925,
-      510,
-      542,
-      701,
-      797,
-      574,
-      670,
-      733
-    ],
-    "viewsPrevious": [
-      352,
-      406,
-      488,
-      732,
-      623,
-      461,
-      515,
-      759,
-      434,
-      894,
-      379,
-      488,
-      677,
-      570,
-      406,
-      461,
-      596,
-      515,
-      650,
-      705,
-      570,
-      488,
-      623,
-      786,
-      434,
-      461,
-      596,
-      677,
-      488,
-      570,
-      623
-    ],
-    "revenue": [
-      1.03,
-      1.2,
-      1.44,
-      2.15,
-      1.83,
-      1.35,
-      1.52,
-      2.23,
-      1.28,
-      2.63,
-      1.11,
-      1.44,
-      1.99,
-      1.68,
-      1.2,
-      1.35,
-      1.75,
-      1.52,
-      1.91,
-      2.07,
-      1.68,
-      1.44,
-      1.83,
-      2.31,
-      1.28,
-      1.35,
-      1.75,
-      1.99,
-      1.44,
-      1.68,
-      1.83
-    ],
-    "revenueUS": [
-      0.6,
-      0.7,
-      0.84,
-      1.25,
-      1.06,
-      0.78,
-      0.88,
-      1.29,
-      0.74,
-      1.53,
-      0.64,
-      0.84,
-      1.15,
-      0.97,
-      0.7,
-      0.78,
-      1.01,
-      0.88,
-      1.11,
-      1.2,
-      0.97,
-      0.84,
-      1.06,
-      1.34,
-      0.74,
-      0.78,
-      1.01,
-      1.15,
-      0.84,
-      0.97,
-      1.06
-    ],
-    "subscribersGained": [
-      1,
-      2,
-      2,
-      3,
-      2,
-      2,
-      2,
-      3,
-      2,
-      3,
-      1,
-      2,
-      3,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      3,
-      2,
-      2,
-      2,
-      3,
-      2,
-      2,
-      2,
-      3,
-      2,
-      2,
-      2
-    ],
-    "watchTimeHours": [
-      20.7,
-      23.9,
-      28.7,
-      43.1,
-      36.6,
-      27.1,
-      30.3,
-      44.7,
-      25.5,
-      52.6,
-      22.3,
-      28.7,
-      39.9,
-      33.5,
-      23.9,
-      27.1,
-      35.1,
-      30.3,
-      38.2,
-      41.5,
-      33.5,
-      28.7,
-      36.6,
-      46.2,
-      25.5,
-      27.1,
-      35.1,
-      39.9,
-      28.7,
-      33.5,
-      36.6
-    ],
-    "interactions": {
-      "likes": [
-        23,
-        27,
-        32,
-        48,
-        41,
-        30,
-        34,
-        50,
-        29,
-        59,
-        25,
-        32,
-        45,
-        38,
-        27,
-        30,
-        39,
-        34,
-        43,
-        46,
-        38,
-        32,
-        41,
-        52,
-        29,
-        30,
-        39,
-        45,
-        32,
-        38,
-        41
-      ],
-      "comments": [
-        1,
-        1,
-        1,
-        2,
-        2,
-        1,
-        2,
-        2,
-        1,
-        3,
-        1,
-        1,
-        2,
-        2,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        2,
-        2,
-        1,
-        1,
-        2,
-        2,
-        1,
-        2,
-        2
-      ],
-      "shares": [
-        3,
-        4,
-        5,
-        7,
-        6,
-        4,
-        5,
-        8,
-        4,
-        9,
-        4,
-        5,
-        7,
-        6,
-        4,
-        4,
-        6,
-        5,
-        6,
-        7,
-        6,
-        5,
-        6,
-        8,
-        4,
-        4,
-        6,
-        7,
-        5,
-        6,
-        6
-      ],
-      "dislikes": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ]
-    }
-  },
-  "videos": [
-    {
-      "id": "fOAJASp-7OE",
-      "title": "1951 Peaceful Autumn Morning in Eguisheim | Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/fOAJASp-7OE/mqdefault.jpg?v=6adf1fd1",
-      "publishedAt": "2026-10-26",
-      "duration": "12:00:00",
-      "views": 144,
-      "likes": 2,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.36,
-      "url": "https://youtube.com/watch?v=fOAJASp-7OE"
-    },
-    {
-      "id": "fpnUTfoFc0s",
-      "title": "Classic Vintage Oldies 📻 Vintage Winter Streets of the 1950s–1970s",
-      "thumbnail": "https://i.ytimg.com/vi/fpnUTfoFc0s/mqdefault.jpg",
-      "publishedAt": "2026-10-26",
-      "duration": "2:11:18",
-      "views": 34,
-      "likes": 1,
-      "comments": 1,
-      "shares": 1,
-      "revenue": 0.09,
-      "url": "https://youtube.com/watch?v=fpnUTfoFc0s"
-    },
-    {
-      "id": "JeO-osB9E-g",
-      "title": "1953 Autumn Peaceful Cottage in Giethoorn | Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/JeO-osB9E-g/mqdefault.jpg",
-      "publishedAt": "2026-10-26",
-      "duration": "11:55:00",
-      "views": 225,
-      "likes": 4,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.56,
-      "url": "https://youtube.com/watch?v=JeO-osB9E-g"
-    },
-    {
-      "id": "Wlb4BVgm9Jk",
-      "title": "1956 Autumn Dreamy Café in Porto | Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/Wlb4BVgm9Jk/mqdefault.jpg",
-      "publishedAt": "2026-10-25",
-      "duration": "11:55:00",
-      "views": 333,
-      "likes": 12,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.83,
-      "url": "https://youtube.com/watch?v=Wlb4BVgm9Jk"
-    },
-    {
-      "id": "iEmaMecBgp8",
-      "title": "Vintage Christmas Songs 1950s & 1960s 🎵 Oldies Classic Christmas Songs Playlist",
-      "thumbnail": "https://i.ytimg.com/vi/iEmaMecBgp8/mqdefault.jpg",
-      "publishedAt": "2026-10-24",
-      "duration": "2:12:29",
-      "views": 97,
-      "likes": 1,
-      "comments": 2,
-      "shares": 1,
-      "revenue": 0.24,
-      "url": "https://youtube.com/watch?v=iEmaMecBgp8"
-    },
-    {
-      "id": "r5lhiiWhuxE",
-      "title": "1949 Autumn Dreamy Market in Florence | Nostalgic Vintage Songs",
-      "thumbnail": "https://i.ytimg.com/vi/r5lhiiWhuxE/mqdefault.jpg",
-      "publishedAt": "2026-10-24",
-      "duration": "11:55:00",
-      "views": 61,
-      "likes": 5,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.15,
-      "url": "https://youtube.com/watch?v=r5lhiiWhuxE"
-    },
-    {
-      "id": "IYvmmCSDBaU",
-      "title": "Top Vintage 50s 60s Christmas Classics 🎄 Legendary Oldies Holiday Music | Timeless Xmas Collection",
-      "thumbnail": "https://i.ytimg.com/vi/IYvmmCSDBaU/mqdefault.jpg",
-      "publishedAt": "2026-10-23",
-      "duration": "2:11:17",
-      "views": 79,
-      "likes": 3,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.2,
-      "url": "https://youtube.com/watch?v=IYvmmCSDBaU"
-    },
-    {
-      "id": "D4ypTrk7N9Y",
-      "title": "1957 Autumn Dreamy Sunset Riverside Café in Salzburg | Golden Memories",
-      "thumbnail": "https://i.ytimg.com/vi/D4ypTrk7N9Y/mqdefault.jpg",
-      "publishedAt": "2026-10-23",
-      "duration": "11:54:59",
-      "views": 78,
-      "likes": 2,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.2,
-      "url": "https://youtube.com/watch?v=D4ypTrk7N9Y"
-    },
-    {
-      "id": "VSFrF2CL5QY",
-      "title": "Greatest Vintage Christmas Classics 🎄 Iconic 40s–60s Oldies | Legendary Holiday Music",
-      "thumbnail": "https://i.ytimg.com/vi/VSFrF2CL5QY/mqdefault.jpg",
-      "publishedAt": "2026-10-22",
-      "duration": "2:12:29",
-      "views": 47,
-      "likes": 3,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.12,
-      "url": "https://youtube.com/watch?v=VSFrF2CL5QY"
-    },
-    {
-      "id": "IQjPaP5f5_E",
-      "title": "1955 Autumn Dreamy Vintage Toy Workshop in Lucerne | Golden Memories",
-      "thumbnail": "https://i.ytimg.com/vi/IQjPaP5f5_E/mqdefault.jpg",
-      "publishedAt": "2026-10-22",
-      "duration": "11:54:59",
-      "views": 41,
-      "likes": 2,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.1,
-      "url": "https://youtube.com/watch?v=IQjPaP5f5_E"
-    },
-    {
-      "id": "7R1mj5BdPUw",
-      "title": "Greatest Vintage Christmas Classics 🎄 Christmas at Chain Bridge Budapest | Iconic 40s–60s Oldies",
-      "thumbnail": "https://i.ytimg.com/vi/7R1mj5BdPUw/mqdefault.jpg",
-      "publishedAt": "2026-10-21",
-      "duration": "2:12:32",
-      "views": 35,
-      "likes": 3,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.09,
-      "url": "https://youtube.com/watch?v=7R1mj5BdPUw"
-    },
-    {
-      "id": "7Vs4UrdI3zE",
-      "title": "1956 Autumn Dreamy Harbor-Side Café in Positano | Nostalgic Vintage Songs",
-      "thumbnail": "https://i.ytimg.com/vi/7Vs4UrdI3zE/mqdefault.jpg",
-      "publishedAt": "2026-10-21",
-      "duration": "11:55:00",
-      "views": 46,
-      "likes": 4,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.12,
-      "url": "https://youtube.com/watch?v=7Vs4UrdI3zE"
-    },
-    {
-      "id": "1wcfYI9KZmA",
-      "title": "1953 Serene Autumn Artist's Studio & Garden in Cotswolds | Timeless Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/1wcfYI9KZmA/mqdefault.jpg",
-      "publishedAt": "2026-10-20",
-      "duration": "2:11:15",
-      "views": 34,
-      "likes": 2,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.09,
-      "url": "https://youtube.com/watch?v=1wcfYI9KZmA"
-    },
-    {
-      "id": "OyznSK07R0g",
-      "title": "1957 Autumn Romantic Harbor Café in Milan | Timeless Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/OyznSK07R0g/mqdefault.jpg",
-      "publishedAt": "2026-10-20",
-      "duration": "11:54:59",
-      "views": 73,
-      "likes": 5,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.18,
-      "url": "https://youtube.com/watch?v=OyznSK07R0g"
-    },
-    {
-      "id": "m9q7fdIEkIw",
-      "title": "1957 Peaceful Autumn Record Shop in Eguisheim | Timeless Vintage Songs",
-      "thumbnail": "https://i.ytimg.com/vi/m9q7fdIEkIw/mqdefault.jpg",
-      "publishedAt": "2026-10-19",
-      "duration": "2:11:41",
-      "views": 67,
-      "likes": 8,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.17,
-      "url": "https://youtube.com/watch?v=m9q7fdIEkIw"
-    },
-    {
-      "id": "tDOa9AoB0EY",
-      "title": "Greatest Vintage Christmas Classics 🎄 Christmas in Tallinn | Iconic 40s–60s Oldies",
-      "thumbnail": "https://i.ytimg.com/vi/tDOa9AoB0EY/mqdefault.jpg",
-      "publishedAt": "2026-10-19",
-      "duration": "11:54:59",
-      "views": 60,
-      "likes": 3,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.15,
-      "url": "https://youtube.com/watch?v=tDOa9AoB0EY"
-    },
-    {
-      "id": "nxaWUTKSMkk",
-      "title": "Vintage Christmas Songs 1940s–1960s ❄️ Snowy Christmas Streets in Québec City",
-      "thumbnail": "https://i.ytimg.com/vi/nxaWUTKSMkk/mqdefault.jpg",
-      "publishedAt": "2026-10-18",
-      "duration": "11:55:00",
-      "views": 41,
-      "likes": 2,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.1,
-      "url": "https://youtube.com/watch?v=nxaWUTKSMkk"
-    },
-    {
-      "id": "NBeHKhq12hE",
-      "title": "1952 Warm Autumn Village Life in Lucerne | Nostalgic Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/NBeHKhq12hE/mqdefault.jpg",
-      "publishedAt": "2026-10-17",
-      "duration": "2:12:55",
-      "views": 99,
-      "likes": 7,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.25,
-      "url": "https://youtube.com/watch?v=NBeHKhq12hE"
-    },
-    {
-      "id": "_L4Xc3_CsvE",
-      "title": "Greatest Vintage Christmas Classics 🎄 Christmas in Rothenburg | Iconic 40s–60s Oldies",
-      "thumbnail": "https://i.ytimg.com/vi/_L4Xc3_CsvE/mqdefault.jpg",
-      "publishedAt": "2026-10-17",
-      "duration": "11:55:00",
-      "views": 204,
-      "likes": 3,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.51,
-      "url": "https://youtube.com/watch?v=_L4Xc3_CsvE"
-    },
-    {
-      "id": "f4lFpMryl5o",
-      "title": "1956 Elegant Autumn Main Street Café in Italy | Nostalgic Vintage Songs",
-      "thumbnail": "https://i.ytimg.com/vi/f4lFpMryl5o/mqdefault.jpg",
-      "publishedAt": "2026-10-16",
-      "duration": "2:11:56",
-      "views": 1107,
-      "likes": 17,
-      "comments": 0,
-      "shares": 2,
-      "revenue": 2.77,
-      "url": "https://youtube.com/watch?v=f4lFpMryl5o"
-    },
-    {
-      "id": "QKj-hGHAsDQ",
-      "title": "Greatest Christmas Songs of the 40s–60s 🎄 Snowy Christmas Night in Austria",
-      "thumbnail": "https://i.ytimg.com/vi/QKj-hGHAsDQ/mqdefault.jpg",
-      "publishedAt": "2026-10-16",
-      "duration": "11:55:00",
-      "views": 164,
-      "likes": 0,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.41,
-      "url": "https://youtube.com/watch?v=QKj-hGHAsDQ"
-    },
-    {
-      "id": "fEOct9ysU2E",
-      "title": "1958 Cozy Autumn Hidden Forest Café in Hallstatt | Timeless Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/fEOct9ysU2E/mqdefault.jpg",
-      "publishedAt": "2026-10-15",
-      "duration": "2:11:52",
-      "views": 2919,
-      "likes": 38,
-      "comments": 2,
-      "shares": 5,
-      "revenue": 7.3,
-      "url": "https://youtube.com/watch?v=fEOct9ysU2E"
-    },
-    {
-      "id": "786sJI9tDv4",
-      "title": "1951 Elegant Autumn Street Café in Milan | Golden Memories",
-      "thumbnail": "https://i.ytimg.com/vi/786sJI9tDv4/mqdefault.jpg",
-      "publishedAt": "2026-10-14",
-      "duration": "2:12:19",
-      "views": 2277,
-      "likes": 22,
-      "comments": 0,
-      "shares": 3,
-      "revenue": 5.69,
-      "url": "https://youtube.com/watch?v=786sJI9tDv4"
-    },
-    {
-      "id": "nE1Jhin0iYc",
-      "title": "1956 Autumn Peaceful Riverside Life in Lucerne | Timeless Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/nE1Jhin0iYc/mqdefault.jpg",
-      "publishedAt": "2026-10-14",
-      "duration": "11:55:00",
-      "views": 535,
-      "likes": 7,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 1.34,
-      "url": "https://youtube.com/watch?v=nE1Jhin0iYc"
-    },
-    {
-      "id": "_F2Wg_7pUXw",
-      "title": "1959 Romantic Autumn Seaside Life in London | Nostalgic Classic Songs",
-      "thumbnail": "https://i.ytimg.com/vi/_F2Wg_7pUXw/mqdefault.jpg",
-      "publishedAt": "2026-10-13",
-      "duration": "2:14:09",
-      "views": 3532,
-      "likes": 50,
-      "comments": 2,
-      "shares": 7,
-      "revenue": 8.83,
-      "url": "https://youtube.com/watch?v=_F2Wg_7pUXw"
-    },
-    {
-      "id": "I_IRr0vw_7g",
-      "title": "1957 Autumn Dreamy Tram Through Santorini’s Seaside Town | Nostalgic Vintage Songs",
-      "thumbnail": "https://i.ytimg.com/vi/I_IRr0vw_7g/mqdefault.jpg",
-      "publishedAt": "2026-10-13",
-      "duration": "11:55:00",
-      "views": 499,
-      "likes": 7,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 1.25,
-      "url": "https://youtube.com/watch?v=I_IRr0vw_7g"
-    },
-    {
-      "id": "NNvBJRIc_aI",
-      "title": "1954 Nostalgic Autumn European Café in Paris | Timeless Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/NNvBJRIc_aI/mqdefault.jpg",
-      "publishedAt": "2026-10-12",
-      "duration": "2:10:07",
-      "views": 2687,
-      "likes": 28,
-      "comments": 0,
-      "shares": 4,
-      "revenue": 6.72,
-      "url": "https://youtube.com/watch?v=NNvBJRIc_aI"
-    },
-    {
-      "id": "ojnnSWap82Y",
-      "title": "Classic Christmas Oldies 1940s–1960s 🎶 Christmas Memories in Poland",
-      "thumbnail": "https://i.ytimg.com/vi/ojnnSWap82Y/mqdefault.jpg",
-      "publishedAt": "2026-10-12",
-      "duration": "9:20:57",
-      "views": 536,
-      "likes": 8,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 1.34,
-      "url": "https://youtube.com/watch?v=ojnnSWap82Y"
-    },
-    {
-      "id": "zoXPgCG09FI",
-      "title": "Snowy Christmas Streets in 1950s New York 🎄 Classic Christmas Songs",
-      "thumbnail": "https://i.ytimg.com/vi/zoXPgCG09FI/mqdefault.jpg",
-      "publishedAt": "2026-10-11",
-      "duration": "11:55:00",
-      "views": 201,
-      "likes": 4,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.5,
-      "url": "https://youtube.com/watch?v=zoXPgCG09FI"
-    },
-    {
-      "id": "CaqkNroUE2c",
-      "title": "1955 Warm Autumn Lakeside Café in Vienna Park | Nostalgic Vintage Songs",
-      "thumbnail": "https://i.ytimg.com/vi/CaqkNroUE2c/mqdefault.jpg",
-      "publishedAt": "2026-10-10",
-      "duration": "2:11:50",
-      "views": 3178,
-      "likes": 30,
-      "comments": 0,
-      "shares": 4,
-      "revenue": 7.95,
-      "url": "https://youtube.com/watch?v=CaqkNroUE2c"
-    },
-    {
-      "id": "BKf8b0nB9jU",
-      "title": "Vintage Christmas Songs 1940s–1960s 🎷 Cozy Christmas Café in France",
-      "thumbnail": "https://i.ytimg.com/vi/BKf8b0nB9jU/mqdefault.jpg",
-      "publishedAt": "2026-10-10",
-      "duration": "11:55:01",
-      "views": 281,
-      "likes": 5,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.7,
-      "url": "https://youtube.com/watch?v=BKf8b0nB9jU"
-    },
-    {
-      "id": "RaaJsPWKeOg",
-      "title": "1952 Cozy Autumn Harbor Café in Switzerland | Golden Memories",
-      "thumbnail": "https://i.ytimg.com/vi/RaaJsPWKeOg/mqdefault.jpg",
-      "publishedAt": "2026-10-09",
-      "duration": "2:11:52",
-      "views": 2319,
-      "likes": 26,
-      "comments": 6,
-      "shares": 3,
-      "revenue": 5.8,
-      "url": "https://youtube.com/watch?v=RaaJsPWKeOg"
-    },
-    {
-      "id": "Jnugf9CKWLM",
-      "title": "Snowy Christmas Café in Canada ❄️ Vintage Christmas Oldies 1940s–1960s",
-      "thumbnail": "https://i.ytimg.com/vi/Jnugf9CKWLM/mqdefault.jpg",
-      "publishedAt": "2026-10-09",
-      "duration": "4:08:40",
-      "views": 264,
-      "likes": 7,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.66,
-      "url": "https://youtube.com/watch?v=Jnugf9CKWLM"
-    },
-    {
-      "id": "XxQ-3IcS6eI",
-      "title": "1957 Nostalgic Autumn European Library in Hallstatt | Timeless Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/XxQ-3IcS6eI/mqdefault.jpg",
-      "publishedAt": "2026-10-08",
-      "duration": "2:11:40",
-      "views": 815,
-      "likes": 8,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 2.04,
-      "url": "https://youtube.com/watch?v=XxQ-3IcS6eI"
-    },
-    {
-      "id": "pzqE1IkoWbE",
-      "title": "1959 Cozy Snowy Christmas Street in London🎄 Timeless Christmas Oldies",
-      "thumbnail": "https://i.ytimg.com/vi/pzqE1IkoWbE/mqdefault.jpg",
-      "publishedAt": "2026-10-08",
-      "duration": "11:54:59",
-      "views": 355,
-      "likes": 6,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.89,
-      "url": "https://youtube.com/watch?v=pzqE1IkoWbE"
-    },
-    {
-      "id": "wjl00XOC5rU",
-      "title": "1959 Elegant Autumn Italian Seaside Restaurant in Porto | Golden Memories",
-      "thumbnail": "https://i.ytimg.com/vi/wjl00XOC5rU/mqdefault.jpg",
-      "publishedAt": "2026-10-07",
-      "duration": "2:11:52",
-      "views": 1275,
-      "likes": 13,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 3.19,
-      "url": "https://youtube.com/watch?v=wjl00XOC5rU"
-    },
-    {
-      "id": "KfvCsa28seY",
-      "title": "Cozy 1957 Christmas Street in Paris 🎁 Timeless Christmas Oldies",
-      "thumbnail": "https://i.ytimg.com/vi/KfvCsa28seY/mqdefault.jpg",
-      "publishedAt": "2026-10-07",
-      "duration": "11:54:59",
-      "views": 372,
-      "likes": 15,
-      "comments": 0,
-      "shares": 2,
-      "revenue": 0.93,
-      "url": "https://youtube.com/watch?v=KfvCsa28seY"
-    },
-    {
-      "id": "q1ji2bGpKZ0",
-      "title": "1958 Warm Autumn Harvest Festival in Lucerne | Nostalgic Classic Songs",
-      "thumbnail": "https://i.ytimg.com/vi/q1ji2bGpKZ0/mqdefault.jpg",
-      "publishedAt": "2026-10-06",
-      "duration": "2:14:40",
-      "views": 1506,
-      "likes": 19,
-      "comments": 0,
-      "shares": 2,
-      "revenue": 3.77,
-      "url": "https://youtube.com/watch?v=q1ji2bGpKZ0"
-    },
-    {
-      "id": "JSJ-6YuHULM",
-      "title": "1953 Charming Autumn Shopping Street in the Cotswolds | Timeless Vintage Songs",
-      "thumbnail": "https://i.ytimg.com/vi/JSJ-6YuHULM/mqdefault.jpg",
-      "publishedAt": "2026-10-05",
-      "duration": "2:10:50",
-      "views": 1503,
-      "likes": 25,
-      "comments": 2,
-      "shares": 3,
-      "revenue": 3.76,
-      "url": "https://youtube.com/watch?v=JSJ-6YuHULM"
-    },
-    {
-      "id": "T9xbE5ThHng",
-      "title": "1955 Elegant Autumn Street Fashion in London | Timeless Vintage Songs",
-      "thumbnail": "https://i.ytimg.com/vi/T9xbE5ThHng/mqdefault.jpg",
-      "publishedAt": "2026-10-03",
-      "duration": "2:11:38",
-      "views": 3556,
-      "likes": 40,
-      "comments": 0,
-      "shares": 6,
-      "revenue": 8.89,
-      "url": "https://youtube.com/watch?v=T9xbE5ThHng"
-    },
-    {
-      "id": "o4PIXVcroyE",
-      "title": "A view of the neighborhood at night",
-      "thumbnail": "https://i.ytimg.com/vi/o4PIXVcroyE/mqdefault.jpg",
-      "publishedAt": "2026-10-02",
-      "duration": "3:59",
-      "views": 70,
-      "likes": 3,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.18,
-      "url": "https://youtube.com/watch?v=o4PIXVcroyE"
-    },
-    {
-      "id": "q8jvvm2_0RI",
-      "title": "1956 Dreamy Autumn Café in Porto | Timeless Vintage Songs",
-      "thumbnail": "https://i.ytimg.com/vi/q8jvvm2_0RI/mqdefault.jpg",
-      "publishedAt": "2026-10-01",
-      "duration": "2:14:37",
-      "views": 3846,
-      "likes": 47,
-      "comments": 2,
-      "shares": 7,
-      "revenue": 9.62,
-      "url": "https://youtube.com/watch?v=q8jvvm2_0RI"
-    },
-    {
-      "id": "up0jhNkzzgo",
-      "title": "1954 Romantic Riverside Café in Salzburg | Nostalgic Vintage Songs",
-      "thumbnail": "https://i.ytimg.com/vi/up0jhNkzzgo/mqdefault.jpg",
-      "publishedAt": "2026-09-30",
-      "duration": "2:12:32",
-      "views": 6380,
-      "likes": 80,
-      "comments": 4,
-      "shares": 12,
-      "revenue": 15.95,
-      "url": "https://youtube.com/watch?v=up0jhNkzzgo"
-    },
-    {
-      "id": "nMiAmhPXbeU",
-      "title": "From Melody to Motion: My Creative Journey in Music and Video",
-      "thumbnail": "https://i.ytimg.com/vi/nMiAmhPXbeU/mqdefault.jpg",
-      "publishedAt": "2026-09-28",
-      "duration": "5:09",
-      "views": 89,
-      "likes": 1,
-      "comments": 0,
-      "shares": 1,
-      "revenue": 0.22,
-      "url": "https://youtube.com/watch?v=nMiAmhPXbeU"
-    },
-    {
-      "id": "u3T2rJLCius",
-      "title": "1951 Peaceful Autumn Morning in Eguisheim | Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/u3T2rJLCius/mqdefault.jpg",
-      "publishedAt": "2026-09-25",
-      "duration": "2:12:15",
-      "views": 2776,
-      "likes": 41,
-      "comments": 4,
-      "shares": 6,
-      "revenue": 6.94,
-      "url": "https://youtube.com/watch?v=u3T2rJLCius"
-    },
-    {
-      "id": "F9KGaj8skw8",
-      "title": "1953 Autumn Peaceful Old Café in Vienna | Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/F9KGaj8skw8/mqdefault.jpg",
-      "publishedAt": "2026-09-24",
-      "duration": "2:13:45",
-      "views": 9711,
-      "likes": 106,
-      "comments": 6,
-      "shares": 15,
-      "revenue": 24.28,
-      "url": "https://youtube.com/watch?v=F9KGaj8skw8"
-    },
-    {
-      "id": "DxSgKS1sWi0",
-      "title": "1949 Autumn Dreamy Market in Florence | Nostalgic Vintage Songs",
-      "thumbnail": "https://i.ytimg.com/vi/DxSgKS1sWi0/mqdefault.jpg",
-      "publishedAt": "2026-09-23",
-      "duration": "2:11:59",
-      "views": 5294,
-      "likes": 69,
-      "comments": 6,
-      "shares": 10,
-      "revenue": 13.23,
-      "url": "https://youtube.com/watch?v=DxSgKS1sWi0"
-    },
-    {
-      "id": "kPAVtFzWYh4",
-      "title": "1956 Autumn Dreamy Café in Porto | Vintage Melodies",
-      "thumbnail": "https://i.ytimg.com/vi/kPAVtFzWYh4/mqdefault.jpg",
-      "publishedAt": "2026-09-22",
-      "duration": "2:10:55",
-      "views": 9559,
-      "likes": 126,
-      "comments": 4,
-      "shares": 18,
-      "revenue": 23.9,
-      "url": "https://youtube.com/watch?v=kPAVtFzWYh4"
-    },
-    {
-      "id": "5ZcEndyZv2M",
-      "title": "1957 Autumn Dreamy Sunset Riverside Café in Salzburg | Golden Memories",
-      "thumbnail": "https://i.ytimg.com/vi/5ZcEndyZv2M/mqdefault.jpg",
-      "publishedAt": "2026-09-21",
-      "duration": "2:11:57",
-      "views": 7021,
-      "likes": 76,
-      "comments": 2,
-      "shares": 11,
-      "revenue": 17.55,
-      "url": "https://youtube.com/watch?v=5ZcEndyZv2M"
-    },
-    {
-      "id": "X6MUhUqQIAM",
-      "title": "Christmas at a Cozy 1941 London Café 🎄 Timeless Holiday Classics",
-      "thumbnail": "https://i.ytimg.com/vi/X6MUhUqQIAM/mqdefault.jpg",
-      "publishedAt": "2026-09-19",
-      "duration": "2:10:12",
-      "views": 13194,
-      "likes": 153,
-      "comments": 9,
-      "shares": 22,
-      "revenue": 32.98,
-      "url": "https://youtube.com/watch?v=X6MUhUqQIAM"
-    }
-  ]
-};
+  // ==========================================================================
+  // SINGLE SOURCE OF TRUTH: 3 TEAMS x 5 EMPLOYEES x 1 CHANNEL = 15 CHANNELS
+  // Loaded from data/mock-hierarchy/dataset.json (window.__DATASET_JSON__)
+  // ==========================================================================
+  const rawDataset = (typeof window !== 'undefined' && window.__DATASET_JSON__) ? window.__DATASET_JSON__ : null;
 
-  // Channel 2: 80s Groove Machine Dataset (Synthwave & Retro Disco)
-  const GROOVE_CHANNEL_DATA = {
-    channel: {
-      id: "UCuNF36PtETqVFz_yK6C_v-g",
-      title: "80s Groove Machine",
-      handle: "@the80sgroovemachine",
-      avatar: "https://yt3.ggpht.com/YIWwPKtcGGulhJUMARzpxGAQRHfj6vM64VUu8Ikk4OWiD133V2zYFfmoDIJE9aomsjbyayDmww=s240-c-k-c0x00ffffff-no-rj",
-      subscribers: 2450,
-      views: 389420,
-      videoCount: 34,
-      pic: "tranminhb (Trần Minh Bình)",
-      team: "Team Disco & Electronic Wave",
-      project: "PRJ-80SGROOVE"
-    },
-    timeline: {
-      labels: [...REAL_CHANNEL_DATA.timeline.labels],
-      views: REAL_CHANNEL_DATA.timeline.views.map(v => Math.round(v * 1.55)),
-      viewsPrevious: REAL_CHANNEL_DATA.timeline.viewsPrevious.map(v => Math.round(v * 1.5)),
-      revenue: REAL_CHANNEL_DATA.timeline.revenue.map(r => Number((r * 1.55).toFixed(2))),
-      revenueUS: REAL_CHANNEL_DATA.timeline.revenueUS.map(r => Number((r * 1.72).toFixed(2))),
-      subscribersGained: REAL_CHANNEL_DATA.timeline.subscribersGained.map(s => Math.round(s * 1.8)),
-      watchTimeHours: REAL_CHANNEL_DATA.timeline.watchTimeHours.map(w => Number((w * 1.4).toFixed(1))),
-      interactions: {
-        likes: REAL_CHANNEL_DATA.timeline.interactions.likes.map(l => Math.round(l * 1.9)),
-        comments: REAL_CHANNEL_DATA.timeline.interactions.comments.map(c => Math.round(c * 2.2)),
-        shares: REAL_CHANNEL_DATA.timeline.interactions.shares.map(s => Math.round(s * 2.0)),
-        dislikes: REAL_CHANNEL_DATA.timeline.interactions.dislikes.map(() => 0)
+  const DATA_STORE = {
+    meta: rawDataset ? rawDataset.meta : {},
+    teams: rawDataset ? (rawDataset.teams || []) : [],
+    employees: rawDataset ? (rawDataset.employees || []) : [],
+    assignments: rawDataset ? (rawDataset.assignments || []) : [],
+    channels: rawDataset ? (rawDataset.channels || []) : [],
+    videos: rawDataset ? (rawDataset.videos || []) : [],
+    projects: rawDataset ? (rawDataset.projects || []) : [],
+    networks: rawDataset ? (rawDataset.networks || []) : [],
+
+    teamMap: new Map(),
+    employeeMap: new Map(),
+    assignmentMap: new Map(),
+    channelMap: new Map(),
+    videosByChannel: new Map(),
+
+    init(datasetObj) {
+      if (datasetObj) {
+        this.meta = datasetObj.meta || {};
+        this.teams = datasetObj.teams || [];
+        this.employees = datasetObj.employees || [];
+        this.assignments = datasetObj.assignments || [];
+        this.channels = datasetObj.channels || [];
+        this.videos = datasetObj.videos || [];
+        this.projects = datasetObj.projects || [];
+        this.networks = datasetObj.networks || [];
       }
+      this.reindex();
     },
-    videos: [
-      { id: "kP-a8z190x8", title: "1984 Midnight Tokyo Drive | 80s Retro Synthwave & Disco Mix", thumbnail: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-10-18", duration: "1:45:20", views: 48500, likes: 1250, comments: 84, shares: 120, revenue: 145.50, url: "https://youtube.com/watch?v=kP-a8z190x8" },
-      { id: "M3x-7q201a4", title: "Electric Dreams 1985 ⚡ Best of 80s Synthpop & Italo Disco", thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-10-14", duration: "2:10:15", views: 36200, likes: 980, comments: 65, shares: 92, revenue: 108.60, url: "https://youtube.com/watch?v=M3x-7q201a4" },
-      { id: "J8w-9p312b5", title: "Cassette Memories: Sunset Boulevard 80s City Pop & Funk Grooves", thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-10-10", duration: "1:32:40", views: 29800, likes: 740, comments: 48, shares: 70, revenue: 89.40, url: "https://youtube.com/watch?v=J8w-9p312b5" },
-      { id: "V2k-1m423c6", title: "Retro Arcade 1986 | Nostalgic 80s Dance Grooves & New Wave", thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-10-04", duration: "2:05:00", views: 22400, likes: 610, comments: 39, shares: 55, revenue: 67.20, url: "https://youtube.com/watch?v=V2k-1m423c6" },
-      { id: "L7n-5o534d7", title: "Miami Vice Vibe 1987 🌴 Pure 80s Retro Synthwave Soundtrack", thumbnail: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-09-28", duration: "2:18:30", views: 19800, likes: 530, comments: 32, shares: 42, revenue: 59.40, url: "https://youtube.com/watch?v=L7n-5o534d7" },
-      { id: "B4x-6p645e8", title: "Cyberpunk Night Drive 1988 | Dark Synth & Retro Wave Instrumental", thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-09-22", duration: "1:55:10", views: 18200, likes: 490, comments: 28, shares: 35, revenue: 54.60, url: "https://youtube.com/watch?v=B4x-6p645e8" },
-      { id: "P9q-8r756f9", title: "Golden 80s Disco Hits Club Remix 💃 Non-stop Dance Party", thumbnail: "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-09-15", duration: "2:30:00", views: 16500, likes: 420, comments: 24, shares: 31, revenue: 49.50, url: "https://youtube.com/watch?v=P9q-8r756f9" },
-      { id: "T1s-9t867g0", title: "1983 Roller Skate Disco Fever | Classic Boogie & Funk Grooves", thumbnail: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=400&auto=format&fit=crop&q=80", publishedAt: "2026-09-08", duration: "1:40:50", views: 14200, likes: 380, comments: 21, shares: 25, revenue: 42.60, url: "https://youtube.com/watch?v=T1s-9t867g0" }
-    ]
+
+    reindex() {
+      this.teamMap.clear();
+      this.teams.forEach(t => this.teamMap.set(t.id, t));
+
+      this.employeeMap.clear();
+      this.employees.forEach(e => this.employeeMap.set(e.id, e));
+
+      this.assignmentMap.clear();
+      this.assignments.forEach(a => {
+        this.assignmentMap.set(a.channel_id, a);
+        this.assignmentMap.set(a.employee_id, a);
+      });
+
+      this.channelMap.clear();
+      this.channels.forEach(c => this.channelMap.set(c.id, c));
+
+      this.videosByChannel.clear();
+      this.videos.forEach(v => {
+        if (!this.videosByChannel.has(v.channel_id)) {
+          this.videosByChannel.set(v.channel_id, []);
+        }
+        this.videosByChannel.get(v.channel_id).push(v);
+      });
+    },
+
+    getTeam(teamId) { return this.teamMap.get(teamId); },
+    getEmployee(empId) { return this.employeeMap.get(empId); },
+    getChannel(channelId) { return this.channelMap.get(channelId); },
+    getAssignmentByChannel(channelId) { return this.assignmentMap.get(channelId); },
+    getAssignmentByEmployee(empId) { return this.assignmentMap.get(empId); },
+    
+    getVideos(channelId) {
+      const rawList = this.videosByChannel.get(channelId) || [];
+      return rawList.map(v => ({
+        id: v.id,
+        channelId: v.channel_id,
+        title: v.title,
+        publishedAt: v.published_at ? v.published_at.split('T')[0] : '',
+        duration: parseIsoDuration(v.duration_iso8601),
+        durationRaw: v.duration_iso8601,
+        views: (v.statistics && v.statistics.viewCount) || 0,
+        likes: (v.statistics && v.statistics.likeCount) || 0,
+        comments: (v.statistics && v.statistics.commentCount) || 0,
+        shares: null, // Shares require YouTube Analytics API
+        revenue: null, // Estimated revenue requires Analytics monetary scope
+        thumbnail: (v.thumbnails && v.thumbnails.medium && v.thumbnails.medium.url) ||
+                   (v.thumbnails && v.thumbnails.default && v.thumbnails.default.url) || '',
+        url: v.url || `https://youtube.com/watch?v=${v.id}`,
+        fetchedAt: v.source ? v.source.fetched_at : null
+      }));
+    }
   };
 
-  // Network Combined Dataset (Both Channels Combined)
-  const NETWORK_CHANNEL_DATA = {
-    channel: {
-      id: "UC_NET_BGMEDIA_ALL",
-      title: "Toàn Bộ Network (BgMedia MCN)",
-      handle: "@bgmediamcn",
-      avatar: "https://yt3.ggpht.com/0Gn6D9_lYPEyA_wH_uz3_Hjv8Hyl7o1i8dtePT5L6GltvVSa9JDosEc8w8PYbmmci8N55t8ifw=s240-c-k-c0x00ffffff-no-rj",
-      subscribers: 3770,
-      views: 641055,
-      videoCount: 93,
-      pic: "Tổng Giám Đốc",
-      team: "Toàn Bộ Đội Ngũ (2 Team)",
-      project: "Tổng Hợp Dự Án"
-    },
-    timeline: {
-      labels: [...REAL_CHANNEL_DATA.timeline.labels],
-      views: REAL_CHANNEL_DATA.timeline.views.map((v, i) => v + GROOVE_CHANNEL_DATA.timeline.views[i]),
-      viewsPrevious: REAL_CHANNEL_DATA.timeline.viewsPrevious.map((v, i) => v + GROOVE_CHANNEL_DATA.timeline.viewsPrevious[i]),
-      revenue: REAL_CHANNEL_DATA.timeline.revenue.map((r, i) => Number((r + GROOVE_CHANNEL_DATA.timeline.revenue[i]).toFixed(2))),
-      revenueUS: REAL_CHANNEL_DATA.timeline.revenueUS.map((r, i) => Number((r + GROOVE_CHANNEL_DATA.timeline.revenueUS[i]).toFixed(2))),
-      subscribersGained: REAL_CHANNEL_DATA.timeline.subscribersGained.map((s, i) => s + GROOVE_CHANNEL_DATA.timeline.subscribersGained[i]),
-      watchTimeHours: REAL_CHANNEL_DATA.timeline.watchTimeHours.map((w, i) => Number((w + GROOVE_CHANNEL_DATA.timeline.watchTimeHours[i]).toFixed(1))),
-      interactions: {
-        likes: REAL_CHANNEL_DATA.timeline.interactions.likes.map((l, i) => l + GROOVE_CHANNEL_DATA.timeline.interactions.likes[i]),
-        comments: REAL_CHANNEL_DATA.timeline.interactions.comments.map((c, i) => c + GROOVE_CHANNEL_DATA.timeline.interactions.comments[i]),
-        shares: REAL_CHANNEL_DATA.timeline.interactions.shares.map((s, i) => s + GROOVE_CHANNEL_DATA.timeline.interactions.shares[i]),
-        dislikes: REAL_CHANNEL_DATA.timeline.interactions.dislikes.map(() => 0)
-      }
-    },
-    videos: [...REAL_CHANNEL_DATA.videos, ...GROOVE_CHANNEL_DATA.videos].sort((a, b) => (b.views || 0) - (a.views || 0))
-  };
-
-  // ==========================================================================
-  // ENTERPRISE MULTI-CHANNEL REGISTRY & DYNAMIC CATALOG
-  // ==========================================================================
-  const DEFAULT_CHANNELS_CATALOG = [
-    {
-      id: 'lunavia',
-      title: 'Lunavia Vintage Melodies',
-      handle: '@lunaviavintagemelodies',
-      url: 'https://www.youtube.com/@LunaviaVintageMelodies',
-      avatar: 'https://yt3.ggpht.com/0Gn6D9_lYPEyA_wH_uz3_Hjv8Hyl7o1i8dtePT5L6GltvVSa9JDosEc8w8PYbmmci8N55t8ifw=s240-c-k-c0x00ffffff-no-rj',
-      category: 'Jazz & Lo-fi',
-      team: 'Team Jazz & Lo-fi',
-      pic: 'Nguyễn Văn An (nguyenvana)',
-      subscribers: 1320,
-      views: 251635,
-      videoCount: 59,
-      revenue: 754.90,
-      rpm: 3.00,
-      status: 'live_api',
-      statusText: 'Đã kết nối Live API',
-      dataSource: 'live'
-    },
-    {
-      id: '80sgroove',
-      title: '80s Groove Machine',
-      handle: '@the80sgroovemachine',
-      url: 'https://www.youtube.com/@The80sGrooveMachine',
-      avatar: 'https://yt3.ggpht.com/YIWwPKtcGGulhJUMARzpxGAQRHfj6vM64VUu8Ikk4OWiD133V2zYFfmoDIJE9aomsjbyayDmww=s240-c-k-c0x00ffffff-no-rj',
-      category: 'Disco & EDM',
-      team: 'Team Disco Wave',
-      pic: 'Trần Minh Bình (tranminhb)',
-      subscribers: 2450,
-      views: 389420,
-      videoCount: 34,
-      revenue: 1168.20,
-      rpm: 3.00,
-      status: 'live_api',
-      statusText: 'Đã kết nối Live API',
-      dataSource: 'live'
-    },
-    {
-      id: 'chillcoffee',
-      title: 'Chill Coffee Beats',
-      handle: '@chillcoffeebeats',
-      url: 'https://www.youtube.com/@chillcoffeebeats',
-      avatar: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=160&h=160&fit=crop',
-      category: 'Jazz & Lo-fi',
-      team: 'Team Ngọc Quỳnh',
-      pic: 'Lê Ngọc Quỳnh (lequynh)',
-      subscribers: 342000,
-      views: 18250000,
-      videoCount: 124,
-      revenue: 4550.00,
-      rpm: 2.45,
-      status: 'active',
-      statusText: 'Đang hoạt động',
-      dataSource: 'curated'
-    },
-    {
-      id: 'retrogaming',
-      title: 'Retro Gaming Wave',
-      handle: '@retrogamingwave',
-      url: 'https://www.youtube.com/@retrogamingwave',
-      avatar: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=160&h=160&fit=crop',
-      category: 'Disco & EDM',
-      team: 'Team Thái Chung',
-      pic: 'Thái Chung (thaichung)',
-      subscribers: 185000,
-      views: 9420000,
-      videoCount: 88,
-      revenue: 2355.00,
-      rpm: 2.50,
-      status: 'active',
-      statusText: 'Đang hoạt động',
-      dataSource: 'curated'
-    },
-    {
-      id: 'pianosanctuary',
-      title: 'Classical Piano Sanctuary',
-      handle: '@pianosanctuary',
-      url: 'https://www.youtube.com/@pianosanctuary',
-      avatar: 'https://images.unsplash.com/photo-1520523839898-507127027c98?w=160&h=160&fit=crop',
-      category: 'Classical Piano',
-      team: 'Team Lê Thúy',
-      pic: 'Lê Thúy (lethuy)',
-      subscribers: 520000,
-      views: 31800000,
-      videoCount: 215,
-      revenue: 7950.00,
-      rpm: 2.50,
-      status: 'active',
-      statusText: 'Đang hoạt động',
-      dataSource: 'curated'
-    },
-    {
-      id: 'acousticsunset',
-      title: 'Acoustic Sunset Vibe',
-      handle: '@acousticsunset',
-      url: 'https://www.youtube.com/@acousticsunset',
-      avatar: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=160&h=160&fit=crop',
-      category: 'Acoustic',
-      team: 'Team Nguyễn Hoa',
-      pic: 'Nguyễn Hoa (nguyenhoa)',
-      subscribers: 98000,
-      views: 4620000,
-      videoCount: 64,
-      revenue: 1150.00,
-      rpm: 2.48,
-      status: 'active',
-      statusText: 'Đang hoạt động',
-      dataSource: 'curated'
-    },
-    {
-      id: 'deepfocus',
-      title: 'Deep Focus Coding Ambient',
-      handle: '@deepfocusambient',
-      url: 'https://www.youtube.com/@deepfocusambient',
-      avatar: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=160&h=160&fit=crop',
-      category: 'Ambient & Focus',
-      team: 'Team Xuân Nam',
-      pic: 'Xuân Nam (xuannam)',
-      subscribers: 410000,
-      views: 22100000,
-      videoCount: 142,
-      revenue: 5520.00,
-      rpm: 2.50,
-      status: 'active',
-      statusText: 'Đang hoạt động',
-      dataSource: 'curated'
-    },
-    {
-      id: 'midnightdrift',
-      title: 'Midnight City Drift',
-      handle: '@midnightdrift',
-      url: 'https://www.youtube.com/@midnightdrift',
-      avatar: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=160&h=160&fit=crop',
-      category: 'Phonk & Wave',
-      team: 'Team CM Media',
-      pic: 'Việt Hoàng (viethoang)',
-      subscribers: 890000,
-      views: 54300000,
-      videoCount: 178,
-      revenue: 13570.00,
-      rpm: 2.50,
-      status: 'active',
-      statusText: 'Đang hoạt động',
-      dataSource: 'curated'
+  function parseIsoDuration(isoDuration) {
+    if (!isoDuration) return '0:00';
+    const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!match) return '0:00';
+    const hours = parseInt(match[1] || '0', 10);
+    const minutes = parseInt(match[2] || '0', 10);
+    const seconds = parseInt(match[3] || '0', 10);
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
-  ];
-
-  function loadChannelsRegistry() {
-    let custom = [];
-    try {
-      const saved = localStorage.getItem('tubepulse_custom_channels');
-      if (saved) custom = JSON.parse(saved);
-    } catch (e) {
-      console.warn('Error reading tubepulse_custom_channels from localStorage', e);
-    }
-    return [...DEFAULT_CHANNELS_CATALOG, ...custom];
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
   }
 
-  let CHANNELS_REGISTRY = loadChannelsRegistry();
+  DATA_STORE.init();
 
-  function generateVideosForChannel(channel) {
-    if (channel.id === 'lunavia') return REAL_CHANNEL_DATA.videos;
-    if (channel.id === '80sgroove') return GROOVE_CHANNEL_DATA.videos;
+  async function ensureDatasetLoaded() {
+    if (DATA_STORE.channels && DATA_STORE.channels.length > 0) return true;
+    if (typeof window !== 'undefined' && window.__DATASET_JSON__) {
+      DATA_STORE.init(window.__DATASET_JSON__);
+      CHANNELS_REGISTRY = buildChannelsRegistry();
+      return true;
+    }
+    try {
+      const res = await fetch('data/mock-hierarchy/dataset.json');
+      if (res.ok) {
+        const json = await res.json();
+        DATA_STORE.init(json);
+        CHANNELS_REGISTRY = buildChannelsRegistry();
+        return true;
+      }
+    } catch (e) {
+      console.warn('Could not fetch dataset.json asynchronously:', e);
+    }
+    return false;
+  }
 
-    const titlesByCat = {
-      'Jazz & Lo-fi': [
-        'Cozy Rainy Night in Tokyo - Chill Lo-Fi Beats',
-        'Coffee Shop Warm Vibes • Relaxing Lo-Fi & Jazz Piano',
-        'Midnight Studying • Deep Focus Chill Lo-Fi Guitar',
-        'Autumn Jazz in Paris • Vintage Acoustic Cafe Sessions',
-        'Late Night Coding Session • Relaxing Beats & Ambient Rain'
-      ],
-      'Disco & EDM': [
-        'Retro Synthwave Drive 1984 • 80s Electro Groove',
-        'Neon Highway Cruising • Retro Electro Beats & Bass',
-        'Cyberpunk Night Ride • Synthwave / Retrowave Melodies',
-        'Miami Sunset 1986 • Vintage Disco Chill Sessions',
-        'Arcade High Score • 80s Electronic Wave Synthesizer'
-      ],
-      'Classical Piano': [
-        'Peaceful Piano Solos for Deep Sleep & Relaxation',
-        'Romantic Piano & Rain • Moonlight Sonata Chill Melodies',
-        'Chopin Nocturnes in the Quiet Forest • Relaxing Piano',
-        'Gentle Morning Piano • Positive Healing Energy Flow',
-        'Sad Emotional Piano Melody • Rainy Afternoon Study Music'
-      ],
-      'Acoustic': [
-        'Sunset Acoustic Guitar • Warm Coffee Breeze Melodies',
-        'Cozy Bedroom Acoustic Pop • Soft Indie Guitar Melodies',
-        'Fireside Acoustic Sessions • Relaxing Folk & Fingerstyle',
-        'Golden Hour Acoustic Guitar • Peaceful Warm Afternoon',
-        'Sweet Sunday Acoustic Melodies for Relaxation'
-      ],
-      'Ambient & Focus': [
-        'Deep Coding Focus Flow • 432Hz Binaural Electronic Ambient',
-        'Binaural Beats for Super Memory & Intense Study Sessions',
-        'Deep Space Ambient Drone • Zero Gravity Coding Focus',
-        'Quiet Rainy Cyber City • 8 Hours Ambient Sleep & Focus',
-        'Productive Mindset • Alpha Wave Coding Soundscape'
-      ],
-      'Phonk & Wave': [
-        'MIDNIGHT TOKYO DRIFT • Aggressive Phonk Bass Boost',
-        'NIGHT SHIFT STREET RACING • Hard Drift Phonk Mix',
-        'DARK WAVE DRIFT • Brazilian & Memphis Phonk Energy',
-        'SHADOW RUNNER • Bass Boosted Phonk Beats 2026',
-        'GHOST DRIFT • Slowed & Reverb Dark Phonk Melodies'
-      ]
-    };
+  // Helper to build CHANNELS_REGISTRY directly from DATA_STORE
+  function buildChannelsRegistry() {
+    return DATA_STORE.channels.map(c => {
+      const asg = DATA_STORE.getAssignmentByChannel(c.id);
+      const emp = asg ? DATA_STORE.getEmployee(asg.employee_id) : null;
+      const team = emp ? DATA_STORE.getTeam(emp.team_id) : null;
+      const avatar = (c.snippet && c.snippet.thumbnails && c.snippet.thumbnails.medium && c.snippet.thumbnails.medium.url) ||
+                     (c.snippet && c.snippet.thumbnails && c.snippet.thumbnails.default && c.snippet.thumbnails.default.url) || '';
 
-    const titles = titlesByCat[channel.category] || titlesByCat['Jazz & Lo-fi'];
-    const baseViews = Math.round((channel.views || 500000) / 12);
-    const rpm = channel.rpm || 2.5;
-
-    return titles.map((title, idx) => {
-      const views = Math.round(baseViews * (1.6 - idx * 0.15));
-      const rev = Number((views * (rpm / 1000)).toFixed(2));
-      const likes = Math.round(views * 0.048);
-      const comments = Math.round(views * 0.009);
-      const shares = Math.round(views * 0.005);
       return {
-        id: `vid_${channel.id}_${idx + 1}`,
-        title,
-        publishedAt: `2026-10-${String(24 - idx * 2).padStart(2, '0')}`,
-        duration: '2:15:30',
-        views,
-        revenue: rev,
-        likes,
-        comments,
-        shares,
-        dislikes: 0,
-        thumbnail: channel.avatar
+        id: c.id,
+        title: (c.snippet && c.snippet.title) || c.id,
+        handle: (c.snippet && c.snippet.customUrl) || c.requested_handle || `@${c.id}`,
+        url: c.url || `https://www.youtube.com/channel/${c.id}`,
+        avatar: avatar,
+        category: team ? team.name : 'Chưa phân loại',
+        team: team ? team.name : 'Chưa phân công',
+        teamId: team ? team.id : null,
+        pic: emp ? `${emp.full_name} (${emp.id})` : 'Chưa phân công',
+        employeeId: emp ? emp.id : null,
+        subscribers: (c.statistics && c.statistics.subscriberCount) || 0,
+        hiddenSubscriberCount: (c.statistics && c.statistics.hiddenSubscriberCount) || false,
+        views: (c.statistics && c.statistics.viewCount) || 0,
+        videoCount: (c.statistics && c.statistics.videoCount) || 10,
+        sampleVideoCount: (c.video_sample && c.video_sample.returned_count) || 10,
+        revenue: null, // No revenue until authorized via Analytics Monetary API
+        rpm: null,
+        status: 'snapshot',
+        statusText: 'Dữ liệu công khai YouTube',
+        dataSource: 'public_snapshot',
+        fetchedAt: (c.source && c.source.fetched_at) || '2026-10-29T01:12:05Z',
+        analyticsStatus: (c.analytics && c.analytics.status) || 'not_connected'
       };
     });
   }
 
+  let CHANNELS_REGISTRY = buildChannelsRegistry();
+
+  function resolveChannelId(key) {
+    if (!key) return CHANNELS_REGISTRY[0]?.id || 'UCL9VCEoz6M6JcUKxlJcr3LQ';
+    if (key === 'lunavia') return 'UCL9VCEoz6M6JcUKxlJcr3LQ';
+    if (key === '80sgroove') return 'UCuNF36PtETqVFz_yK6C_v-g';
+    const found = CHANNELS_REGISTRY.find(c => c.id === key || c.handle === key);
+    return found ? found.id : key;
+  }
+
   function getChannelData(channelKey) {
-    if (channelKey === 'lunavia') return REAL_CHANNEL_DATA;
-    if (channelKey === '80sgroove') return GROOVE_CHANNEL_DATA;
-    if (channelKey === 'network') {
+    const targetId = resolveChannelId(channelKey);
+
+    if (channelKey === 'network' || targetId === 'network') {
       const allActive = CHANNELS_REGISTRY.filter(c => c.status !== 'paused');
       const totalSubs = allActive.reduce((sum, c) => sum + (c.subscribers || 0), 0);
       const totalViews = allActive.reduce((sum, c) => sum + (c.views || 0), 0);
-      const totalRev = Number(allActive.reduce((sum, c) => sum + (c.revenue || (c.views * 0.0025)), 0).toFixed(2));
-      const totalVideosCount = allActive.reduce((sum, c) => sum + (c.videoCount || 40), 0);
+      const totalVideosCount = allActive.reduce((sum, c) => sum + (c.videoCount || 0), 0);
 
       const netChannel = {
         id: 'network',
-        title: 'Toàn Bộ Network (BgMedia MCN)',
+        title: 'Toàn Bộ Hệ Thống (3 Team · 15 Kênh)',
         handle: `@bgmedia_network (${allActive.length} Kênh)`,
         avatar: 'https://cdn-icons-png.flaticon.com/512/8140/8140283.png',
         subscribers: totalSubs,
         views: totalViews,
         videoCount: totalVideosCount,
-        revenue: totalRev,
-        rpm: 2.51
+        revenue: null,
+        rpm: null,
+        analyticsStatus: 'not_connected',
+        fetchedAt: DATA_STORE.meta.completed_at || '2026-10-29T01:12:05Z'
       };
 
-      const videos = allActive.flatMap(c => generateVideosForChannel(c)).sort((a, b) => b.views - a.views).slice(0, 30);
-      const timeline = generateTimelineForRange(netChannel, videos, state.startDate || '2026-09-28', state.endDate || '2026-10-28');
+      const videos = DATA_STORE.videos.slice(0, 30).map(v => ({
+        id: v.id,
+        channelId: v.channel_id,
+        title: v.title,
+        publishedAt: v.published_at ? v.published_at.split('T')[0] : '',
+        duration: parseIsoDuration(v.duration_iso8601),
+        views: (v.statistics && v.statistics.viewCount) || 0,
+        likes: (v.statistics && v.statistics.likeCount) || 0,
+        comments: (v.statistics && v.statistics.commentCount) || 0,
+        shares: null,
+        revenue: null,
+        thumbnail: (v.thumbnails && v.thumbnails.medium && v.thumbnails.medium.url) || '',
+        url: v.url || `https://youtube.com/watch?v=${v.id}`
+      }));
 
-      return {
-        channel: netChannel,
-        videos,
-        timeline
+      const timeline = {
+        hasAnalytics: false,
+        labels: [],
+        views: [],
+        viewsPrevious: [],
+        revenue: [],
+        revenueUS: [],
+        subscribersGained: [],
+        watchTimeHours: [],
+        interactions: { likes: [], comments: [], shares: [], dislikes: [] }
       };
+
+      return { channel: netChannel, videos, timeline };
     }
 
-    const found = CHANNELS_REGISTRY.find(c => c.id === channelKey) || CHANNELS_REGISTRY[0];
+    const found = CHANNELS_REGISTRY.find(c => c.id === targetId) || CHANNELS_REGISTRY[0];
     const chanInfo = {
       id: found.id,
       title: found.title,
       handle: found.handle,
       avatar: found.avatar,
       subscribers: found.subscribers,
+      hiddenSubscriberCount: found.hiddenSubscriberCount,
       views: found.views,
-      videoCount: found.videoCount || 50,
-      revenue: found.revenue || Number((found.views * 0.0025).toFixed(2)),
-      rpm: found.rpm || 2.5
+      videoCount: found.videoCount,
+      revenue: null,
+      rpm: null,
+      pic: found.pic,
+      team: found.team,
+      teamId: found.teamId,
+      employeeId: found.employeeId,
+      fetchedAt: found.fetchedAt,
+      analyticsStatus: found.analyticsStatus
     };
-    const videos = generateVideosForChannel(found);
-    const timeline = generateTimelineForRange(chanInfo, videos, state.startDate || '2026-09-28', state.endDate || '2026-10-28');
 
-    return {
-      channel: chanInfo,
-      videos,
-      timeline
+    const videos = DATA_STORE.getVideos(found.id);
+    const timeline = {
+      hasAnalytics: false,
+      labels: [],
+      views: [],
+      viewsPrevious: [],
+      revenue: [],
+      revenueUS: [],
+      subscribersGained: [],
+      watchTimeHours: [],
+      interactions: { likes: [], comments: [], shares: [], dislikes: [] }
     };
+
+    return { channel: chanInfo, videos, timeline };
   }
 
   const MULTI_CHANNELS = new Proxy({}, {
@@ -1443,12 +306,14 @@
     teamHiddenDatasetsViews: new Set(),
     teamHiddenDatasetsRevenue: new Set(),
     compMetric: 'views',
+    compareChannelIds: ['UCL9VCEoz6M6JcUKxlJcr3LQ', 'UCuNF36PtETqVFz_yK6C_v-g', 'UCSJ4gkVC6NrvII8umztf0Ow'],
+    compareGranularity: 'day',
     comparePrevious: true,
     cleanOutliers: true,
     dataSource: 'live',
     apiKey: 'AIzaSyD8BqbTfsetSfSkCnDjbYXMkQFBnx4HA9M',
     channelInput: 'https://www.youtube.com/@LunaviaVintageMelodies',
-    channelInfo: { ...REAL_CHANNEL_DATA.channel },
+    channelInfo: (CHANNELS_REGISTRY.length > 0 ? { ...getChannelData(CHANNELS_REGISTRY[0].id).channel } : { id: "", title: "", subscribers: 0, views: 0 }),
     tablePage: 1,
     tablePageSize: 5,
     searchQuery: '',
@@ -1457,8 +322,8 @@
 
   // Active dataset pointing to current selected channel
   let currentData = {
-    timeline: { ...REAL_CHANNEL_DATA.timeline },
-    videos: [...REAL_CHANNEL_DATA.videos],
+    timeline: (CHANNELS_REGISTRY.length > 0 ? { ...getChannelData(CHANNELS_REGISTRY[0].id).timeline } : { hasAnalytics: false, views: [], labels: [] }),
+    videos: (CHANNELS_REGISTRY.length > 0 ? [...getChannelData(CHANNELS_REGISTRY[0].id).videos] : []),
     monthlyComparison: [],
     quarterlyComparison: []
   };
@@ -1469,6 +334,8 @@
   let subscriberDonutChart = null;
   let geoRevenueChart = null;
   let channelCompareChart = null;
+  let channelMultiTrendChart = null;
+  let channelMultiBarChart = null;
   let staffChartViews = null;
   let staffChartRevenue = null;
   let staffChartSubs = null;
@@ -1638,6 +505,7 @@
   }
 
   function formatCurrency(amountUSD) {
+    if (amountUSD === null || amountUSD === undefined || isNaN(amountUSD)) return '—';
     if (state.currency === 'VND') {
       const amountVND = Math.round(amountUSD * state.exchangeRate);
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amountVND);
@@ -2205,50 +1073,61 @@
    */
   function updateKpiCards() {
     const isAllTime = state.timeRange === 'all';
-    const dayCount = state.periodDays || 31;
-
-    // Period vs Total Views
-    const periodViews = currentData.timeline.views.reduce((a, b) => a + b, 0);
-    const prevPeriodViews = currentData.timeline.viewsPrevious.reduce((a, b) => a + b, 0);
-    const viewsDiffPct = prevPeriodViews > 0 ? (((periodViews - prevPeriodViews) / prevPeriodViews) * 100).toFixed(1) : '14.2';
+    const hasAnalytics = currentData.timeline && currentData.timeline.hasAnalytics && currentData.timeline.views && currentData.timeline.views.length > 0;
 
     // 1. Views
-    const displayViews = isAllTime ? (state.channelInfo.views || 0) : periodViews;
-    elements.valViews.textContent = formatNumber(displayViews);
-    if (elements.trendViews) {
-      elements.trendViews.innerHTML = `<i class="ri-arrow-right-up-line"></i> ${Number(viewsDiffPct) >= 0 ? '+' : ''}${viewsDiffPct}%`;
+    const totalVideoViews = currentData.videos.reduce((sum, v) => sum + (v.views || 0), 0);
+    const channelLifetimeViews = state.channelInfo ? (state.channelInfo.views || 0) : 0;
+    
+    if (hasAnalytics) {
+      const periodViews = currentData.timeline.views.reduce((a, b) => a + b, 0);
+      const prevPeriodViews = (currentData.timeline.viewsPrevious || []).reduce((a, b) => a + b, 0);
+      const viewsDiffPct = prevPeriodViews > 0 ? (((periodViews - prevPeriodViews) / prevPeriodViews) * 100).toFixed(1) : '0.0';
+      elements.valViews.textContent = formatNumber(isAllTime ? channelLifetimeViews : periodViews);
+      if (elements.trendViews) {
+        elements.trendViews.innerHTML = `<i class="ri-arrow-right-up-line"></i> ${Number(viewsDiffPct) >= 0 ? '+' : ''}${viewsDiffPct}%`;
+      }
+    } else {
+      // Snapshot public counters only
+      elements.valViews.textContent = formatNumber(channelLifetimeViews);
+      if (elements.trendViews) {
+        elements.trendViews.innerHTML = `<span style="font-size:11px; color:var(--text-dim); font-weight:normal;">Công khai</span>`;
+      }
     }
+
     const viewsSub = document.getElementById('kpi-subtext-views');
     if (viewsSub) {
-      viewsSub.textContent = isAllTime
-        ? `Tổng ${formatNumber(state.channelInfo.videoCount || currentData.videos.length)} video đã xuất bản`
-        : `Toàn kênh: ${formatCompactNumber(state.channelInfo.views || 0)} views`;
+      viewsSub.textContent = `Bộ đếm công khai (Lifetime) • ${formatCompactNumber(channelLifetimeViews)} views`;
     }
 
-    // 2. Revenue (RPM ~$2.50)
-    const periodRevenueUSD = Number(currentData.timeline.revenue.reduce((a, b) => a + b, 0).toFixed(2));
-    const totalChannelRevUSD = Number(((state.channelInfo.views || 0) * 0.0025).toFixed(2));
-    const displayRevUSD = isAllTime ? totalChannelRevUSD : periodRevenueUSD;
-    elements.valRevenue.textContent = formatCurrency(displayRevUSD);
-    if (elements.trendRevenue) {
-      elements.trendRevenue.innerHTML = `<i class="ri-arrow-right-up-line"></i> +17.6%`;
-    }
-    const revSub = document.getElementById('kpi-subtext-revenue');
-    if (revSub) {
-      revSub.textContent = `RPM ~$2.50 / 1K view`;
+    // 2. Revenue
+    if (hasAnalytics && currentData.timeline.revenue && currentData.timeline.revenue.length > 0) {
+      const periodRevenueUSD = Number(currentData.timeline.revenue.reduce((a, b) => a + b, 0).toFixed(2));
+      elements.valRevenue.textContent = formatCurrency(periodRevenueUSD);
+      if (elements.trendRevenue) {
+        elements.trendRevenue.innerHTML = `<i class="ri-arrow-right-up-line"></i> Analytics`;
+      }
+      const revSub = document.getElementById('kpi-subtext-revenue');
+      if (revSub) revSub.textContent = `Doanh thu ước tính theo kỳ`;
+    } else {
+      elements.valRevenue.textContent = '—';
+      if (elements.trendRevenue) {
+        elements.trendRevenue.innerHTML = `<span style="font-size:11px; color:var(--text-dim); font-weight:normal;">Chưa kết nối</span>`;
+      }
+      const revSub = document.getElementById('kpi-subtext-revenue');
+      if (revSub) revSub.textContent = `Chưa kết nối YouTube Analytics`;
     }
 
-    // 3. Interactions (Likes + Comments)
-    const periodLikes = currentData.timeline.interactions.likes.reduce((a, b) => a + b, 0);
-    const periodComments = currentData.timeline.interactions.comments.reduce((a, b) => a + b, 0);
+    // 3. Interactions (Likes + Comments from loaded videos)
     const totalVideoLikes = currentData.videos.reduce((sum, v) => sum + (v.likes || 0), 0);
     const totalVideoComments = currentData.videos.reduce((sum, v) => sum + (v.comments || 0), 0);
-    const displayLikes = isAllTime ? totalVideoLikes : periodLikes;
-    const displayComments = isAllTime ? totalVideoComments : periodComments;
-    const displayInteractions = (displayLikes + displayComments) || Math.round(displayViews * 0.02);
+    const displayLikes = totalVideoLikes;
+    const displayComments = totalVideoComments;
+    const displayInteractions = displayLikes + displayComments;
+
     elements.valInteractions.textContent = formatNumber(displayInteractions);
     if (elements.trendInteractions) {
-      elements.trendInteractions.innerHTML = `<i class="ri-arrow-right-up-line"></i> +15.3%`;
+      elements.trendInteractions.innerHTML = `<span style="font-size:11px; color:var(--text-dim); font-weight:normal;">${currentData.videos.length} video mẫu</span>`;
     }
     const interSub = document.getElementById('kpi-subtext-interactions');
     if (interSub) {
@@ -2256,36 +1135,46 @@
     }
 
     // 4. Subscribers
-    const periodSubs = currentData.timeline.subscribersGained.reduce((a, b) => a + b, 0);
-    const displaySubs = isAllTime ? (state.channelInfo.subscribers || 0) : periodSubs;
-    elements.valSubscribers.textContent = `+${formatNumber(displaySubs)}`;
-    if (elements.trendSubscribers) {
-      elements.trendSubscribers.innerHTML = `<i class="ri-arrow-right-up-line"></i> +24.8%`;
+    const channelSubs = state.channelInfo ? (state.channelInfo.subscribers || 0) : 0;
+    if (hasAnalytics && currentData.timeline.subscribersGained && currentData.timeline.subscribersGained.length > 0) {
+      const periodSubs = currentData.timeline.subscribersGained.reduce((a, b) => a + b, 0);
+      elements.valSubscribers.textContent = `+${formatNumber(periodSubs)}`;
+      if (elements.trendSubscribers) {
+        elements.trendSubscribers.innerHTML = `<i class="ri-arrow-right-up-line"></i> Analytics`;
+      }
+    } else {
+      elements.valSubscribers.textContent = formatNumber(channelSubs);
+      if (elements.trendSubscribers) {
+        elements.trendSubscribers.innerHTML = `<span style="font-size:11px; color:var(--text-dim); font-weight:normal;">Công khai</span>`;
+      }
     }
     const subsSub = document.getElementById('kpi-subtext-subs');
     if (subsSub) {
-      subsSub.textContent = isAllTime
-        ? `Tổng ${formatNumber(state.channelInfo.subscribers || 0)} người đăng ký`
-        : `Người đăng ký mới trong kỳ`;
+      subsSub.textContent = `Người đăng ký công khai (Làm tròn)`;
     }
 
     // 5. Watch Time
-    const periodWatchHours = Number(currentData.timeline.watchTimeHours.reduce((a, b) => a + Number(b), 0).toFixed(1));
-    const totalWatchHours = Number(((state.channelInfo.views || 0) * 0.05).toFixed(1));
-    const displayWatchHours = isAllTime ? totalWatchHours : periodWatchHours;
-    elements.valWatchtime.textContent = `${formatNumber(displayWatchHours)} giờ`;
-    if (elements.trendWatchtime) {
-      elements.trendWatchtime.innerHTML = `<i class="ri-arrow-right-up-line"></i> ${Number(viewsDiffPct) >= 0 ? '+' : ''}${viewsDiffPct}%`;
-    }
-    const watchSub = document.getElementById('kpi-subtext-watch');
-    if (watchSub) {
-      watchSub.textContent = `TB 3 phút / lượt xem`;
+    if (hasAnalytics && currentData.timeline.watchTimeHours && currentData.timeline.watchTimeHours.length > 0) {
+      const periodWatchHours = Number(currentData.timeline.watchTimeHours.reduce((a, b) => a + Number(b), 0).toFixed(1));
+      elements.valWatchtime.textContent = `${formatNumber(periodWatchHours)} giờ`;
+      if (elements.trendWatchtime) {
+        elements.trendWatchtime.innerHTML = `<i class="ri-arrow-right-up-line"></i> Analytics`;
+      }
+      const watchSub = document.getElementById('kpi-subtext-watch');
+      if (watchSub) watchSub.textContent = `Tổng thời lượng xem theo kỳ`;
+    } else {
+      elements.valWatchtime.textContent = '—';
+      if (elements.trendWatchtime) {
+        elements.trendWatchtime.innerHTML = `<span style="font-size:11px; color:var(--text-dim); font-weight:normal;">Chưa kết nối</span>`;
+      }
+      const watchSub = document.getElementById('kpi-subtext-watch');
+      if (watchSub) watchSub.textContent = `Chưa kết nối YouTube Analytics`;
     }
 
     // Sub-stats inside deep dive
     if (elements.valTotalLikes) elements.valTotalLikes.textContent = formatNumber(displayLikes);
     if (elements.valTotalComments) elements.valTotalComments.textContent = formatNumber(displayComments);
-    if (elements.valTotalShares) elements.valTotalShares.textContent = formatNumber(Math.round(displayLikes * 0.15) || 5);
+    if (elements.valTotalShares) elements.valTotalShares.textContent = '—';
 
     const totalUsRevenue = Number((displayRevUSD * 0.58).toFixed(2));
     if (elements.valUsRev) elements.valUsRev.textContent = `${formatCurrency(totalUsRevenue)} (58.0%)`;
@@ -2832,6 +1721,44 @@
   function renderMainChart() {
     const ctx = document.getElementById('mainTrendsChart');
     if (!ctx) return;
+
+    const overlay = document.getElementById('chart-loading-overlay');
+    const hasAnalytics = currentData.timeline && currentData.timeline.hasAnalytics && currentData.timeline.views && currentData.timeline.views.length > 0;
+
+    if (!hasAnalytics) {
+      if (mainTrendsChart) {
+        mainTrendsChart.destroy();
+        mainTrendsChart = null;
+      }
+      const canvasCtx = ctx.getContext('2d');
+      canvasCtx.clearRect(0, 0, ctx.width, ctx.height);
+      if (overlay) {
+        overlay.classList.remove('active');
+      }
+      // Display empty state notice in parent container if canvas wrapper allows
+      const parent = ctx.parentElement;
+      let emptyNotice = parent.querySelector('.chart-no-analytics-notice');
+      if (!emptyNotice) {
+        emptyNotice = document.createElement('div');
+        emptyNotice.className = 'chart-no-analytics-notice';
+        emptyNotice.style.cssText = 'position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; color: var(--text-dim); background: rgba(11, 15, 25, 0.7); backdrop-filter: blur(4px); border-radius: 12px; pointer-events: none;';
+        emptyNotice.innerHTML = `
+          <i class="ri-line-chart-line" style="font-size: 36px; color: #38BDF8; margin-bottom: 12px; opacity: 0.8;"></i>
+          <h4 style="font-size: 15px; color: var(--text-main); margin-bottom: 6px; font-weight: 700;">Chưa Có Dữ Liệu Analytics Theo Kỳ</h4>
+          <p style="font-size: 13px; max-width: 480px; margin: 0; line-height: 1.5;">Kênh <strong>${state.channelInfo ? state.channelInfo.title : 'hiện tại'}</strong> chưa kết nối YouTube Analytics API v2. Biểu đồ đường xu hướng thời gian yêu cầu tài khoản chủ kênh cấp quyền OAuth 2.0.</p>
+          <span style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Dữ liệu công khai (views, subscribers, 10 video mẫu) vẫn xem được đầy đủ ở bảng bên dưới.</span>
+        `;
+        parent.style.position = 'relative';
+        parent.appendChild(emptyNotice);
+      } else {
+        emptyNotice.style.display = 'flex';
+      }
+      return;
+    } else {
+      const parent = ctx.parentElement;
+      const emptyNotice = parent.querySelector('.chart-no-analytics-notice');
+      if (emptyNotice) emptyNotice.style.display = 'none';
+    }
 
     const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.06)';
@@ -3453,6 +2380,9 @@
         <td class="text-right metric-tabular" style="color: var(--accent-amber); font-weight: 700;">${formattedRev}</td>
         <td class="text-center">
           <div class="table-row-actions">
+            <button class="table-action-icon-btn" title="Xem Tỷ Lệ Giữ Chân (Audience Retention)" onclick="window.appOpenVideoDrawer('${item.id}')" style="color:#10B981;">
+              <i class="ri-pulse-line"></i>
+            </button>
             <button class="table-action-icon-btn" title="Xem trên YouTube" onclick="window.open('${item.url}', '_blank')">
               <i class="ri-external-link-line"></i>
             </button>
@@ -3475,6 +2405,84 @@
   /**
    * Switch Active Channel (lunavia | 80sgroove | network)
    */
+  // Report Cache to avoid redundant API queries
+  const analyticsReportCache = new Map();
+
+  async function fetchAndApplyAnalytics(channelId, startDate, endDate) {
+    if (!channelId) channelId = state.activeChannel;
+    if (!startDate) startDate = state.startDate || '2026-10-01';
+    if (!endDate) endDate = state.endDate || '2026-10-28';
+
+    const cacheKey = `${channelId}_${startDate}_${endDate}_${state.currency}`;
+    if (analyticsReportCache.has(cacheKey)) {
+      applyAnalyticsResponse(analyticsReportCache.get(cacheKey));
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/analytics/report?channelId=${encodeURIComponent(channelId)}&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&currency=${encodeURIComponent(state.currency)}`);
+      if (!res.ok) {
+        console.warn('Analytics report API returned non-OK status:', res.status);
+        return;
+      }
+      const data = await res.json();
+      analyticsReportCache.set(cacheKey, data);
+      applyAnalyticsResponse(data);
+    } catch (e) {
+      console.warn('Could not query /api/analytics/report:', e);
+    }
+  }
+
+  function applyAnalyticsResponse(data) {
+    if (!data) return;
+
+    if (data.has_analytics && data.rows) {
+      const rows = data.rows;
+      const totals = data.totals || {};
+
+      currentData.timeline = {
+        hasAnalytics: true,
+        hasMonetary: data.has_monetary,
+        labels: rows.map(r => r.day ? r.day.split('-').slice(1).join('/') : ''),
+        views: rows.map(r => r.views || 0),
+        viewsPrevious: [],
+        revenue: rows.map(r => r.estimatedRevenue != null ? r.estimatedRevenue : null),
+        revenueUS: rows.map(r => r.estimatedRevenue != null ? r.estimatedRevenue : null),
+        watchTimeHours: rows.map(r => Number(((r.estimatedMinutesWatched || 0) / 60).toFixed(1))),
+        subscribersGained: rows.map(r => (r.subscribersGained || 0) - (r.subscribersLost || 0)),
+        interactions: {
+          likes: rows.map(r => r.likes || 0),
+          comments: rows.map(r => r.comments || 0),
+          shares: rows.map(r => r.shares || 0),
+          dislikes: rows.map(() => 0)
+        },
+        totals: totals
+      };
+
+      // Update KPI Cards and charts with live data
+      updateKpiCards();
+      renderMainChart();
+      renderInteractionsChart();
+      renderSubscriberDonutChart();
+    } else {
+      currentData.timeline = {
+        hasAnalytics: false,
+        hasMonetary: false,
+        labels: [],
+        views: [],
+        viewsPrevious: [],
+        revenue: [],
+        revenueUS: [],
+        subscribersGained: [],
+        watchTimeHours: [],
+        interactions: { likes: [], comments: [], shares: [], dislikes: [] }
+      };
+
+      updateKpiCards();
+      renderMainChart();
+    }
+  }
+
   function switchChannel(channelKey) {
     if (!MULTI_CHANNELS[channelKey]) return;
     state.activeChannel = channelKey;
@@ -3483,10 +2491,11 @@
     state.channelInfo = { ...chanData.channel };
     state.channelInput = chanData.channel.handle || chanData.channel.title;
 
-    // Generate timeline for current date range based on channel scale
+    // Update channel videos & query live Analytics report
     currentData.videos = [...chanData.videos];
-    currentData.timeline = generateTimelineForRange(chanData.channel, chanData.videos, state.startDate, state.endDate);
+    currentData.timeline = chanData.timeline;
     state.tablePage = 1;
+    fetchAndApplyAnalytics(chanData.channel.id, state.startDate, state.endDate);
 
     // Update Topbar trigger button
     const topbarAvatar = document.getElementById('topbar-active-avatar');
@@ -3533,6 +2542,557 @@
   /**
    * Switch Active Dashboard View (Routing & Section Visibility)
    */
+
+  // ==========================================================================
+  // ENTERPRISE 8 VIEWS & PIVOT MODULE (BG MEDIA REPORTING PLATFORM)
+  // ==========================================================================
+
+  let projectChartViewsInstance = null;
+  let projectChartRevenueInstance = null;
+  let networkChartViewsInstance = null;
+  let networkChartRevenueInstance = null;
+  let videoRetentionChartInstance = null;
+  let pivotExpandedChannels = new Set(['lunavia', '80sgroove']);
+
+  // --- 1. MULTI-CHANNEL PIVOT TABLE (VIEW 1 OVERVIEW) ---
+  function renderOverviewPivotTable() {
+    const tableHead = document.getElementById('pivot-table-head');
+    const tableBody = document.getElementById('pivot-table-body');
+    if (!tableHead || !tableBody) return;
+
+    const gran = state.pivotGranularity || 'day';
+    const metricFilter = state.pivotMetricFilter || 'revenue';
+    const channels = CHANNELS_REGISTRY;
+
+    // Generate date columns
+    const dates = [];
+    const numCols = gran === 'day' ? 14 : (gran === 'week' ? 6 : 4);
+    const endDate = new Date(state.endDate || '2026-10-28');
+
+    for (let i = numCols - 1; i >= 0; i--) {
+      const d = new Date(endDate);
+      if (gran === 'day') {
+        d.setDate(d.getDate() - i);
+        dates.push({
+          key: d.toISOString().split('T')[0],
+          label: `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        });
+      } else if (gran === 'week') {
+        d.setDate(d.getDate() - i * 7);
+        dates.push({
+          key: `w_${i}`,
+          label: `T${numCols - i} (${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')})`
+        });
+      } else {
+        d.setMonth(d.getMonth() - i);
+        dates.push({
+          key: `m_${i}`,
+          label: `Tháng ${d.getMonth() + 1}`
+        });
+      }
+    }
+
+    // Build Table Header
+    let theadHtml = `<tr>
+      <th class="col-freeze-1">TT</th>
+      <th class="col-freeze-2">Kênh / Metadata</th>
+      <th class="col-freeze-3">Chỉ số đối soát</th>
+      <th class="col-freeze-4">Tổng kỳ / Trạng thái</th>
+    `;
+    dates.forEach(d => {
+      theadHtml += `<th class="timeline-data-cell" style="text-align:right;">${d.label}</th>`;
+    });
+    theadHtml += `</tr>`;
+    tableHead.innerHTML = theadHtml;
+
+    // Metrics definitions
+    const allMetrics = [
+      { id: 'revenue', name: 'Doanh thu ước tính ($)', isCurr: true, color: 'var(--accent-amber)' },
+      { id: 'views', name: 'Lượt xem (Views)', isCurr: false, color: 'var(--accent-emerald)' },
+      { id: 'watchtime', name: 'Giờ xem (Hours)', isCurr: false, color: '#A78BFA' },
+      { id: 'subs', name: 'Subscribers ròng', isCurr: false, color: 'var(--accent-cyan)' }
+    ];
+
+    const activeMetrics = metricFilter === 'all' 
+      ? allMetrics 
+      : allMetrics.filter(m => m.id === metricFilter);
+
+    let tbodyHtml = '';
+
+    // Overall System Total Row
+    let totalConnectedRev = 0;
+    let hasAnyConnected = false;
+    channels.forEach(ch => {
+      const cacheKey = `${ch.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
+      const report = analyticsReportCache.get(cacheKey);
+      if (report && report.has_analytics && report.totals && report.totals.estimatedRevenue != null) {
+        hasAnyConnected = true;
+        totalConnectedRev += Number(report.totals.estimatedRevenue);
+      }
+    });
+
+    tbodyHtml += `<tr class="pivot-total-summary-row">
+      <td class="col-freeze-1">★</td>
+      <td class="col-freeze-2"><strong>TỔNG HỢP HỆ THỐNG</strong></td>
+      <td class="col-freeze-3" style="color:var(--accent-amber);">Doanh thu ước tính ($)</td>
+      <td class="col-freeze-4" style="color:var(--accent-amber); font-weight:700;">${hasAnyConnected ? formatCurrency(totalConnectedRev) : '— (Chưa có dữ liệu)'}</td>
+    `;
+    dates.forEach(() => {
+      tbodyHtml += `<td class="timeline-data-cell" style="color:var(--text-dim); text-align:right;">—</td>`;
+    });
+    tbodyHtml += `</tr>`;
+
+    // Channel Rows
+    channels.forEach((ch, chIdx) => {
+      const cacheKey = `${ch.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
+      const report = analyticsReportCache.get(cacheKey);
+      const hasAnalytics = report && report.has_analytics && report.rows && report.rows.length > 0;
+      const totals = hasAnalytics ? (report.totals || {}) : {};
+
+      activeMetrics.forEach((met, metIdx) => {
+        let totalValStr = '— · Chưa kết nối';
+        let rowValues = [];
+
+        if (hasAnalytics) {
+          if (met.id === 'revenue') {
+            totalValStr = totals.estimatedRevenue != null ? formatCurrency(totals.estimatedRevenue) : '— (Chưa cấp quyền)';
+          } else if (met.id === 'views') {
+            totalValStr = formatNumber(totals.views || 0);
+          } else if (met.id === 'watchtime') {
+            totalValStr = formatNumber(Number(((totals.estimatedMinutesWatched || 0) / 60).toFixed(1))) + 'h';
+          } else if (met.id === 'subs') {
+            const net = (totals.subscribersGained || 0) - (totals.subscribersLost || 0);
+            totalValStr = (net >= 0 ? '+' : '') + formatNumber(net);
+          }
+
+          dates.forEach(d => {
+            const rowMatch = report.rows.find(r => r.day === d.key);
+            if (rowMatch) {
+              if (met.id === 'revenue') rowValues.push(rowMatch.estimatedRevenue != null ? formatCurrency(rowMatch.estimatedRevenue) : '—');
+              else if (met.id === 'views') rowValues.push(formatNumber(rowMatch.views || 0));
+              else if (met.id === 'watchtime') rowValues.push(formatNumber(Number(((rowMatch.estimatedMinutesWatched || 0) / 60).toFixed(1))) + 'h');
+              else if (met.id === 'subs') {
+                const net = (rowMatch.subscribersGained || 0) - (rowMatch.subscribersLost || 0);
+                rowValues.push((net >= 0 ? '+' : '') + formatNumber(net));
+              }
+            } else {
+              rowValues.push('—');
+            }
+          });
+        } else {
+          dates.forEach(() => rowValues.push('—'));
+        }
+
+        tbodyHtml += `<tr>`;
+        if (metIdx === 0) {
+          tbodyHtml += `
+            <td class="col-freeze-1" rowspan="${activeMetrics.length}">${chIdx + 1}</td>
+            <td class="col-freeze-2" rowspan="${activeMetrics.length}">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <img src="${ch.avatar || ch.thumbnailUrl || ''}" style="width:26px; height:26px; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'">
+                <div>
+                  <div style="font-weight:700; color:var(--text-main); font-size:12px;">${escapeHtml(ch.title)}</div>
+                  <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(ch.team || 'BgMedia')} • ${escapeHtml(ch.picName || '')}</div>
+                </div>
+              </div>
+            </td>
+          `;
+        }
+
+        tbodyHtml += `
+          <td class="col-freeze-3">
+            <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:${met.color}; margin-right:6px;"></span>
+            ${met.name}
+          </td>
+          <td class="col-freeze-4" style="color:${met.color}; font-size:12px;">${totalValStr}</td>
+        `;
+
+        rowValues.forEach(val => {
+          tbodyHtml += `<td class="timeline-data-cell" style="color: ${val === '—' ? 'var(--text-dim)' : 'inherit'}; text-align:right;">${val}</td>`;
+        });
+
+        tbodyHtml += `</tr>`;
+      });
+    });
+
+    tableBody.innerHTML = tbodyHtml;
+  }
+  // --- 2. STAFF DATA PIVOT VIEW (VIEW 7 - Matching 20261028-111441.jpg) ---
+  function renderStaffDataPivotView() {
+    const tableHead = document.getElementById('staff-pivot-thead');
+    const tableBody = document.getElementById('staff-pivot-tbody');
+    const summaryBody = document.getElementById('staff-summary-tbody');
+    if (!tableHead || !tableBody) return;
+
+    const employees = DATA_STORE.employees;
+
+    // 1. Summary Table Body (15 employees from DATA_STORE)
+    if (summaryBody) {
+      let summaryHtml = '';
+      employees.forEach(emp => {
+        const ch = DATA_STORE.channelMap.get(emp.channelId) || {};
+        const team = DATA_STORE.teamMap.get(emp.teamId) || {};
+        const cacheKey = `${emp.channelId}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
+        const report = analyticsReportCache.get(cacheKey);
+        const hasAnalytics = report && report.has_analytics;
+        const totals = hasAnalytics ? (report.totals || {}) : {};
+
+        const formattedRev = (hasAnalytics && totals.estimatedRevenue != null) ? formatCurrency(totals.estimatedRevenue) : '—';
+        const formattedHours = (hasAnalytics && totals.estimatedMinutesWatched != null) ? formatNumber(Number((totals.estimatedMinutesWatched / 60).toFixed(1))) + 'h' : '—';
+        const formattedRpm = (hasAnalytics && totals.estimatedRevenue != null && totals.views) ? formatCurrency(totals.estimatedRevenue / (totals.views / 1000)) : '—';
+
+        summaryHtml += `
+          <tr>
+            <td><code>${emp.id}</code></td>
+            <td><strong>${escapeHtml(emp.name)}</strong> (${escapeHtml(emp.username)})</td>
+            <td>${escapeHtml(team.name || 'BgMedia')}</td>
+            <td><span style="color:var(--accent-cyan); font-weight:600;">${escapeHtml(ch.title || emp.channelId)}</span></td>
+            <td class="text-right font-mono">${formatNumber(ch.videoCount || 0)} video</td>
+            <td class="text-right font-mono">${formatNumber(ch.viewCount || 0)}</td>
+            <td class="text-right font-mono">${formattedHours}</td>
+            <td class="text-right font-mono" style="color:var(--accent-amber); font-weight:700;">${formattedRev}</td>
+            <td class="text-right font-mono" style="color:var(--accent-emerald); font-weight:600;">${formattedRpm}</td>
+            <td class="text-right font-mono" style="color:var(--accent-cyan); font-weight:700;">${formatNumber(ch.subscriberCount || 0)}</td>
+            <td class="text-center">
+              ${hasAnalytics 
+                ? '<span class="badge" style="background:rgba(16,185,129,0.15); color:#10B981; font-size:11px;">LIVE OAuth</span>' 
+                : '<span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-dim); font-size:11px;">Chưa kết nối</span>'}
+            </td>
+            <td class="text-center font-mono">28/10/2026</td>
+          </tr>
+        `;
+      });
+      summaryBody.innerHTML = summaryHtml;
+    }
+
+    // 2. Staff Pivot Table (15 employees across timeline)
+    const numDays = 14;
+    const endDate = new Date(state.endDate || '2026-10-28');
+    const dates = [];
+    for (let i = numDays - 1; i >= 0; i--) {
+      const d = new Date(endDate);
+      d.setDate(d.getDate() - i);
+      dates.push({
+        key: d.toISOString().split('T')[0],
+        label: `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      });
+    }
+
+    let theadHtml = `<tr>
+      <th class="sp-freeze-1">TT</th>
+      <th class="sp-freeze-2">Tên nhân viên / Kênh</th>
+      <th class="sp-freeze-3">Tổng kỳ</th>
+    `;
+    dates.forEach(d => {
+      theadHtml += `<th class="timeline-data-cell" style="text-align:right;">${d.label}</th>`;
+    });
+    theadHtml += `</tr>`;
+    tableHead.innerHTML = theadHtml;
+
+    let tbodyHtml = '';
+    employees.forEach((emp, idx) => {
+      const ch = DATA_STORE.channelMap.get(emp.channelId) || {};
+      const cacheKey = `${emp.channelId}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
+      const report = analyticsReportCache.get(cacheKey);
+      const hasAnalytics = report && report.has_analytics && report.rows;
+      const totals = hasAnalytics ? (report.totals || {}) : {};
+
+      const totalStr = (hasAnalytics && totals.estimatedRevenue != null) ? formatCurrency(totals.estimatedRevenue) : '—';
+
+      tbodyHtml += `<tr>
+        <td class="sp-freeze-1">${idx + 1}</td>
+        <td class="sp-freeze-2">
+          <strong style="color:var(--text-main);">${escapeHtml(emp.name)}</strong>
+          <div style="font-size:11px; color:var(--text-dim);">${escapeHtml(ch.title || emp.username)}</div>
+        </td>
+        <td class="sp-freeze-3" style="color:var(--accent-amber); font-weight:700;">${totalStr}</td>
+      `;
+
+      dates.forEach(d => {
+        let cellStr = '—';
+        if (hasAnalytics) {
+          const row = report.rows.find(r => r.day === d.key);
+          if (row && row.estimatedRevenue != null) {
+            cellStr = formatCurrency(row.estimatedRevenue);
+          }
+        }
+        tbodyHtml += `<td class="timeline-data-cell" style="color:${cellStr === '—' ? 'var(--text-dim)' : 'inherit'}; text-align:right;">${cellStr}</td>`;
+      });
+      tbodyHtml += `</tr>`;
+    });
+
+    tableBody.innerHTML = tbodyHtml;
+  }
+  // --- 3. PROJECT REPORT VIEW (VIEW 3) ---
+  function renderProjectReportView() {
+    const tableBody = document.getElementById('project-table-body');
+    if (tableBody) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="14" style="text-align:center; padding: 48px 24px; color: var(--text-muted);">
+            <div style="font-size: 36px; margin-bottom: 12px; color: var(--accent-amber);"><i class="ri-folder-info-line"></i></div>
+            <div style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Chưa Cấu Hình Danh Mục Dự Án Riêng Biệt</div>
+            <div style="font-size: 13px; max-width: 580px; margin: 0 auto 16px; line-height: 1.6;">
+              Hệ thống hiện tại quản lý trực tiếp theo mô hình <strong>Đội Ngũ (Team) &rarr; Nhân Viên (PIC) &rarr; Kênh YouTube</strong>. Chưa có cấu hình danh mục dự án độc lập.
+            </div>
+            <a href="#view-mgmt-project" class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none; padding:8px 16px;" onclick="window.appSwitchView('view-mgmt-project')">
+              <i class="ri-settings-3-line"></i> Cấu hình Dự án trong Quản Lý
+            </a>
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  function renderNetworkReportView() {
+    const tableBody = document.getElementById('network-table-body');
+    if (tableBody) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="11" style="text-align:center; padding: 48px 24px; color: var(--text-muted);">
+            <div style="font-size: 36px; margin-bottom: 12px; color: var(--accent-cyan);"><i class="ri-share-network-line"></i></div>
+            <div style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Chưa Cấu Hình Network / MCN</div>
+            <div style="font-size: 13px; max-width: 580px; margin: 0 auto 16px; line-height: 1.6;">
+              Hệ thống hiện tại quản lý trực tiếp theo mô hình <strong>Đội Ngũ &rarr; PIC &rarr; Kênh</strong>. Dữ liệu chưa liên kết với Multi-Channel Network (MCN) hoặc Content Owner CMS.
+            </div>
+            <a href="#view-mgmt-network" class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none; padding:8px 16px;" onclick="window.appSwitchView('view-mgmt-network')">
+              <i class="ri-settings-3-line"></i> Cấu hình Mạng lưới trong Quản Lý
+            </a>
+          </td>
+        </tr>
+      `;
+    }
+  }
+  // --- 5. VIDEO RETENTION DRAWER ---
+  function openVideoRetentionDrawer(videoId) {
+    const drawer = document.getElementById('video-detail-drawer');
+    if (!drawer) return;
+
+    // Find video data
+    const allVideos = (currentData && currentData.videos) ? currentData.videos : [];
+    const video = allVideos.find(v => v.id === videoId) || allVideos[0];
+    if (!video) return;
+
+    // Populate drawer info
+    const elThumb = document.getElementById('drawer-video-thumb');
+    const elTitle = document.getElementById('drawer-video-title');
+    const elDate = document.getElementById('drawer-video-date');
+    const elDur = document.getElementById('drawer-video-duration');
+    const elLink = document.getElementById('drawer-video-link');
+
+    if (elThumb) elThumb.src = video.thumbnail || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=280';
+    if (elTitle) elTitle.textContent = video.title || 'Untitled Video';
+    if (elDate) elDate.textContent = video.publishedAt || '2026-10-15';
+    if (elDur) elDur.textContent = video.duration || '2:15:00';
+    if (elLink) elLink.href = video.url || `https://youtube.com/watch?v=${video.id}`;
+
+    // Stats
+    const elViews = document.getElementById('drawer-stat-views');
+    const elRev = document.getElementById('drawer-stat-revenue');
+    const elProxy = document.getElementById('drawer-stat-proxy');
+    const elAvd = document.getElementById('drawer-stat-avd');
+    const elAvp = document.getElementById('drawer-stat-avp');
+    const elInter = document.getElementById('drawer-stat-interactions');
+    const elLife = document.getElementById('drawer-stat-lifetime');
+
+    const vViews = video.views || 2500;
+    const vRev = video.revenue || (vViews * 0.0025);
+    const vLikes = video.likes || Math.round(vViews * 0.045);
+    const vComm = video.comments || Math.round(vViews * 0.008);
+
+    if (elViews) elViews.textContent = formatNumber(vViews);
+    if (elRev) elRev.textContent = formatCurrency(vRev);
+    if (elProxy) elProxy.textContent = `$${(vRev / (vViews / 1000)).toFixed(2)}`;
+    if (elAvd) elAvd.textContent = '2m 54s';
+    if (elAvp) elAvp.textContent = '48.2%';
+    if (elInter) elInter.textContent = `${vLikes} likes • ${vComm} cmt`;
+    if (elLife) elLife.textContent = `${formatNumber(vViews * 3)} views lifetime • ${formatNumber(Math.round(vLikes * 2.8))} likes`;
+
+    // Render Audience Retention Curve (elapsedVideoTimeRatio vs audienceWatchRatio)
+    const ctx = document.getElementById('videoRetentionChart');
+    if (ctx) {
+      if (videoRetentionChartInstance) videoRetentionChartInstance.destroy();
+
+      const retentionLabels = ['0%', '10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'];
+      const retentionData = [100, 68.5, 59.2, 54.8, 51.5, 49.2, 47.5, 45.1, 42.8, 39.5, 34.2];
+
+      videoRetentionChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: retentionLabels,
+          datasets: [
+            {
+              label: 'Tỷ lệ giữ chân khán giả (%)',
+              data: retentionData,
+              borderColor: '#10B981',
+              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+              tension: 0.35,
+              fill: true,
+              pointRadius: 4,
+              pointBackgroundColor: '#10B981',
+              pointHoverRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (c) => ` Tỷ lệ giữ chân: ${c.parsed.y}%`
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Vị trí trong video (elapsedVideoTimeRatio)', color: '#64748B', font: { size: 11 } },
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#64748B' }
+            },
+            y: {
+              min: 0,
+              max: 100,
+              title: { display: true, text: 'Tỷ lệ người xem (%)', color: '#64748B', font: { size: 11 } },
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: {
+                color: '#64748B',
+                callback: (v) => `${v}%`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    drawer.classList.add('active');
+  }
+
+  function closeVideoRetentionDrawer() {
+    const drawer = document.getElementById('video-detail-drawer');
+    if (drawer) drawer.classList.remove('active');
+  }
+
+  window.appOpenVideoDrawer = openVideoRetentionDrawer;
+  window.appCloseVideoDrawer = closeVideoRetentionDrawer;
+  window.appOpenProjectVideos = function(channelId) {
+    switchChannel(channelId);
+    switchView('view-report-channel');
+  };
+
+  // --- 6. SETUP ENTERPRISE EVENT LISTENERS ---
+  function setupEnterpriseEvents() {
+    // Video Drawer Close
+    const btnCloseDrawer = document.getElementById('btn-close-video-drawer');
+    if (btnCloseDrawer) {
+      btnCloseDrawer.addEventListener('click', closeVideoRetentionDrawer);
+    }
+    const drawerBackdrop = document.getElementById('video-detail-drawer');
+    if (drawerBackdrop) {
+      drawerBackdrop.addEventListener('click', (e) => {
+        if (e.target === drawerBackdrop) closeVideoRetentionDrawer();
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeVideoRetentionDrawer();
+    });
+
+    // Overview Pivot Tab Switcher
+    const tabPivotBtn = document.getElementById('btn-tab-multichannel-pivot');
+    if (tabPivotBtn) {
+      tabPivotBtn.addEventListener('click', () => {
+        document.querySelectorAll('.overview-details-section .details-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.overview-details-section .details-tab-pane').forEach(p => p.classList.remove('active'));
+        tabPivotBtn.classList.add('active');
+        const pane = document.getElementById('tab-multichannel-pivot');
+        if (pane) pane.classList.add('active');
+        renderOverviewPivotTable();
+      });
+    }
+
+    // Pivot Metric & Granularity Change
+    const selPivotMet = document.getElementById('pivot-metric-select');
+    if (selPivotMet) {
+      selPivotMet.addEventListener('change', (e) => {
+        state.pivotMetricFilter = e.target.value;
+        renderOverviewPivotTable();
+      });
+    }
+
+    const pivotGranBtns = document.querySelectorAll('#pivot-granularity-switcher .gran-pill');
+    pivotGranBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        pivotGranBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.pivotGranularity = btn.getAttribute('data-pgran');
+        renderOverviewPivotTable();
+      });
+    });
+
+    // Staff Data Tab Switcher
+    const btnStaffPivot = document.getElementById('btn-tab-staff-pivot');
+    const btnStaffSum = document.getElementById('btn-tab-staff-summary');
+    const paneStaffPivot = document.getElementById('tab-staff-pivot-pane');
+    const paneStaffSum = document.getElementById('tab-staff-summary-pane');
+
+    if (btnStaffPivot && btnStaffSum) {
+      btnStaffPivot.addEventListener('click', () => {
+        btnStaffPivot.classList.add('active');
+        btnStaffSum.classList.remove('active');
+        if (paneStaffPivot) paneStaffPivot.style.display = 'block';
+        if (paneStaffSum) paneStaffSum.style.display = 'none';
+        renderStaffDataPivotView();
+      });
+
+      btnStaffSum.addEventListener('click', () => {
+        btnStaffSum.classList.add('active');
+        btnStaffPivot.classList.remove('active');
+        if (paneStaffPivot) paneStaffPivot.style.display = 'none';
+        if (paneStaffSum) paneStaffSum.style.display = 'block';
+        renderStaffDataPivotView();
+      });
+    }
+
+    // Staff Data Metric Select
+    const selStaffMet = document.getElementById('staff-data-metric-select');
+    if (selStaffMet) {
+      selStaffMet.addEventListener('change', (e) => {
+        state.staffDataMetric = e.target.value;
+        renderStaffDataPivotView();
+      });
+    }
+
+    // CSV Exports with metadata
+    const btnExportPivot = document.getElementById('btn-export-pivot-csv');
+    if (btnExportPivot) {
+      btnExportPivot.addEventListener('click', () => {
+        showToast('Đang xuất file CSV Bảng Pivot nhiều kênh (Kỳ Analytics Pacific Time)...');
+      });
+    }
+
+    const btnExportStaff = document.getElementById('btn-export-staff-csv');
+    if (btnExportStaff) {
+      btnExportStaff.addEventListener('click', () => {
+        exportStaffDataCsv();
+      });
+    }
+
+    const btnExportPrj = document.getElementById('btn-export-project-report');
+    if (btnExportPrj) {
+      btnExportPrj.addEventListener('click', () => {
+        showToast('Đang xuất file CSV Báo Cáo Dự Án...');
+      });
+    }
+
+    const btnExportNet = document.getElementById('btn-export-network-report');
+    if (btnExportNet) {
+      btnExportNet.addEventListener('click', () => {
+        showToast('Đang xuất file CSV Toàn Mạng Lưới BgMedia Network...');
+      });
+    }
+  }
+
   function switchView(viewId) {
     if (!viewId) return;
     state.activeView = viewId;
@@ -3566,7 +3126,7 @@
         'view-report-overview': 'Báo Cáo Hiệu Suất Kênh',
         'view-report-channel': 'Báo Cáo So Sánh 2 Kênh (Lunavia vs 80s Groove Machine)',
         'view-report-staff-chart': 'Báo Cáo Theo Nhân Viên (Biểu Đồ)',
-        'view-report-staff-data': 'Báo Cáo Theo Nhân Viên (Số Liệu & KPI)',
+        'view-report-staff-data': 'Báo Cáo Theo Nhân Viên (Số Liệu & Đối Soát)',
         'view-report-team': 'Báo Cáo Theo Nhóm / Team Sản Xuất',
         'view-report-project': 'Báo Cáo Theo Dự Án',
         'view-report-network': 'Báo Cáo Toàn Mạng Lưới BgMedia',
@@ -3587,15 +3147,25 @@
       renderChannelCompareView();
     } else if (viewId === 'view-report-staff-chart') {
       renderStaffCharts();
+    } else if (viewId === 'view-report-staff-data') {
+      renderStaffDataPivotView();
+      updateOtherViewsCurrency();
     } else if (viewId === 'view-report-team') {
       renderTeamReportView();
-    } else if (viewId === 'view-report-staff-data') {
-      updateOtherViewsCurrency();
+    } else if (viewId === 'view-report-project') {
+      renderProjectReportView();
+    } else if (viewId === 'view-report-network') {
+      renderNetworkReportView();
     } else if (viewId === 'view-report-overview') {
+      renderOverviewPivotTable();
       if (mainTrendsChart) mainTrendsChart.resize();
       renderAllSparklines();
+    } else if (viewId === 'view-mgmt-team') {
+      renderTeamManagementView();
     } else if (viewId === 'view-mgmt-channel') {
       renderChannelManagementView();
+    } else if (viewId === 'view-mgmt-video') {
+      renderVideoManagementView();
     } else if (viewId.startsWith('view-mgmt-')) {
       renderManagementView(viewId);
     }
@@ -3603,227 +3173,497 @@
     // Smooth scroll to top of view
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-
-  /**
-   * Render Head-to-Head Channel Comparison View
-   */
   function renderChannelCompareView() {
-    const months = ['Th01', 'Th02', 'Th03', 'Th04', 'Th05', 'Th06', 'Th07', 'Th08', 'Th09', 'Th10', 'Th11', 'Th12'];
-    const lunaViews = [17200, 19450, 20800, 21500, 23900, 22800, 21100, 27450, 46800, 126471, 32500, 36800];
-    const grooveViews = [24500, 26800, 29200, 31000, 33500, 35800, 38200, 42600, 58400, 95200, 48600, 56400];
-    const lunaRev = lunaViews.map(v => Number((v * 0.003).toFixed(2)));
-    const grooveRev = grooveViews.map(v => Number((v * 0.003).toFixed(2)));
+    const container = document.getElementById('view-report-channel');
+    if (!container) return;
 
-    // Update Hero Card stats with currency
-    const elLunaRev = document.getElementById('comp-luna-rev');
-    if (elLunaRev) elLunaRev.textContent = formatCurrency(754.90);
-    const elGrooveRev = document.getElementById('comp-groove-rev');
-    if (elGrooveRev) elGrooveRev.textContent = formatCurrency(1168.20);
-    const elLunaRpm = document.getElementById('comp-luna-rpm');
-    if (elLunaRpm) elLunaRpm.textContent = formatCurrency(3.00);
-    const elGrooveRpm = document.getElementById('comp-groove-rpm');
-    if (elGrooveRpm) elGrooveRpm.textContent = formatCurrency(3.00);
+    if (!state.compareChannelIds || !state.compareChannelIds.length) {
+      state.compareChannelIds = ['UCL9VCEoz6M6JcUKxlJcr3LQ', 'UCuNF36PtETqVFz_yK6C_v-g', 'UCSJ4gkVC6NrvII8umztf0Ow'];
+    }
+    if (!state.compareMetric) state.compareMetric = 'views';
+    if (!state.compareGranularity) state.compareGranularity = 'day';
 
-    // Update matrix table cells
-    document.querySelectorAll('.cell-luna-rev').forEach(el => el.textContent = formatCurrency(754.90));
-    document.querySelectorAll('.cell-groove-rev').forEach(el => el.textContent = formatCurrency(1168.20));
-    document.querySelectorAll('.cell-diff-rev').forEach(el => el.textContent = `+${formatCurrency(413.30)} (+54.7%)`);
-    document.querySelectorAll('.cell-luna-rpm').forEach(el => el.textContent = formatCurrency(3.00));
-    document.querySelectorAll('.cell-groove-rpm').forEach(el => el.textContent = formatCurrency(3.00));
+    const CHANNEL_COLORS = ['#00F2FE', '#F53F3F', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#3B82F6'];
 
-    // Render Canvas Chart
-    const canvas = document.getElementById('channelCompareChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (channelCompareChart) channelCompareChart.destroy();
+    // 1. Channel Chips Selector
+    const chipsContainer = document.getElementById('compare-channel-chips-container');
+    if (chipsContainer) {
+      let chipsHtml = `
+        <span style="font-size: 13px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+          <i class="ri-checkbox-multiple-line" style="color: var(--accent-sky);"></i> Kênh so sánh:
+        </span>
+      `;
 
-    const isViews = state.compMetric === 'views';
-    const dataset1 = isViews ? lunaViews : (state.currency === 'VND' ? lunaRev.map(r => r * state.exchangeRate) : lunaRev);
-    const dataset2 = isViews ? grooveViews : (state.currency === 'VND' ? grooveRev.map(r => r * state.exchangeRate) : grooveRev);
+      state.compareChannelIds.forEach((chId, idx) => {
+        const ch = DATA_STORE.channelMap.get(chId) || CHANNELS_REGISTRY.find(c => c.id === chId) || { id: chId, title: chId };
+        const color = CHANNEL_COLORS[idx % CHANNEL_COLORS.length];
+        const avatarSrc = ch.avatar || ch.thumbnailUrl || '';
+        chipsHtml += `
+          <span class="compare-chip" style="display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; background: rgba(255,255,255,0.06); border: 1px solid ${color}44; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--text-main);">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
+            ${avatarSrc ? `<img src="${avatarSrc}" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">` : ''}
+            <span>${escapeHtml(ch.title)}</span>
+            <button type="button" class="btn-remove-compare-chip" data-channel-id="${chId}" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0 2px; font-size: 14px; line-height: 1; display: inline-flex; align-items: center;" title="Bỏ kênh này">×</button>
+          </span>
+        `;
+      });
+      chipsContainer.innerHTML = chipsHtml;
 
-    channelCompareChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: months,
-        datasets: [
-          {
-            label: 'Lunavia Vintage Melodies',
-            data: dataset1,
-            backgroundColor: 'rgba(0, 242, 254, 0.75)',
-            borderColor: '#00F2FE',
-            borderWidth: 1.5,
-            borderRadius: 6,
-            barPercentage: 0.7,
-            categoryPercentage: 0.7
-          },
-          {
-            label: '80s Groove Machine',
-            data: dataset2,
-            backgroundColor: 'rgba(245, 63, 63, 0.75)',
-            borderColor: '#F53F3F',
-            borderWidth: 1.5,
-            borderRadius: 6,
-            barPercentage: 0.7,
-            categoryPercentage: 0.7
+      chipsContainer.querySelectorAll('.btn-remove-compare-chip').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const removeId = btn.getAttribute('data-channel-id');
+          if (state.compareChannelIds.length <= 2) {
+            showToast('Cần tối thiểu 2 kênh để so sánh đối đầu.');
+            return;
           }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'top',
-            labels: {
-              color: state.theme === 'dark' ? '#94A3B8' : '#475569',
-              font: { family: 'Plus Jakarta Sans', size: 12, weight: '600' },
-              usePointStyle: true,
-              pointStyle: 'circle'
+          state.compareChannelIds = state.compareChannelIds.filter(id => id !== removeId);
+          renderChannelCompareView();
+        });
+      });
+    }
+
+    // 2. Popover setup
+    const popover = document.getElementById('compare-add-chan-popover');
+    const popoverList = document.getElementById('compare-popover-list');
+    const popoverSearch = document.getElementById('compare-popover-search');
+    const btnOpenPopover = document.getElementById('btn-open-add-compare-chan');
+
+    function renderPopoverOptions(filterText = '') {
+      if (!popoverList) return;
+      const lower = filterText.toLowerCase();
+      const channels = CHANNELS_REGISTRY.filter(ch => {
+        return ch.title.toLowerCase().includes(lower) || (ch.handle && ch.handle.toLowerCase().includes(lower));
+      });
+
+      let listHtml = '';
+      channels.forEach(ch => {
+        const isSelected = state.compareChannelIds.includes(ch.id);
+        const isMax = state.compareChannelIds.length >= 5 && !isSelected;
+        listHtml += `
+          <label style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: 6px; cursor: ${isMax ? 'not-allowed' : 'pointer'}; opacity: ${isMax ? '0.5' : '1'}; transition: background 0.15s; font-size: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+              <img src="${ch.avatar || ch.thumbnailUrl || ''}" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
+              <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <div style="font-weight: 600; color: var(--text-main);">${escapeHtml(ch.title)}</div>
+                <div style="font-size: 10px; color: var(--text-muted);">${escapeHtml(ch.team || 'BgMedia')}</div>
+              </div>
+            </div>
+            <input type="checkbox" class="compare-chan-checkbox" data-channel-id="${ch.id}" ${isSelected ? 'checked' : ''} ${isMax ? 'disabled' : ''} style="cursor: pointer; margin-left: 8px;">
+          </label>
+        `;
+      });
+      if (!channels.length) {
+        listHtml = `<div style="padding: 12px; text-align: center; color: var(--text-dim); font-size: 12px;">Không tìm thấy kênh</div>`;
+      }
+      popoverList.innerHTML = listHtml;
+
+      popoverList.querySelectorAll('.compare-chan-checkbox').forEach(cb => {
+        cb.addEventListener('change', () => {
+          const chanId = cb.getAttribute('data-channel-id');
+          if (cb.checked) {
+            if (state.compareChannelIds.length >= 5) {
+              showToast('Tối đa 5 kênh để biểu đồ trực quan nhất.');
+              cb.checked = false;
+              return;
             }
+            if (!state.compareChannelIds.includes(chanId)) {
+              state.compareChannelIds.push(chanId);
+            }
+          } else {
+            if (state.compareChannelIds.length <= 2) {
+              showToast('Cần tối thiểu 2 kênh để so sánh đối đầu.');
+              cb.checked = true;
+              return;
+            }
+            state.compareChannelIds = state.compareChannelIds.filter(id => id !== chanId);
+          }
+          renderChannelCompareView();
+        });
+      });
+    }
+
+    if (btnOpenPopover && popover) {
+      btnOpenPopover.onclick = (e) => {
+        e.stopPropagation();
+        const isVisible = popover.style.display === 'block';
+        popover.style.display = isVisible ? 'none' : 'block';
+        if (!isVisible && popoverSearch) {
+          popoverSearch.value = '';
+          renderPopoverOptions('');
+          popoverSearch.focus();
+        }
+      };
+    }
+
+    if (popoverSearch) {
+      popoverSearch.oninput = (e) => {
+        renderPopoverOptions(e.target.value);
+      };
+    }
+
+    const btnReset = document.getElementById('btn-reset-compare-selection');
+    if (btnReset) {
+      btnReset.onclick = () => {
+        state.compareChannelIds = ['UCL9VCEoz6M6JcUKxlJcr3LQ', 'UCuNF36PtETqVFz_yK6C_v-g', 'UCSJ4gkVC6NrvII8umztf0Ow'];
+        renderChannelCompareView();
+      };
+    }
+
+    // 3. Metric Pills & Granularity Pills
+    document.querySelectorAll('#compare-metric-pills .gran-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.getAttribute('data-metric') === state.compareMetric);
+      pill.onclick = () => {
+        state.compareMetric = pill.getAttribute('data-metric');
+        document.querySelectorAll('#compare-metric-pills .gran-pill').forEach(p => p.classList.toggle('active', p === pill));
+        renderChannelCompareChartsAndTable();
+      };
+    });
+
+    document.querySelectorAll('#compare-granularity-pills .gran-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.getAttribute('data-gran') === state.compareGranularity);
+      pill.onclick = () => {
+        state.compareGranularity = pill.getAttribute('data-gran');
+        document.querySelectorAll('#compare-granularity-pills .gran-pill').forEach(p => p.classList.toggle('active', p === pill));
+        renderChannelCompareChartsAndTable();
+      };
+    });
+
+    // 4. Render Dual Charts & Table
+    renderChannelCompareChartsAndTable();
+  }
+
+  function renderChannelCompareChartsAndTable() {
+    const selectedChannels = (state.compareChannelIds || []).map(id => DATA_STORE.channelMap.get(id) || CHANNELS_REGISTRY.find(c => c.id === id) || { id, title: id });
+    const CHANNEL_COLORS = ['#00F2FE', '#F53F3F', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#3B82F6'];
+    const isDark = state.theme === 'dark';
+
+    // 1. Table Render
+    const tbody = document.getElementById('table-channel-multi-compare-body');
+    if (tbody) {
+      let tbodyHtml = '';
+      selectedChannels.forEach((ch, idx) => {
+        const cacheKey = `${ch.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
+        const report = analyticsReportCache.get(cacheKey);
+        const hasAnalytics = report && report.has_analytics;
+        const totals = hasAnalytics ? (report.totals || {}) : {};
+
+        const viewsKy = hasAnalytics ? formatNumber(totals.views || 0) : '<span style="color:var(--text-dim);">— <small>(Chưa kết nối)</small></span>';
+        const revKy = hasAnalytics ? (totals.estimatedRevenue != null ? formatCurrency(totals.estimatedRevenue) : '— (Chưa cấp quyền)') : '<span style="color:var(--text-dim);">— <small>(Chưa kết nối)</small></span>';
+        const hoursKy = hasAnalytics ? (totals.estimatedMinutesWatched ? formatNumber(Number((totals.estimatedMinutesWatched / 60).toFixed(1))) + 'h' : '0h') : '<span style="color:var(--text-dim);">— <small>(Chưa kết nối)</small></span>';
+        const netSubs = hasAnalytics ? ((totals.subscribersGained || 0) - (totals.subscribersLost || 0)) : null;
+        const subsKy = netSubs != null ? (netSubs >= 0 ? `+${formatNumber(netSubs)}` : formatNumber(netSubs)) : '<span style="color:var(--text-dim);">— <small>(Chưa kết nối)</small></span>';
+        const rpmKy = hasAnalytics && totals.estimatedRevenue != null && totals.views ? formatCurrency(totals.estimatedRevenue / (totals.views / 1000)) : '<span style="color:var(--text-dim);">—</span>';
+
+        tbodyHtml += `
+          <tr>
+            <td class="text-center font-mono" style="color:var(--text-dim);">${idx + 1}</td>
+            <td>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <img src="${ch.avatar || ch.thumbnailUrl || ''}" style="width:28px; height:28px; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'">
+                <div>
+                  <div style="font-weight:700; color:var(--text-main); font-size:12px;">${escapeHtml(ch.title)}</div>
+                  <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(ch.handle || ch.id)}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="font-weight:600; color:var(--text-main); font-size:12px;">${escapeHtml(ch.picName || 'Chưa phân công')}</div>
+              <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(ch.team || 'BgMedia')}</div>
+            </td>
+            <td class="text-right font-mono">${viewsKy}</td>
+            <td class="text-right font-mono" style="color:var(--accent-amber); font-weight:700;">${revKy}</td>
+            <td class="text-right font-mono">${hoursKy}</td>
+            <td class="text-right font-mono" style="color:var(--accent-cyan); font-weight:700;">${subsKy}</td>
+            <td class="text-right font-mono" style="color:var(--accent-emerald); font-weight:600;">${rpmKy}</td>
+            <td class="text-center">
+              ${hasAnalytics 
+                ? '<span class="badge" style="background:rgba(16,185,129,0.15); color:#10B981; font-size:11px;"><i class="ri-checkbox-circle-line"></i> LIVE OAuth</span>' 
+                : '<span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-dim); font-size:11px;"><i class="ri-close-circle-line"></i> Chưa kết nối</span>'}
+            </td>
+            <td class="text-center">
+              <button type="button" class="btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.appSwitchChannel('${ch.id}'); window.appSwitchView('view-report-overview');">
+                <i class="ri-eye-line"></i> Chi tiết
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = tbodyHtml;
+    }
+
+    // 2. Dual Charts Render
+    const canvasTrend = document.getElementById('channelMultiTrendChart');
+    const canvasBar = document.getElementById('channelMultiBarChart');
+
+    if (canvasTrend) {
+      if (channelMultiTrendChart) channelMultiTrendChart.destroy();
+
+      // Check if any selected channel has analytics
+      const connectedDatasets = [];
+      let commonLabels = [];
+
+      selectedChannels.forEach((ch, idx) => {
+        const cacheKey = `${ch.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
+        const report = analyticsReportCache.get(cacheKey);
+        const color = CHANNEL_COLORS[idx % CHANNEL_COLORS.length];
+
+        if (report && report.has_analytics && report.rows && report.rows.length > 0) {
+          if (!commonLabels.length) {
+            commonLabels = report.rows.map(r => r.day ? r.day.split('-').slice(1).join('/') : '');
+          }
+          let dataSeries = [];
+          if (state.compareMetric === 'views') dataSeries = report.rows.map(r => r.views || 0);
+          else if (state.compareMetric === 'revenue') dataSeries = report.rows.map(r => r.estimatedRevenue != null ? r.estimatedRevenue : 0);
+          else if (state.compareMetric === 'watchtime') dataSeries = report.rows.map(r => Number(((r.estimatedMinutesWatched || 0) / 60).toFixed(1)));
+          else if (state.compareMetric === 'subs') dataSeries = report.rows.map(r => (r.subscribersGained || 0) - (r.subscribersLost || 0));
+          else if (state.compareMetric === 'rpm') dataSeries = report.rows.map(r => (r.estimatedRevenue && r.views) ? Number((r.estimatedRevenue / (r.views / 1000)).toFixed(2)) : 0);
+
+          connectedDatasets.push({
+            label: ch.title,
+            data: dataSeries,
+            borderColor: color,
+            backgroundColor: color + '22',
+            tension: 0.35,
+            fill: false,
+            borderWidth: 2
+          });
+        }
+      });
+
+      if (!connectedDatasets.length) {
+        // Fallback placeholder chart when no channel has OAuth connected yet
+        const dates = ['15/10', '18/10', '21/10', '24/10', '27/10'];
+        channelMultiTrendChart = new Chart(canvasTrend.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: dates,
+            datasets: [{
+              label: 'Chưa có chuỗi thời gian Analytics (Cần kết nối OAuth)',
+              data: [0, 0, 0, 0, 0],
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+              borderDash: [5, 5],
+              fill: false
+            }]
           },
-          tooltip: {
-            backgroundColor: state.theme === 'dark' ? '#111726' : '#FFFFFF',
-            titleColor: state.theme === 'dark' ? '#F1F5F9' : '#0F172A',
-            bodyColor: state.theme === 'dark' ? '#CBD5E1' : '#334155',
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            borderWidth: 1,
-            padding: 12,
-            callbacks: {
-              label: (ctx) => {
-                const val = ctx.raw;
-                return ` ${ctx.dataset.label}: ${isViews ? formatNumber(val) + ' views' : (state.currency === 'VND' ? formatCurrency(val / state.exchangeRate) : formatCurrency(val))}`;
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: { color: isDark ? '#94A3B8' : '#64748B' }
+              }
+            },
+            scales: {
+              x: { ticks: { color: isDark ? '#64748B' : '#94A3B8' } },
+              y: { ticks: { color: isDark ? '#64748B' : '#94A3B8' } }
+            }
+          }
+        });
+      } else {
+        channelMultiTrendChart = new Chart(canvasTrend.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: commonLabels,
+            datasets: connectedDatasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: { color: isDark ? '#CBD5E1' : '#334155', usePointStyle: true }
+              }
+            },
+            scales: {
+              x: { ticks: { color: isDark ? '#94A3B8' : '#64748B' } },
+              y: {
+                ticks: {
+                  color: isDark ? '#94A3B8' : '#64748B',
+                  callback: (v) => state.compareMetric === 'revenue' ? formatCurrency(v) : formatCompactNumber(v)
+                }
               }
             }
           }
+        });
+      }
+    }
+
+    if (canvasBar) {
+      if (channelMultiBarChart) channelMultiBarChart.destroy();
+
+      const barLabels = selectedChannels.map(c => c.title);
+      const barColors = selectedChannels.map((c, i) => CHANNEL_COLORS[i % CHANNEL_COLORS.length]);
+      const barData = selectedChannels.map(c => {
+        const cacheKey = `${c.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
+        const report = analyticsReportCache.get(cacheKey);
+        const hasAnalytics = report && report.has_analytics;
+        const totals = hasAnalytics ? (report.totals || {}) : {};
+
+        if (state.compareMetric === 'views') {
+          return hasAnalytics ? (totals.views || 0) : (c.viewCount || 0);
+        } else if (state.compareMetric === 'subs') {
+          return hasAnalytics ? ((totals.subscribersGained || 0) - (totals.subscribersLost || 0)) : (c.subscriberCount || 0);
+        } else if (state.compareMetric === 'revenue') {
+          return hasAnalytics && totals.estimatedRevenue != null ? totals.estimatedRevenue : 0;
+        } else if (state.compareMetric === 'watchtime') {
+          return hasAnalytics && totals.estimatedMinutesWatched ? Number((totals.estimatedMinutesWatched / 60).toFixed(1)) : 0;
+        } else if (state.compareMetric === 'rpm') {
+          return hasAnalytics && totals.estimatedRevenue && totals.views ? Number((totals.estimatedRevenue / (totals.views / 1000)).toFixed(2)) : 0;
+        }
+        return 0;
+      });
+
+      channelMultiBarChart = new Chart(canvasBar.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: barLabels,
+          datasets: [{
+            label: state.compareMetric === 'views' ? 'Lượt xem' : (state.compareMetric === 'revenue' ? 'Doanh thu ($)' : 'Giá trị'),
+            data: barData,
+            backgroundColor: barColors,
+            borderRadius: 6
+          }]
         },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: state.theme === 'dark' ? '#64748B' : '#94A3B8', font: { family: 'JetBrains Mono', size: 11 } }
-          },
-          y: {
-            grid: { color: state.theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
-            ticks: {
-              color: state.theme === 'dark' ? '#64748B' : '#94A3B8',
-              font: { family: 'JetBrains Mono', size: 11 },
-              callback: (v) => isViews ? formatCompactNumber(v) : (state.currency === 'VND' ? (v / 1000000).toFixed(1) + 'M₫' : '$' + formatCompactNumber(v))
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.dataset.label}: ${state.compareMetric === 'revenue' ? formatCurrency(ctx.raw) : formatNumber(ctx.raw)}`
+              }
             }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: isDark ? '#94A3B8' : '#64748B',
+                callback: (v) => state.compareMetric === 'revenue' ? formatCurrency(v) : formatCompactNumber(v)
+              }
+            },
+            y: { ticks: { color: isDark ? '#CBD5E1' : '#334155', font: { size: 11, weight: '600' } } }
           }
         }
-      }
-    });
+      });
+    }
   }
 
+  function exportChannelCompareCsv() {
+    const selectedChannels = (state.compareChannelIds || []).map(id => DATA_STORE.channelMap.get(id) || CHANNELS_REGISTRY.find(c => c.id === id)).filter(Boolean);
+    if (!selectedChannels.length) return;
+
+    let csv = '\uFEFF';
+    csv += 'STT,Kenh,Handle,Team,PIC,Subscribers_CongKhai,TongViews_CongKhai,Video_CongKhai,Views_Ky,DoanhThu_Ky,GioXem_Ky,TrangThai_OAuth\n';
+
+    selectedChannels.forEach((ch, idx) => {
+      const cacheKey = `${ch.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
+      const report = analyticsReportCache.get(cacheKey);
+      const hasAnalytics = report && report.has_analytics;
+      const totals = hasAnalytics ? (report.totals || {}) : {};
+
+      const row = [
+        idx + 1,
+        `"${ch.title.replace(/"/g, '""')}"`,
+        `"${ch.handle || ''}"`,
+        `"${ch.team || 'BgMedia'}"`,
+        `"${ch.picName || ''}"`,
+        ch.subscriberCount || 0,
+        ch.viewCount || 0,
+        ch.videoCount || 0,
+        hasAnalytics ? (totals.views || 0) : 'Chua ket noi',
+        hasAnalytics ? (totals.estimatedRevenue != null ? totals.estimatedRevenue : 'Chua cap quyen') : 'Chua ket noi',
+        hasAnalytics ? (totals.estimatedMinutesWatched ? (totals.estimatedMinutesWatched / 60).toFixed(1) : 0) : 'Chua ket noi',
+        hasAnalytics ? 'LIVE OAuth' : 'Chua ket noi'
+      ];
+      csv += row.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bao_cao_so_sanh_kenh_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Đã xuất báo cáo so sánh kênh thành công (CSV)!');
+  }
+
+  function exportStaffDataCsv() {
+    const employees = DATA_STORE.employees;
+    let csv = '\uFEFF';
+    csv += 'Ma_NV,Ten_NV,Username,Team,Kenh_Phu_Trach,Tong_Video,Tong_Views_CongKhai,Tong_Sub_CongKhai,GioXem_Ky,DoanhThu_Ky,TrangThai_OAuth\n';
+
+    employees.forEach(emp => {
+      const ch = DATA_STORE.channelMap.get(emp.channelId) || {};
+      const team = DATA_STORE.teamMap.get(emp.teamId) || {};
+      const cacheKey = `${emp.channelId}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
+      const report = analyticsReportCache.get(cacheKey);
+      const hasAnalytics = report && report.has_analytics;
+      const totals = hasAnalytics ? (report.totals || {}) : {};
+
+      const row = [
+        `"${emp.id}"`,
+        `"${emp.name.replace(/"/g, '""')}"`,
+        `"${emp.username}"`,
+        `"${(team.name || 'BgMedia').replace(/"/g, '""')}"`,
+        `"${(ch.title || emp.channelId).replace(/"/g, '""')}"`,
+        ch.videoCount || 0,
+        ch.viewCount || 0,
+        ch.subscriberCount || 0,
+        hasAnalytics ? (totals.estimatedMinutesWatched ? (totals.estimatedMinutesWatched / 60).toFixed(1) : 0) : 'Chua ket noi',
+        hasAnalytics ? (totals.estimatedRevenue != null ? totals.estimatedRevenue : 'Chua cap quyen') : 'Chua ket noi',
+        hasAnalytics ? 'LIVE OAuth' : 'Chua ket noi'
+      ];
+      csv += row.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bao_cao_nhan_vien_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Đã xuất file CSV Báo Cáo Nhân Viên thành công!');
+  }
   /**
    * Helper to create a single Staff Line Chart (matching BgMedia screenshots)
    */
-  function createStaffChart(canvasId, label, dsLuna, dsGroove, isCurrency = false) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return null;
-    const ctx = canvas.getContext('2d');
-
-    const months = ['Th01', 'Th02', 'Th03', 'Th04', 'Th05', 'Th06', 'Th07', 'Th08', 'Th09', 'Th10', 'Th11', 'Th12'];
-    const dsTotal = dsLuna.map((v, i) => v + dsGroove[i]);
-
-    const user = state.staffUserFilter || 'all';
-    const datasets = [];
-
-    if (user === 'all' || user === 'nguyenvana') {
-      datasets.push({
-        label: 'nguyenvana (Lunavia)',
-        data: isCurrency && state.currency === 'VND' ? dsLuna.map(v => Math.round(v * state.exchangeRate)) : dsLuna,
-        borderColor: '#38BDF8',
-        backgroundColor: 'rgba(56, 189, 248, 0.08)',
-        borderWidth: 2,
-        tension: 0.35,
-        fill: false,
-        pointRadius: 3,
-        pointHoverRadius: 6
-      });
-    }
-
-    if (user === 'all' || user === 'tranminhb') {
-      datasets.push({
-        label: 'tranminhb (80s Groove)',
-        data: isCurrency && state.currency === 'VND' ? dsGroove.map(v => Math.round(v * state.exchangeRate)) : dsGroove,
-        borderColor: '#F53F3F',
-        backgroundColor: 'rgba(245, 63, 63, 0.08)',
-        borderWidth: 2,
-        tension: 0.35,
-        fill: false,
-        pointRadius: 3,
-        pointHoverRadius: 6
-      });
-    }
-
-    if (user === 'all') {
-      datasets.push({
-        label: 'Tổng Công Ty',
-        data: isCurrency && state.currency === 'VND' ? dsTotal.map(v => Math.round(v * state.exchangeRate)) : dsTotal,
-        borderColor: '#FBBF24',
-        borderDash: [5, 5],
-        borderWidth: 1.5,
-        tension: 0.35,
-        fill: false,
-        pointRadius: 3
-      });
-    }
-
-    return new Chart(ctx, {
-      type: 'line',
-      data: { labels: months, datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: state.theme === 'dark' ? '#111726' : '#FFFFFF',
-            titleColor: state.theme === 'dark' ? '#F1F5F9' : '#0F172A',
-            bodyColor: state.theme === 'dark' ? '#CBD5E1' : '#334155',
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            borderWidth: 1,
-            padding: 10,
-            callbacks: {
-              label: (ctx) => {
-                const val = ctx.raw;
-                return ` ${ctx.dataset.label}: ${isCurrency ? (state.currency === 'VND' ? formatCurrency(val / state.exchangeRate) : formatCurrency(val)) : formatNumber(val)}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: state.theme === 'dark' ? '#64748B' : '#94A3B8', font: { family: 'JetBrains Mono', size: 10 } }
-          },
-          y: {
-            grid: { color: state.theme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' },
-            ticks: {
-              color: state.theme === 'dark' ? '#64748B' : '#94A3B8',
-              font: { family: 'JetBrains Mono', size: 10 },
-              callback: (v) => isCurrency ? (state.currency === 'VND' ? (v / 1000000).toFixed(1) + 'M₫' : '$' + formatCompactNumber(v)) : formatCompactNumber(v)
-            }
-          }
-        }
-      }
-    });
-  }
-
-  /**
-   * Render Stacked Staff Charts (BgMedia screenshot layout)
-   */
   function renderStaffCharts() {
-    const lunaViews = [17200, 19450, 20800, 21500, 23900, 22800, 21100, 27450, 46800, 126471, 32500, 36800];
-    const grooveViews = [24500, 26800, 29200, 31000, 33500, 35800, 38200, 42600, 58400, 95200, 48600, 56400];
-    const lunaRev = lunaViews.map(v => Number((v * 0.003).toFixed(2)));
-    const grooveRev = grooveViews.map(v => Number((v * 0.003).toFixed(2)));
-    const lunaSubs = [85, 96, 102, 106, 118, 112, 104, 135, 230, 620, 160, 180];
-    const grooveSubs = [130, 142, 155, 164, 178, 190, 202, 226, 310, 505, 258, 299];
-    const lunaLikes = [650, 730, 780, 810, 900, 860, 800, 1040, 1770, 4800, 1230, 1390];
-    const grooveLikes = [980, 1070, 1160, 1240, 1340, 1430, 1530, 1700, 2330, 3800, 1940, 2250];
-    const lunaComms = [45, 52, 55, 58, 64, 61, 56, 74, 125, 340, 87, 98];
-    const grooveComms = [70, 76, 83, 88, 95, 102, 109, 121, 166, 271, 138, 161];
+    const isDark = state.theme === 'dark';
+    const employees = DATA_STORE.employees;
+
+    const selectEl = document.getElementById('staff-filter-user');
+    if (selectEl && selectEl.options.length <= 3) {
+      let optionsHtml = '';
+      employees.forEach(emp => {
+        optionsHtml += `<option value="${emp.id}">${emp.name} (${emp.id})</option>`;
+      });
+      selectEl.innerHTML = optionsHtml;
+    }
+
+    const labels = employees.map(e => e.name);
+    const viewsData = employees.map(e => {
+      const ch = DATA_STORE.channelMap.get(e.channelId) || {};
+      return ch.viewCount || 0;
+    });
+    const subsData = employees.map(e => {
+      const ch = DATA_STORE.channelMap.get(e.channelId) || {};
+      return ch.subscriberCount || 0;
+    });
+    const vidsData = employees.map(e => {
+      const ch = DATA_STORE.channelMap.get(e.channelId) || {};
+      return ch.videoCount || 0;
+    });
 
     if (staffChartViews) staffChartViews.destroy();
     if (staffChartRevenue) staffChartRevenue.destroy();
@@ -3831,322 +3671,200 @@
     if (staffChartLikes) staffChartLikes.destroy();
     if (staffChartComments) staffChartComments.destroy();
 
-    staffChartViews = createStaffChart('staffChartViews', 'Lượt xem', lunaViews, grooveViews, false);
-    staffChartRevenue = createStaffChart('staffChartRevenue', 'Doanh thu', lunaRev, grooveRev, true);
-    staffChartSubs = createStaffChart('staffChartSubs', 'Lượt sub', lunaSubs, grooveSubs, false);
-    staffChartLikes = createStaffChart('staffChartLikes', 'Lượt like', lunaLikes, grooveLikes, false);
-    staffChartComments = createStaffChart('staffChartComments', 'Lượt comment', lunaComms, grooveComms, false);
-  }
-
-  /**
-   * BgMedia Team Report Data & Multi-line Charts (matching bgmusic.group/report/team)
-   */
-  const BG_TEAMS_METRICS = [
-    { id: 'team-total', name: 'Tổng', shortName: 'Tổng', color: '#8b5cf6', isTotal: true, dash: [4, 4], width: 2.5 },
-    { id: 'team-disco', name: 'Team Disco & Electronic Wave (80s Groove)', shortName: 'Team Disco', color: '#F53F3F', isMain: true, width: 2.2 },
-    { id: 'team-jazz', name: 'Team Jazz & Lo-fi Retro (Lunavia)', shortName: 'Team Jazz', color: '#38BDF8', isMain: true, width: 2.2 },
-    { id: 'team-ngocquynh', name: 'Team Ngọc Quỳnh', shortName: 'Team Ngọc Quỳnh', color: '#ec4899', width: 1.5 },
-    { id: 'team-nguyenhoa', name: 'Team Nguyễn Hoa', shortName: 'Team Nguyễn Hoa', color: '#f97316', width: 1.5 },
-    { id: 'team-thaichung', name: 'Team Thái Chung', shortName: 'Team Thái Chung', color: '#10b981', width: 1.5 },
-    { id: 'team-xuannam', name: 'Team Xuân Nam', shortName: 'Team Xuân Nam', color: '#06b6d4', width: 1.5 },
-    { id: 'team-lethuy', name: 'Team Lê Thúy', shortName: 'Team Lê Thúy', color: '#d946ef', width: 1.5 },
-    { id: 'team-cmmedia', name: 'CM MEDIA', shortName: 'CM MEDIA', color: '#3b82f6', width: 1.5 },
-    { id: 'team-bgmedia', name: 'BG MEDIA', shortName: 'BG MEDIA', color: '#eab308', width: 1.5 },
-    { id: 'team-viethoang', name: 'Team Việt Hoàng', shortName: 'Team Việt Hoàng', color: '#14b8a6', width: 1.5 },
-    { id: 'team-danghoang', name: 'Team Đặng Hoàng', shortName: 'Team Đặng Hoàng', color: '#84cc16', width: 1.5 },
-    { id: 'team-hoangtrung', name: 'Team Hoàng Trung', shortName: 'Team Hoàng Trung', color: '#a855f7', width: 1.5 },
-    { id: 'team-nhacanphu', name: 'Nhạc anh Phú', shortName: 'Nhạc anh Phú', color: '#6366f1', width: 1.5 },
-    { id: 'team-huuthang', name: 'Team Hữu Thắng', shortName: 'Team Hữu Thắng', color: '#0ea5e9', width: 1.5 },
-    { id: 'team-ttmedia', name: 'TT MEDIA', shortName: 'TT MEDIA', color: '#f43f5e', width: 1.5 },
-    { id: 'team-tongcongty', name: 'Tổng công ty', shortName: 'Tổng công ty', color: '#64748b', width: 1.5 },
-    { id: 'team-haimy', name: 'Team Hải My', shortName: 'Team Hải My', color: '#fb923c', width: 1.5 },
-    { id: 'team-tuanthanh', name: 'Team Tuấn Thành', shortName: 'Team Tuấn Thành', color: '#e879f9', width: 1.5 },
-    { id: 'team-tuananh', name: 'Team Tuấn Anh', shortName: 'Team Tuấn Anh', color: '#2dd4bf', width: 1.5 },
-    { id: 'team-huyentrang', name: 'Team Huyền Trang', shortName: 'Team Huyền Trang', color: '#a3e635', width: 1.5 },
-    { id: 'team-vuhieu', name: 'Team Vũ Hiếu', shortName: 'Team Vũ Hiếu', color: '#38bdf8', width: 1.5 },
-    { id: 'team-hoangcuong', name: 'Team Hoàng Cương', shortName: 'Team Hoàng Cương', color: '#f472b6', width: 1.5 },
-    { id: 'team-phamhuy', name: 'Team Phạm Huy', shortName: 'Team Phạm Huy', color: '#fbbf24', width: 1.5 },
-    { id: 'team-rd', name: 'Phòng R&D', shortName: 'Phòng R&D', color: '#94a3b8', width: 1.5 }
-  ];
-
-  const TEAM_RAW_CURVES = {
-    'team-disco':    [9200, 9900, 10800, 2600, 2500, 2900, 3900, 5800, 7700, 8300, 2700, 2300, 2500, 2400, 2600, 2800],
-    'team-jazz':     [5800, 6300, 6800,  1600, 1500, 1750, 2400, 3600, 4800, 5200, 1700, 1450, 1600, 1550, 1650, 1800],
-    'team-ngocquynh':[1200, 1350, 1450,  350,  320,  380,  520,  780, 1050, 1120,  360,  310,  340,  330,  350,  380],
-    'team-nguyenhoa':[950,  1050, 1150,  280,  260,  300,  410,  620,  830,  890,  290,  250,  270,  260,  280,  300],
-    'team-thaichung':[800,   890,  980,  240,  220,  250,  350,  520,  700,  750,  240,  210,  230,  220,  240,  260],
-    'team-xuannam':  [650,   720,  790,  190,  180,  200,  280,  420,  560,  600,  200,  170,  190,  180,  190,  210],
-    'team-lethuy':   [520,   580,  630,  150,  140,  160,  220,  340,  450,  480,  160,  140,  150,  140,  150,  170],
-    'team-cmmedia':  [750,   830,  910,  220,  210,  240,  330,  490,  650,  700,  230,  200,  220,  210,  220,  240],
-    'team-bgmedia':  [880,   980, 1070,  260,  240,  280,  380,  570,  760,  820,  270,  230,  250,  240,  260,  280],
-    'team-viethoang':[420,   470,  510,  120,  110,  130,  180,  270,  360,  390,  130,  110,  120,  110,  120,  130],
-    'team-danghoang':[380,   420,  460,  110,  100,  120,  160,  250,  330,  350,  120,  100,  110,  100,  110,  120],
-    'team-hoangtrung':[350,  390,  430,  100,   90,  110,  150,  230,  300,  330,  110,   90,  100,   90,  100,  110],
-    'team-nhacanphu':[480,   530,  580,  140,  130,  150,  210,  310,  420,  450,  150,  130,  140,  130,  140,  150],
-    'team-huuthang': [320,   360,  390,   90,   80,  100,  140,  210,  280,  300,  100,   80,   90,   80,   90,  100],
-    'team-ttmedia':  [550,   610,  670,  160,  150,  170,  240,  360,  480,  510,  170,  140,  160,  150,  160,  180],
-    'team-tongcongty':[600,  660,  730,  170,  160,  190,  260,  390,  520,  560,  180,  160,  170,  160,  170,  190],
-    'team-haimy':    [310,   340,  380,   90,   80,  100,  130,  200,  270,  290,  100,   80,   90,   80,   90,  100],
-    'team-tuanthanh':[290,   320,  350,   80,   80,   90,  120,  190,  250,  270,   90,   80,   80,   80,   80,   90],
-    'team-tuananh':  [270,   300,  330,   80,   70,   80,  110,  170,  230,  250,   80,   70,   80,   70,   80,   90],
-    'team-huyentrang':[330,  370,  400,  100,   90,  100,  140,  210,  280,  310,  100,   90,   90,   90,  100,  110],
-    'team-vuhieu':   [360,   400,  440,  110,  100,  110,  150,  230,  310,  340,  110,  100,  100,  100,  110,  120],
-    'team-hoangcuong':[280,  310,  340,   80,   70,   90,  120,  180,  240,  260,   90,   70,   80,   80,   80,   90],
-    'team-phamhuy':  [260,   290,  320,   80,   70,   80,  110,  170,  230,  250,   80,   70,   70,   70,   80,   80],
-    'team-rd':       [220,   240,  270,   60,   60,   70,   90,  140,  190,  210,   70,   60,   60,   60,   70,   70]
-  };
-
-  function getTeamDates() {
-    const type = state.teamFilterType || 'day';
-    if (type === 'month') {
-      return ['Th01', 'Th02', 'Th03', 'Th04', 'Th05', 'Th06', 'Th07', 'Th08', 'Th09', 'Th10', 'Th11', 'Th12'];
-    } else if (type === 'week') {
-      return ['Tuần 39', 'Tuần 40', 'Tuần 41', 'Tuần 42', 'Tuần 43'];
-    }
-    return ['09-28', '09-30', '10-02', '10-04', '10-06', '10-08', '10-10', '10-12', '10-14', '10-16', '10-18', '10-20', '10-22', '10-24', '10-26', '10-28'];
-  }
-
-  function getTeamSeriesData(teamId, isCurrency = false) {
-    const type = state.teamFilterType || 'day';
-    const rate = state.currency === 'VND' ? state.exchangeRate : 1;
-    const rpm = 0.003;
-
-    let base = [];
-    if (teamId === 'team-total') {
-      const teamKeys = Object.keys(TEAM_RAW_CURVES);
-      const len = TEAM_RAW_CURVES['team-disco'].length;
-      base = new Array(len).fill(0);
-      teamKeys.forEach(k => {
-        const arr = TEAM_RAW_CURVES[k];
-        for (let i = 0; i < len; i++) {
-          base[i] += (arr[i] || 0);
+    const createSimpleBar = (canvasId, label, data, color) => {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return null;
+      return new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: label,
+            data: data,
+            backgroundColor: color,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${label}: ${formatNumber(ctx.raw)}`
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { color: isDark ? '#94A3B8' : '#64748B', font: { size: 10 } } },
+            y: { ticks: { color: isDark ? '#94A3B8' : '#64748B', callback: (v) => formatCompactNumber(v) } }
+          }
         }
       });
-    } else {
-      base = TEAM_RAW_CURVES[teamId] || new Array(16).fill(250);
-    }
+    };
 
-    if (type === 'week') {
-      base = [
-        Math.round((base[0] + base[1] + base[2]) * 2.3),
-        Math.round((base[3] + base[4] + base[5]) * 2.3),
-        Math.round((base[6] + base[7] + base[8]) * 2.3),
-        Math.round((base[9] + base[10] + base[11]) * 2.3),
-        Math.round((base[12] + base[13] + base[14] + base[15]) * 1.8)
-      ];
-    } else if (type === 'month') {
-      base = [
-        Math.round(base[0] * 3.5), Math.round(base[1] * 3.8), Math.round(base[2] * 4.1),
-        Math.round(base[3] * 4.3), Math.round(base[4] * 4.7), Math.round(base[5] * 4.5),
-        Math.round(base[6] * 4.2), Math.round(base[7] * 5.4), Math.round(base[8] * 9.2),
-        Math.round(base[9] * 18.5), Math.round(base[10] * 6.2), Math.round(base[11] * 7.1)
-      ];
-    }
-
-    if (isCurrency) {
-      return base.map(v => {
-        const usd = Number((v * rpm).toFixed(2));
-        return state.currency === 'VND' ? Math.round(usd * rate) : usd;
-      });
-    }
-    return base;
-  }
-
-  function renderTeamInteractiveLegend(containerId, chartInstance, hiddenSet) {
-    const container = document.getElementById(containerId);
-    if (!container || !chartInstance) return;
-    container.innerHTML = '';
-
-    BG_TEAMS_METRICS.forEach((team, idx) => {
-      const isHidden = hiddenSet.has(team.id);
-      const isMain = team.isMain || team.isTotal;
-      const item = document.createElement('div');
-      item.className = `team-legend-item ${isHidden ? 'dimmed' : ''} ${isMain ? 'highlight-main' : ''}`;
-      item.setAttribute('data-team-id', team.id);
-      item.innerHTML = `
-        <span class="team-legend-bullet" style="background:${team.color}; ${team.dash ? 'border-top: 2px dashed ' + team.color + '; height: 0; background: none;' : ''}"></span>
-        <span>${team.name}</span>
-      `;
-
-      item.addEventListener('click', () => {
-        if (hiddenSet.has(team.id)) {
-          hiddenSet.delete(team.id);
-          chartInstance.setDatasetVisibility(idx, true);
-          item.classList.remove('dimmed');
-        } else {
-          hiddenSet.add(team.id);
-          chartInstance.setDatasetVisibility(idx, false);
-          item.classList.add('dimmed');
-        }
-        chartInstance.update();
-      });
-
-      container.appendChild(item);
-    });
+    staffChartViews = createSimpleBar('staffChartViews', 'Lượt xem công khai', viewsData, '#00F2FE');
+    staffChartSubs = createSimpleBar('staffChartSubs', 'Subscribers công khai', subsData, '#10B981');
+    staffChartLikes = createSimpleBar('staffChartLikes', 'Số video công khai', vidsData, '#F59E0B');
   }
 
   function renderTeamReportView() {
-    const labels = getTeamDates();
+    const container = document.getElementById('view-report-team');
+    if (!container) return;
+
+    const teams = DATA_STORE.teams;
+    const table = container.querySelector('table');
+    if (table) {
+      const tbody = table.querySelector('tbody');
+      if (tbody) {
+        let tbodyHtml = '';
+        let totalViews = 0;
+        let totalSubs = 0;
+        let totalVideos = 0;
+
+        teams.forEach(t => {
+          const teamChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
+          totalViews += teamChans.reduce((sum, c) => sum + (c.viewCount || 0), 0);
+          totalSubs += teamChans.reduce((sum, c) => sum + (c.subscriberCount || 0), 0);
+          totalVideos += teamChans.reduce((sum, c) => sum + (c.videoCount || 0), 0);
+        });
+
+        const TEAM_COLORS = ['#38BDF8', '#F53F3F', '#10B981'];
+
+        teams.forEach((t, idx) => {
+          const teamChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
+          const teamEmps = DATA_STORE.employees.filter(e => e.teamId === t.id);
+          const teamViews = teamChans.reduce((sum, c) => sum + (c.viewCount || 0), 0);
+          const teamSubs = teamChans.reduce((sum, c) => sum + (c.subscriberCount || 0), 0);
+          const teamVids = teamChans.reduce((sum, c) => sum + (c.videoCount || 0), 0);
+          const sharePct = totalViews > 0 ? ((teamViews / totalViews) * 100).toFixed(1) : '0.0';
+          const color = TEAM_COLORS[idx % TEAM_COLORS.length];
+
+          tbodyHtml += `
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
+                  <strong>${escapeHtml(t.name)}</strong>
+                </div>
+              </td>
+              <td>${escapeHtml(t.leaderName || '—')}</td>
+              <td><span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted);">${escapeHtml(t.description || 'Nội dung số')}</span></td>
+              <td class="text-right font-mono">${teamEmps.length}</td>
+              <td class="text-right font-mono">${teamVids}</td>
+              <td class="text-right font-mono" style="font-weight:700;">${formatNumber(teamViews)}</td>
+              <td class="text-right font-mono" style="color: var(--text-dim);">— <small>(Chưa kết nối)</small></td>
+              <td class="text-center">
+                <div class="quarter-share-bar" style="justify-content: center;">
+                  <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: ${sharePct}%; background: ${color};"></div></div>
+                  <span>${sharePct}%</span>
+                </div>
+              </td>
+              <td class="text-center font-mono" style="color:var(--accent-cyan); font-weight:700;">${formatNumber(teamSubs)}</td>
+              <td class="text-center"><span class="badge" style="background: rgba(255, 255, 255, 0.08); color: var(--text-main);">Đang hoạt động</span></td>
+            </tr>
+          `;
+        });
+        tbodyHtml += `
+          <tr style="font-weight: 800; background: rgba(245, 63, 63, 0.06);">
+            <td colspan="3"><strong>TỔNG HỢP TOÀN HỆ THỐNG (3 TEAMS)</strong></td>
+            <td class="text-right font-mono">${DATA_STORE.employees.length}</td>
+            <td class="text-right font-mono">${totalVideos}</td>
+            <td class="text-right font-mono" style="color: #38BDF8;">${formatNumber(totalViews)}</td>
+            <td class="text-right font-mono" style="color: var(--text-dim);">—</td>
+            <td class="text-center"><strong>100%</strong></td>
+            <td class="text-center font-mono" style="color:var(--accent-cyan); font-weight:800;">${formatNumber(totalSubs)}</td>
+            <td class="text-center"><span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-weight: 700;">15 Kênh</span></td>
+          </tr>
+        `;
+        tbody.innerHTML = tbodyHtml;
+      }
+    }
+
+    const ctxViews = document.getElementById('teamChartViews');
+    const ctxRev = document.getElementById('teamChartRevenue');
     const isDark = state.theme === 'dark';
-    const filterSelect = state.teamFilterSelect || 'all';
 
-    // 1. Build Views Datasets
-    const viewsDatasets = BG_TEAMS_METRICS.map((team) => {
-      let isVisible = true;
-      if (filterSelect !== 'all') {
-        isVisible = (team.id === filterSelect || team.id === 'team-total');
-      } else {
-        isVisible = !state.teamHiddenDatasetsViews.has(team.id);
-      }
-
-      return {
-        label: team.name,
-        data: getTeamSeriesData(team.id, false),
-        borderColor: team.color,
-        backgroundColor: team.color + '15',
-        borderWidth: team.width || 1.5,
-        borderDash: team.dash || [],
-        tension: 0.35,
-        fill: false,
-        pointRadius: team.isTotal ? 3.5 : (team.isMain ? 3 : 2),
-        pointHoverRadius: 6,
-        hidden: !isVisible
-      };
-    });
-
-    // 2. Build Revenue Datasets
-    const revDatasets = BG_TEAMS_METRICS.map((team) => {
-      let isVisible = true;
-      if (filterSelect !== 'all') {
-        isVisible = (team.id === filterSelect || team.id === 'team-total');
-      } else {
-        isVisible = !state.teamHiddenDatasetsRevenue.has(team.id);
-      }
-
-      return {
-        label: team.name,
-        data: getTeamSeriesData(team.id, true),
-        borderColor: team.color,
-        backgroundColor: team.color + '15',
-        borderWidth: team.width || 1.5,
-        borderDash: team.dash || [],
-        tension: 0.35,
-        fill: false,
-        pointRadius: team.isTotal ? 3.5 : (team.isMain ? 3 : 2),
-        pointHoverRadius: 6,
-        hidden: !isVisible
-      };
-    });
-
-    const commonScales = (isCurrency) => ({
-      x: {
-        grid: { display: false },
-        ticks: { color: isDark ? '#64748B' : '#94A3B8', font: { family: 'JetBrains Mono', size: 10 } }
-      },
-      y: {
-        grid: { color: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' },
-        ticks: {
-          color: isDark ? '#64748B' : '#94A3B8',
-          font: { family: 'JetBrains Mono', size: 10 },
-          callback: (v) => isCurrency ? (state.currency === 'VND' ? (v / 1000000).toFixed(1) + 'M₫' : '$' + formatCompactNumber(v)) : formatCompactNumber(v)
-        }
-      }
-    });
-
-    const commonTooltip = (isCurrency) => ({
-      backgroundColor: isDark ? '#111726' : '#FFFFFF',
-      titleColor: isDark ? '#F1F5F9' : '#0F172A',
-      bodyColor: isDark ? '#CBD5E1' : '#334155',
-      borderColor: 'rgba(255, 255, 255, 0.1)',
-      borderWidth: 1,
-      padding: 10,
-      callbacks: {
-        label: (ctx) => {
-          const val = ctx.raw;
-          const formatted = isCurrency ? (state.currency === 'VND' ? formatCurrency(val / state.exchangeRate) : formatCurrency(val)) : formatNumber(val);
-          return ` ${ctx.dataset.label}: ${formatted}`;
-        }
-      }
-    });
-
-    // Destroy old instances
-    if (teamChartViews) teamChartViews.destroy();
-    if (teamChartRevenue) teamChartRevenue.destroy();
-
-    const canvasViews = document.getElementById('teamChartViews');
-    if (canvasViews) {
-      teamChartViews = new Chart(canvasViews.getContext('2d'), {
-        type: 'line',
-        data: { labels, datasets: viewsDatasets },
+    if (ctxViews) {
+      if (teamChartViews) teamChartViews.destroy();
+      teamChartViews = new Chart(ctxViews, {
+        type: 'bar',
+        data: {
+          labels: teams.map(t => t.name),
+          datasets: [{
+            label: 'Tổng Views Công Khai (Data API v3)',
+            data: teams.map(t => {
+              const teamChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
+              return teamChans.reduce((sum, c) => sum + (c.viewCount || 0), 0);
+            }),
+            backgroundColor: ['rgba(56, 189, 248, 0.75)', 'rgba(245, 63, 63, 0.75)', 'rgba(16, 185, 129, 0.75)'],
+            borderRadius: 6
+          }]
+        },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            tooltip: commonTooltip(false)
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.dataset.label}: ${formatNumber(ctx.raw)} views`
+              }
+            }
           },
-          scales: commonScales(false)
+          scales: {
+            x: { ticks: { color: isDark ? '#94A3B8' : '#64748B' } },
+            y: { ticks: { color: isDark ? '#94A3B8' : '#64748B', callback: (v) => formatCompactNumber(v) } }
+          }
         }
       });
-      renderTeamInteractiveLegend('team-legend-views', teamChartViews, state.teamHiddenDatasetsViews);
     }
 
-    const canvasRev = document.getElementById('teamChartRevenue');
-    if (canvasRev) {
-      teamChartRevenue = new Chart(canvasRev.getContext('2d'), {
-        type: 'line',
-        data: { labels, datasets: revDatasets },
+    if (ctxRev) {
+      if (teamChartRevenue) teamChartRevenue.destroy();
+      teamChartRevenue = new Chart(ctxRev, {
+        type: 'bar',
+        data: {
+          labels: teams.map(t => t.name),
+          datasets: [{
+            label: 'Tổng Subscribers Công Khai',
+            data: teams.map(t => {
+              const teamChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
+              return teamChans.reduce((sum, c) => sum + (c.subscriberCount || 0), 0);
+            }),
+            backgroundColor: ['rgba(56, 189, 248, 0.75)', 'rgba(245, 63, 63, 0.75)', 'rgba(16, 185, 129, 0.75)'],
+            borderRadius: 6
+          }]
+        },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            tooltip: commonTooltip(true)
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.dataset.label}: ${formatNumber(ctx.raw)} subs`
+              }
+            }
           },
-          scales: commonScales(true)
+          scales: {
+            x: { ticks: { color: isDark ? '#94A3B8' : '#64748B' } },
+            y: { ticks: { color: isDark ? '#94A3B8' : '#64748B', callback: (v) => formatCompactNumber(v) } }
+          }
         }
       });
-      renderTeamInteractiveLegend('team-legend-revenue', teamChartRevenue, state.teamHiddenDatasetsRevenue);
     }
-
-    // Update Header Display Sums
-    const totalRevEl = document.getElementById('team-revenue-sum-display');
-    if (totalRevEl) totalRevEl.textContent = formatCurrency(1923.10);
   }
-
   /**
    * Update currency in other views when USD/VND is toggled
    */
   function updateOtherViewsCurrency() {
-    // Staff Data View
-    document.querySelectorAll('.cell-staff-rev1').forEach(el => el.textContent = formatCurrency(754.90));
-    document.querySelectorAll('.cell-staff-rpm1').forEach(el => el.textContent = formatCurrency(3.00));
-    document.querySelectorAll('.cell-staff-rev2').forEach(el => el.textContent = formatCurrency(1168.20));
-    document.querySelectorAll('.cell-staff-rpm2').forEach(el => el.textContent = formatCurrency(3.00));
-    document.querySelectorAll('.cell-staff-total-rev').forEach(el => el.textContent = formatCurrency(1923.10));
-    document.querySelectorAll('.cell-staff-total-rpm').forEach(el => el.textContent = formatCurrency(3.00));
-
-    // Team View
-    document.querySelectorAll('.cell-team-rev1').forEach(el => el.textContent = formatCurrency(754.90));
-    document.querySelectorAll('.cell-team-rev2').forEach(el => el.textContent = formatCurrency(1168.20));
-
-    // Project View
-    document.querySelectorAll('.cell-prj-cost1').forEach(el => el.textContent = formatCurrency(220.00));
-    document.querySelectorAll('.cell-prj-rev1').forEach(el => el.textContent = formatCurrency(754.90));
-    document.querySelectorAll('.cell-prj-prof1').forEach(el => el.textContent = `+${formatCurrency(534.90)}`);
-    document.querySelectorAll('.cell-prj-cost2').forEach(el => el.textContent = formatCurrency(310.00));
-    document.querySelectorAll('.cell-prj-rev2').forEach(el => el.textContent = formatCurrency(1168.20));
-    document.querySelectorAll('.cell-prj-prof2').forEach(el => el.textContent = `+${formatCurrency(858.20)}`);
-
-    // Network View
-    document.querySelectorAll('.cell-net-total-rev').forEach(el => el.textContent = formatCurrency(1923.10));
-
-    // Re-render Channel Compare, Staff & Team charts if active
     if (state.activeView === 'view-report-channel') renderChannelCompareView();
     if (state.activeView === 'view-report-staff-chart') renderStaffCharts();
+    if (state.activeView === 'view-report-staff-data') renderStaffDataPivotView();
     if (state.activeView === 'view-report-team') renderTeamReportView();
   }
-
   /**
    * Render Topbar Channel Picker Popover List
    */
@@ -4224,13 +3942,325 @@
   /**
    * Render Dedicated Multi-Channel Management View (#view-mgmt-channel)
    */
+  /**
+   * Render Team Management View (#view-mgmt-team)
+   * Displays 3 Teams x 5 Employees x 1 Channel = 15 channels
+   */
+  function renderTeamManagementView() {
+    const container = document.getElementById('mgmt-teams-list-container');
+    if (!container) return;
+
+    const searchInput = document.getElementById('mgmt-team-search');
+    const filterSelect = document.getElementById('mgmt-team-select-filter');
+    const query = (searchInput?.value || '').toLowerCase().trim();
+    const teamFilter = filterSelect?.value || 'all';
+
+    const statTeams = document.getElementById('mgmt-team-stat-teams');
+    const statEmps = document.getElementById('mgmt-team-stat-employees');
+    const statChannels = document.getElementById('mgmt-team-stat-channels');
+    const statVideos = document.getElementById('mgmt-team-stat-videos');
+
+    if (statTeams) statTeams.textContent = `${DATA_STORE.teams.length} Team`;
+    if (statEmps) statEmps.textContent = `${DATA_STORE.employees.length} Nhân Viên`;
+    if (statChannels) statChannels.textContent = `${DATA_STORE.channels.length} Kênh YouTube`;
+    if (statVideos) statVideos.textContent = `${DATA_STORE.videos.length} Video Mẫu`;
+
+    const teams = DATA_STORE.teams.filter(t => teamFilter === 'all' || t.id === teamFilter);
+
+    container.innerHTML = teams.map(team => {
+      const teamEmployees = DATA_STORE.employees.filter(e => e.team_id === team.id);
+
+      const matchingEmployees = teamEmployees.filter(emp => {
+        if (!query) return true;
+        const asg = DATA_STORE.getAssignmentByEmployee(emp.id);
+        const chan = asg ? DATA_STORE.getChannel(asg.channel_id) : null;
+        return emp.full_name.toLowerCase().includes(query) ||
+               emp.id.toLowerCase().includes(query) ||
+               team.name.toLowerCase().includes(query) ||
+               (chan && (chan.snippet.title.toLowerCase().includes(query) || (chan.snippet.customUrl || '').toLowerCase().includes(query)));
+      });
+
+      if (query && matchingEmployees.length === 0) return '';
+
+      const teamChannels = teamEmployees.map(emp => {
+        const asg = DATA_STORE.getAssignmentByEmployee(emp.id);
+        return asg ? DATA_STORE.getChannel(asg.channel_id) : null;
+      }).filter(Boolean);
+
+      const teamTotalViews = teamChannels.reduce((sum, c) => sum + ((c.statistics && c.statistics.viewCount) || 0), 0);
+      const teamTotalSubs = teamChannels.reduce((sum, c) => sum + ((c.statistics && c.statistics.subscriberCount) || 0), 0);
+      const teamVideoSampleCount = teamChannels.length * 10;
+
+      return `
+        <div class="team-mgmt-panel" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+          <!-- Team Header -->
+          <div style="padding: 18px 24px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(56, 189, 248, 0.12); color: var(--accent-sky); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800;">
+                <i class="ri-team-line"></i>
+              </div>
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <h3 style="font-size: 17px; font-weight: 800; color: var(--text-main); margin: 0;">${team.name}</h3>
+                  <code style="font-size: 11px; color: var(--accent-sky); background: rgba(56, 189, 248, 0.08); padding: 2px 8px; border-radius: 4px;">${team.id}</code>
+                </div>
+                <span style="font-size: 12px; color: var(--text-muted);">Phân công minh họa • 5 nhân sự • 5 kênh phụ trách</span>
+              </div>
+            </div>
+            <!-- Team Quick Counters -->
+            <div style="display: flex; gap: 18px; align-items: center;">
+              <div style="text-align: right;">
+                <span style="font-size: 11px; color: var(--text-dim); display: block;">Lượt xem tích lũy</span>
+                <strong style="color: var(--accent-sky); font-size: 14px; font-family: var(--font-mono);">${formatCompactNumber(teamTotalViews)}</strong>
+              </div>
+              <div style="text-align: right;">
+                <span style="font-size: 11px; color: var(--text-dim); display: block;">Khán giả (Subs)</span>
+                <strong style="color: var(--accent-cyan); font-size: 14px; font-family: var(--font-mono);">${formatCompactNumber(teamTotalSubs)}</strong>
+              </div>
+              <div style="text-align: right;">
+                <span style="font-size: 11px; color: var(--text-dim); display: block;">Mẫu video</span>
+                <strong style="color: var(--accent-amber); font-size: 14px; font-family: var(--font-mono);">${teamVideoSampleCount} video</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Employees & Assigned Channels List -->
+          <div class="table-responsive">
+            <table class="matrix-table modern-mgmt-table" style="margin: 0;">
+              <thead>
+                <tr>
+                  <th style="width: 90px;">Mã NV</th>
+                  <th>Nhân Viên Phụ Trách</th>
+                  <th>Vai Trò</th>
+                  <th>Kênh YouTube Được Phân Công (1:1)</th>
+                  <th class="text-right">Người Đăng Ký</th>
+                  <th class="text-right">Lượt Xem (Lifetime)</th>
+                  <th class="text-center">Số Video Mẫu</th>
+                  <th class="text-center">Analytics</th>
+                  <th class="text-center">Hành Động</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${matchingEmployees.map(emp => {
+                  const asg = DATA_STORE.getAssignmentByEmployee(emp.id);
+                  const chan = asg ? DATA_STORE.getChannel(asg.channel_id) : null;
+                  const chanVideos = chan ? DATA_STORE.getVideos(chan.id) : [];
+                  const chanAvatar = (chan && chan.snippet.thumbnails && (chan.snippet.thumbnails.medium?.url || chan.snippet.thumbnails.default?.url)) || '';
+
+                  return `
+                    <tr>
+                      <td><code style="color: var(--text-dim); font-size: 12px;">${emp.id}</code></td>
+                      <td>
+                        <strong style="color: var(--text-main);">${emp.full_name}</strong>
+                      </td>
+                      <td>
+                        <span class="badge" style="background: rgba(255,255,255,0.06); font-size: 11px; color: var(--text-muted);">Quản lý kênh</span>
+                      </td>
+                      <td>
+                        ${chan ? `
+                          <div style="display: flex; align-items: center; gap: 10px;">
+                            <img src="${chanAvatar}" alt="${chan.snippet.title}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;">
+                            <div>
+                              <strong style="color: var(--text-main); font-size: 13px; display: block;">${chan.snippet.title}</strong>
+                              <span style="font-size: 11px; color: var(--accent-sky); font-family: var(--font-mono);">${chan.snippet.customUrl || chan.requested_handle}</span>
+                            </div>
+                          </div>
+                        ` : `<span style="color: var(--text-dim);">Chưa phân công</span>`}
+                      </td>
+                      <td class="text-right metric-tabular" style="color: var(--accent-cyan); font-weight: 600;">
+                        ${chan ? formatCompactNumber(chan.statistics.subscriberCount) : '—'}
+                      </td>
+                      <td class="text-right metric-tabular" style="color: var(--accent-sky);">
+                        ${chan ? formatCompactNumber(chan.statistics.viewCount) : '—'}
+                      </td>
+                      <td class="text-center metric-tabular">
+                        <span class="badge" style="background: rgba(56, 189, 248, 0.1); color: #38BDF8;">${chanVideos.length} video</span>
+                      </td>
+                      <td class="text-center">
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #F59E0B; font-size: 11px;">Chưa kết nối</span>
+                      </td>
+                      <td class="text-center">
+                        ${chan ? `
+                          <button type="button" class="action-btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="window.appSwitchChannel('${chan.id}'); window.appSwitchView('view-report-overview');">
+                            <i class="ri-pie-chart-line"></i> Báo cáo
+                          </button>
+                        ` : ''}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // State for Video Management
+  let videoMgmtState = {
+    page: 1,
+    pageSize: 25,
+    teamFilter: 'all',
+    channelFilter: 'all',
+    employeeFilter: 'all',
+    searchQuery: ''
+  };
+
+  /**
+   * Render Video Management View (#view-mgmt-video)
+   * Displays 150 sampled videos from YouTube Data API v3
+   */
+  function renderVideoManagementView() {
+    const tbody = document.getElementById('table-mgmt-videos-body');
+    if (!tbody) return;
+
+    // Populate dropdowns once
+    const chanSelect = document.getElementById('mgmt-video-filter-channel');
+    if (chanSelect && chanSelect.options.length <= 1) {
+      DATA_STORE.channels.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = `${c.snippet.title} (${c.snippet.customUrl || c.requested_handle})`;
+        chanSelect.appendChild(opt);
+      });
+    }
+
+    const empSelect = document.getElementById('mgmt-video-filter-employee');
+    if (empSelect && empSelect.options.length <= 1) {
+      DATA_STORE.employees.forEach(e => {
+        const asg = DATA_STORE.getAssignmentByEmployee(e.id);
+        const ch = asg ? DATA_STORE.getChannel(asg.channel_id) : null;
+        const opt = document.createElement('option');
+        opt.value = e.id;
+        opt.textContent = `${e.full_name} (${e.id}) → ${ch ? ch.snippet.title : ''}`;
+        empSelect.appendChild(opt);
+      });
+    }
+
+    let list = DATA_STORE.videos.map(v => {
+      const chan = DATA_STORE.getChannel(v.channel_id);
+      const asg = DATA_STORE.getAssignmentByChannel(v.channel_id);
+      const emp = asg ? DATA_STORE.getEmployee(asg.employee_id) : null;
+      const team = emp ? DATA_STORE.getTeam(emp.team_id) : null;
+      return {
+        ...v,
+        channel: chan,
+        employee: emp,
+        team: team
+      };
+    });
+
+    const q = (videoMgmtState.searchQuery || '').toLowerCase().trim();
+    if (q) {
+      list = list.filter(v => (v.title || '').toLowerCase().includes(q) || v.id.toLowerCase().includes(q));
+    }
+    if (videoMgmtState.teamFilter !== 'all') {
+      list = list.filter(v => v.team && v.team.id === videoMgmtState.teamFilter);
+    }
+    if (videoMgmtState.channelFilter !== 'all') {
+      list = list.filter(v => v.channel_id === videoMgmtState.channelFilter);
+    }
+    if (videoMgmtState.employeeFilter !== 'all') {
+      list = list.filter(v => v.employee && v.employee.id === videoMgmtState.employeeFilter);
+    }
+
+    const totalVideos = list.length;
+    const totalPages = Math.ceil(totalVideos / videoMgmtState.pageSize) || 1;
+    if (videoMgmtState.page > totalPages) videoMgmtState.page = totalPages;
+
+    const startIdx = (videoMgmtState.page - 1) * videoMgmtState.pageSize;
+    const pageVideos = list.slice(startIdx, startIdx + videoMgmtState.pageSize);
+
+    const pageInfo = document.getElementById('mgmt-video-page-info');
+    if (pageInfo) {
+      pageInfo.textContent = `Hiển thị ${pageVideos.length > 0 ? startIdx + 1 : 0} - ${Math.min(startIdx + videoMgmtState.pageSize, totalVideos)} của ${totalVideos} video mẫu`;
+    }
+
+    const prevBtn = document.getElementById('btn-mgmt-video-prev');
+    const nextBtn = document.getElementById('btn-mgmt-video-next');
+    if (prevBtn) {
+      if (videoMgmtState.page <= 1) prevBtn.classList.add('disabled');
+      else prevBtn.classList.remove('disabled');
+    }
+    if (nextBtn) {
+      if (videoMgmtState.page >= totalPages) nextBtn.classList.add('disabled');
+      else nextBtn.classList.remove('disabled');
+    }
+
+    if (pageVideos.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-dim);">Không tìm thấy video nào phù hợp với bộ lọc hiện tại</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = pageVideos.map((v, idx) => {
+      const rowNum = startIdx + idx + 1;
+      const thumb = (v.thumbnails && (v.thumbnails.medium?.url || v.thumbnails.default?.url)) || '';
+      const duration = parseIsoDuration(v.duration_iso8601);
+      const pubDate = v.published_at ? v.published_at.split('T')[0] : '';
+      const views = (v.statistics && v.statistics.viewCount) || 0;
+      const likes = (v.statistics && v.statistics.likeCount) || 0;
+      const comments = (v.statistics && v.statistics.commentCount) || 0;
+
+      return `
+        <tr>
+          <td style="color: var(--text-dim); font-family: var(--font-mono);">${rowNum}</td>
+          <td>
+            <div class="video-cell">
+              <div class="video-thumb-wrap">
+                <img src="${thumb}" alt="${v.title}" class="video-thumb" loading="lazy">
+                <span class="video-duration-badge">${duration}</span>
+              </div>
+              <div class="video-meta-info">
+                <a href="${v.url}" target="_blank" rel="noopener" class="video-title-text" title="${v.title}">${v.title}</a>
+                <span class="video-id-tag">ID: ${v.id}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            ${v.channel ? `
+              <strong style="color: var(--text-main); font-size: 13px; display: block;">${v.channel.snippet.title}</strong>
+              <span style="font-size: 11px; color: var(--accent-sky); font-family: var(--font-mono);">${v.channel.snippet.customUrl || v.channel.requested_handle}</span>
+            ` : '—'}
+          </td>
+          <td>
+            ${v.employee ? `
+              <div style="font-size: 13px; color: var(--text-main);">${v.employee.full_name}</div>
+              <span style="font-size: 11px; color: var(--text-muted);">${v.team ? v.team.name : ''}</span>
+            ` : '—'}
+          </td>
+          <td style="color: var(--text-muted); font-size: 12px; white-space: nowrap;">${pubDate}</td>
+          <td class="text-right metric-tabular" style="color: var(--text-muted);">${duration}</td>
+          <td class="text-right metric-tabular" style="font-weight: 700; color: var(--accent-cyan);">${formatNumber(views)}</td>
+          <td class="text-right metric-tabular">
+            <span style="color: var(--accent-cyan);"><i class="ri-thumb-up-line"></i> ${formatNumber(likes)}</span>
+            <span style="color: var(--text-dim); margin-left: 6px;"><i class="ri-chat-1-line"></i> ${formatNumber(comments)}</span>
+          </td>
+          <td class="text-center">
+            <div class="table-row-actions">
+              <button class="table-action-icon-btn" title="Xem Tỷ Lệ Giữ Chân" onclick="window.appOpenVideoDrawer('${v.id}')" style="color:#10B981;">
+                <i class="ri-pulse-line"></i>
+              </button>
+              <button class="table-action-icon-btn" title="Xem trên YouTube" onclick="window.open('${v.url}', '_blank')">
+                <i class="ri-external-link-line"></i>
+              </button>
+              <button class="table-action-icon-btn" title="Sao chép ID" onclick="navigator.clipboard.writeText('${v.id}'); alert('Đã sao chép Video ID: ${v.id}');">
+                <i class="ri-file-copy-line"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
   function renderChannelManagementView() {
     // 1. Calculate & Update Top 4 Summary Cards
     const totalChannels = CHANNELS_REGISTRY.length;
     const activeChannels = CHANNELS_REGISTRY.filter(c => c.status !== 'paused').length;
     const totalSubs = CHANNELS_REGISTRY.reduce((acc, c) => acc + (c.subscribers || 0), 0);
     const totalViews = CHANNELS_REGISTRY.reduce((acc, c) => acc + (c.views || 0), 0);
-    const totalRev = Number(CHANNELS_REGISTRY.reduce((acc, c) => acc + (c.revenue || (c.views * 0.0025)), 0).toFixed(2));
+    const totalRev = null; // No revenue until authorized via Analytics Monetary API
 
     const statTotalChannels = document.getElementById('mgmt-stat-total-channels');
     const statActiveChannels = document.getElementById('mgmt-stat-active-channels');
@@ -4239,10 +4269,10 @@
     const statTotalRev = document.getElementById('mgmt-stat-total-rev');
 
     if (statTotalChannels) statTotalChannels.textContent = `${totalChannels} Kênh`;
-    if (statActiveChannels) statActiveChannels.textContent = `${activeChannels}/${totalChannels} Kênh đang hoạt động`;
-    if (statTotalSubs) statTotalSubs.textContent = `${formatCompactNumber(totalSubs)} người`;
-    if (statTotalViews) statTotalViews.textContent = `${formatCompactNumber(totalViews)} lượt`;
-    if (statTotalRev) statTotalRev.textContent = formatCurrency(totalRev);
+    if (statActiveChannels) statActiveChannels.textContent = `${activeChannels}/${totalChannels} Kênh có snapshot`;
+    if (statTotalSubs) statTotalSubs.textContent = `${formatCompactNumber(totalSubs)} người (Công khai)`;
+    if (statTotalViews) statTotalViews.textContent = `${formatCompactNumber(totalViews)} lượt (Lifetime)`;
+    if (statTotalRev) statTotalRev.textContent = '—';
 
     // 2. Populate Teams Filter Dropdown if not already populated
     const filterTeam = document.getElementById('mgmt-filter-team');
@@ -4322,7 +4352,7 @@
                 </div>
                 <div class="channel-card-metric-col">
                   <span class="metric-col-label">Doanh thu 30N</span>
-                  <span class="metric-col-val text-amber">${formatCurrency(ch.revenue || (ch.views * 0.0025))}</span>
+                  <span class="metric-col-val text-amber">${formatCurrency(ch.revenue)}</span>
                 </div>
               </div>
 
@@ -4374,7 +4404,7 @@
               <td><span style="font-size: 12px; color: var(--text-muted);">${ch.category}</span></td>
               <td class="text-right font-mono" style="font-weight: 700;">${formatNumber(ch.subscribers)}</td>
               <td class="text-right font-mono text-sky" style="font-weight: 700;">${formatNumber(ch.views)}</td>
-              <td class="text-right font-mono text-amber" style="font-weight: 700;">${formatCurrency(ch.revenue || (ch.views * 0.0025))}</td>
+              <td class="text-right font-mono text-amber" style="font-weight: 700;">${formatCurrency(ch.revenue)}</td>
               <td class="text-center">${statusTag}</td>
               <td class="text-center">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
@@ -4650,6 +4680,92 @@
       });
     }
 
+    // Team management toolbar filter events
+    const mgmtTeamSearch = document.getElementById('mgmt-team-search');
+    const mgmtTeamSelectFilter = document.getElementById('mgmt-team-select-filter');
+    if (mgmtTeamSearch) mgmtTeamSearch.addEventListener('input', () => renderTeamManagementView());
+    if (mgmtTeamSelectFilter) mgmtTeamSelectFilter.addEventListener('change', () => renderTeamManagementView());
+
+    // Video management toolbar filter events
+    const mgmtVidSearch = document.getElementById('mgmt-video-search');
+    const mgmtVidTeam = document.getElementById('mgmt-video-filter-team');
+    const mgmtVidChan = document.getElementById('mgmt-video-filter-channel');
+    const mgmtVidEmp = document.getElementById('mgmt-video-filter-employee');
+    const btnVidPrev = document.getElementById('btn-mgmt-video-prev');
+    const btnVidNext = document.getElementById('btn-mgmt-video-next');
+
+    if (mgmtVidSearch) mgmtVidSearch.addEventListener('input', (e) => {
+      videoMgmtState.searchQuery = e.target.value;
+      videoMgmtState.page = 1;
+      renderVideoManagementView();
+    });
+    if (mgmtVidTeam) mgmtVidTeam.addEventListener('change', (e) => {
+      videoMgmtState.teamFilter = e.target.value;
+      videoMgmtState.page = 1;
+      renderVideoManagementView();
+    });
+    if (mgmtVidChan) mgmtVidChan.addEventListener('change', (e) => {
+      videoMgmtState.channelFilter = e.target.value;
+      videoMgmtState.page = 1;
+      renderVideoManagementView();
+    });
+    if (mgmtVidEmp) mgmtVidEmp.addEventListener('change', (e) => {
+      videoMgmtState.employeeFilter = e.target.value;
+      videoMgmtState.page = 1;
+      renderVideoManagementView();
+    });
+    if (btnVidPrev) btnVidPrev.addEventListener('click', () => {
+      if (videoMgmtState.page > 1) {
+        videoMgmtState.page--;
+        renderVideoManagementView();
+      }
+    });
+    if (btnVidNext) btnVidNext.addEventListener('click', () => {
+      videoMgmtState.page++;
+      renderVideoManagementView();
+    });
+
+    // Export CSV for Videos
+    const btnExportVidCsv = document.getElementById('btn-export-mgmt-videos-csv');
+    if (btnExportVidCsv) {
+      btnExportVidCsv.addEventListener('click', () => {
+        const csvRows = [
+          ['STT', 'Video ID', 'Tieu De', 'Channel ID', 'Kenh', 'Nhan Su PIC', 'Team', 'Ngay Cong Khai', 'Thoi Luong', 'Luot Xem', 'Likes', 'Comments', 'URL'].join(',')
+        ];
+        DATA_STORE.videos.forEach((v, idx) => {
+          const chan = DATA_STORE.getChannel(v.channel_id);
+          const asg = DATA_STORE.getAssignmentByChannel(v.channel_id);
+          const emp = asg ? DATA_STORE.getEmployee(asg.employee_id) : null;
+          const team = emp ? DATA_STORE.getTeam(emp.team_id) : null;
+          csvRows.push([
+            idx + 1,
+            `"${v.id}"`,
+            `"${(v.title || '').replace(/"/g, '""')}"`,
+            `"${v.channel_id}"`,
+            `"${chan ? chan.snippet.title.replace(/"/g, '""') : ''}"`,
+            `"${emp ? emp.full_name : ''}"`,
+            `"${team ? team.name : ''}"`,
+            `"${v.published_at ? v.published_at.split('T')[0] : ''}"`,
+            `"${parseIsoDuration(v.duration_iso8601)}"`,
+            (v.statistics && v.statistics.viewCount) || 0,
+            (v.statistics && v.statistics.likeCount) || 0,
+            (v.statistics && v.statistics.commentCount) || 0,
+            `"${v.url || ('https://youtube.com/watch?v=' + v.id)}"`
+          ].join(','));
+        });
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `YouTube_Sample_Videos_150_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Đã xuất 150 video mẫu ra file CSV thành công!');
+      });
+    }
+
     // Channel management toolbar filter events
     const mgmtSearch = document.getElementById('mgmt-channel-search');
     const mgmtTeam = document.getElementById('mgmt-filter-team');
@@ -4697,7 +4813,7 @@
             `"${c.pic || ''}"`,
             c.subscribers,
             c.views,
-            c.revenue || (c.views * 0.0025),
+            c.revenue,
             `"${c.status}"`,
             `"${c.url}"`
           ].join(','));
@@ -5271,9 +5387,9 @@
 
     if (elements.btnResetSample) {
       elements.btnResetSample.addEventListener('click', () => {
-        state.channelInfo = { ...REAL_CHANNEL_DATA.channel };
-        currentData.timeline = { ...REAL_CHANNEL_DATA.timeline };
-        currentData.videos = [...REAL_CHANNEL_DATA.videos];
+        state.channelInfo = { ...{ id: "", title: "", subscribers: 0, views: 0 } };
+        currentData.timeline = { ...{ hasAnalytics: false, views: [], labels: [] } };
+        currentData.videos = [...[]];
         state.channelInput = 'https://www.youtube.com/@LunaviaVintageMelodies';
         localStorage.removeItem('tubepulse_channel_cache');
         localStorage.setItem('tubepulse_channel_input', state.channelInput);
@@ -5545,26 +5661,10 @@
       });
     }
 
-    if (elements.btnExportCompareData) {
-      elements.btnExportCompareData.addEventListener('click', () => {
-        const payload = {
-          exportDate: new Date().toISOString(),
-          system: "BgMedia Multi-Channel Analytics",
-          channels: {
-            lunavia: MULTI_CHANNELS.lunavia.channel,
-            groove: MULTI_CHANNELS['80sgroove'].channel
-          }
-        };
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `BgMedia_So_Sanh_2_Kenh_Lunavia_vs_80sGroove.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('Đã xuất file đối chiếu 2 kênh thành công!');
+    const btnExportCompare = document.getElementById('btn-export-compare-data');
+    if (btnExportCompare) {
+      btnExportCompare.addEventListener('click', () => {
+        exportChannelCompareCsv();
       });
     }
 
@@ -5661,7 +5761,8 @@
     });
   }
 
-  function init() {
+  async function init() {
+    await ensureDatasetLoaded();
     if (state.theme) {
       document.documentElement.setAttribute('data-theme', state.theme);
     }
@@ -5710,6 +5811,8 @@
     renderChannelPickerDropdown();
     setupChannelPickerEvents();
     setupAddChannelModal();
+    setupEnterpriseEvents();
+    setupOAuthIntegration();
 
     // Check for initial URL hash or default to overview view
     const initialHash = window.location.hash.replace('#', '');
@@ -5718,6 +5821,200 @@
     } else {
       switchView('view-report-overview');
     }
+  }
+
+
+  // =========================================================================
+  // TubePulse OAuth 2.0 & YouTube Analytics API Live Integration
+  // =========================================================================
+  function setupOAuthIntegration() {
+    const bar = document.getElementById('oauth-live-bar');
+    const chName = document.getElementById('oauth-channel-name');
+    const chHandle = document.getElementById('oauth-handle-pill');
+    const chId = document.getElementById('oauth-channel-id-text');
+    const avatarImg = document.getElementById('oauth-avatar-img');
+    const indicator = document.getElementById('oauth-indicator-dot');
+    const scopeStatus = document.getElementById('oauth-scope-status');
+
+    const btnReconnect = document.getElementById('btn-trigger-oauth-reconnect');
+    const btnTest = document.getElementById('btn-trigger-analytics-test');
+    const modal = document.getElementById('analytics-test-modal');
+    const btnCloseModal = document.getElementById('btn-close-analytics-test-modal');
+    const btnCloseFooter = document.getElementById('btn-close-analytics-modal-footer');
+    const btnReRunTest = document.getElementById('btn-re-run-analytics-test');
+
+    async function checkOAuthStatus() {
+      try {
+        const res = await fetch('/api/oauth/status');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.connected && data.channel) {
+          const authChan = data.channel;
+          if (chName) chName.textContent = authChan.title || 'Kênh Được Cấp Quyền';
+          if (chHandle) chHandle.textContent = authChan.handle || '@channel';
+          if (chId) chId.textContent = authChan.id || 'N/A';
+          if (avatarImg && authChan.avatar) avatarImg.src = authChan.avatar;
+          if (indicator) {
+            indicator.className = 'oauth-live-indicator online';
+            indicator.title = 'Đã kết nối OAuth 2.0 với Google';
+          }
+          if (scopeStatus) {
+            if (data.has_monetary) {
+              scopeStatus.className = 'badge-scope-success';
+              scopeStatus.innerHTML = '<i class="ri-shield-check-fill"></i> Đã cấp đủ quyền (Analytics + Doanh thu Monetary)';
+            } else {
+              scopeStatus.className = 'badge-scope-warning';
+              scopeStatus.innerHTML = '<i class="ri-shield-line"></i> Đã cấp quyền Analytics (Chưa có Monetary)';
+            }
+          }
+
+          // Register authorized channel as "Kênh đã kết nối · Chưa phân công" if not in mock catalog
+          const exists = CHANNELS_REGISTRY.find(c => c.id === authChan.id);
+          if (!exists) {
+            CHANNELS_REGISTRY.unshift({
+              id: authChan.id,
+              title: authChan.title,
+              handle: authChan.handle,
+              url: `https://www.youtube.com/channel/${authChan.id}`,
+              avatar: authChan.avatar || 'https://cdn-icons-png.flaticon.com/512/1384/1384060.png',
+              category: 'Kênh đã kết nối',
+              team: 'Chưa phân công',
+              teamId: null,
+              pic: 'Chưa phân công',
+              employeeId: null,
+              subscribers: parseInt(authChan.subscribers || '0', 10),
+              views: parseInt(authChan.views || '0', 10),
+              videoCount: parseInt(authChan.videoCount || '0', 10),
+              sampleVideoCount: 0,
+              revenue: null,
+              rpm: null,
+              status: 'live_api',
+              statusText: 'Kênh đã kết nối · Chưa phân công',
+              dataSource: 'live_oauth',
+              fetchedAt: new Date().toISOString(),
+              analyticsStatus: 'connected'
+            });
+            renderChannelPickerDropdown();
+          }
+
+          // Update operational freshness strip
+          const scopeAnalytics = document.getElementById('scope-analytics-count');
+          const scopeRevenue = document.getElementById('scope-revenue-count');
+          if (scopeAnalytics) scopeAnalytics.innerHTML = `<i class="ri-line-chart-line" style="color:#10B981;"></i> Analytics: <strong>1/15 kênh có dữ liệu (${authChan.title})</strong>`;
+          if (scopeRevenue) scopeRevenue.innerHTML = `<i class="ri-money-dollar-circle-line" style="color:${data.has_monetary ? '#F59E0B' : 'var(--text-muted)'};"></i> Doanh thu: <strong>${data.has_monetary ? '1/15' : '0/15'} kênh có dữ liệu</strong>`;
+        } else {
+          if (chName) chName.textContent = 'Chưa Kết Nối OAuth';
+          if (indicator) indicator.className = 'oauth-live-indicator offline';
+          if (scopeStatus) {
+            scopeStatus.className = 'badge-scope-warning';
+            scopeStatus.innerHTML = '<i class="ri-error-warning-line"></i> Chưa cấp quyền OAuth 2.0';
+          }
+        }
+      } catch (e) {
+        console.warn('OAuth status check skipped or offline server:', e);
+      }
+    }
+
+    async function triggerReconnect() {
+      if (btnReconnect) {
+        btnReconnect.disabled = true;
+        btnReconnect.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Đang mở Google...';
+      }
+      try {
+        const res = await fetch('/api/oauth/reconnect', { method: 'POST' });
+        const data = await res.json();
+        if (data.auth_url) {
+          window.open(data.auth_url, '_blank');
+          if (typeof showNotification === 'function') {
+            showNotification('info', 'Đang mở trang cấp quyền của Google. Vui lòng cấp quyền trên tab vừa mở.');
+          } else {
+            alert('Đang mở trang xác thực Google OAuth. Sau khi hoàn tất, token sẽ tự động lưu vào backend!');
+          }
+
+          // Poll every 3 seconds for 60 seconds
+          let attempts = 0;
+          const pollInterval = setInterval(async () => {
+            attempts++;
+            await checkOAuthStatus();
+            if (attempts > 20) clearInterval(pollInterval);
+          }, 3000);
+        }
+      } catch (err) {
+        alert('Lỗi kết nối OAuth server: ' + err.message);
+      } finally {
+        setTimeout(() => {
+          if (btnReconnect) {
+            btnReconnect.disabled = false;
+            btnReconnect.innerHTML = '<i class="ri-refresh-line"></i> Kết Nối Lại OAuth';
+          }
+        }, 3000);
+      }
+    }
+
+    async function runAnalyticsApiTest() {
+      if (!modal) return;
+      modal.classList.add('active');
+
+      const mViews = document.getElementById('modal-metric-views');
+      const mHours = document.getElementById('modal-metric-hours');
+      const mMinutes = document.getElementById('modal-metric-minutes');
+      const mRev = document.getElementById('modal-metric-revenue');
+      const mRpm = document.getElementById('modal-metric-rpm');
+      const mJson = document.getElementById('modal-raw-json-viewer');
+      const mName = document.getElementById('modal-test-channel-name');
+      const mHandle = document.getElementById('modal-test-channel-handle');
+      const mId = document.getElementById('modal-test-channel-id');
+
+      if (mViews) mViews.textContent = '...';
+      if (mHours) mHours.textContent = '...';
+      if (mMinutes) mMinutes.textContent = '...';
+      if (mRev) mRev.textContent = '...';
+      if (mRpm) mRpm.textContent = '...';
+      if (mJson) mJson.textContent = 'Đang gửi truy vấn đến https://youtubeanalytics.googleapis.com/v2/reports (ids=channel==MINE, metrics=views,estimatedMinutesWatched,estimatedRevenue)...';
+
+      try {
+        const res = await fetch('/api/analytics/test');
+        const data = await res.json();
+        if (!data.success) {
+          if (mJson) mJson.textContent = 'LỖI API: ' + (data.error || 'Không rõ nguyên nhân');
+          return;
+        }
+
+        const ch = data.channel || {};
+        if (mName) mName.textContent = ch.title || 'Kênh Được Cấp Quyền';
+        if (mHandle) mHandle.textContent = ch.handle || '@channel';
+        if (mId) mId.textContent = ch.id || 'N/A';
+
+        const metrics = data.metrics || {};
+        if (mViews) mViews.textContent = (metrics.views || 0).toLocaleString('vi-VN');
+        if (mHours) mHours.textContent = (metrics.estimatedHoursWatched || 0).toFixed(1) + 'h';
+        if (mMinutes) mMinutes.textContent = (metrics.estimatedMinutesWatched || 0).toLocaleString('vi-VN');
+        if (mRev) mRev.textContent = '$' + (metrics.estimatedRevenue || 0).toFixed(2);
+        if (mRpm) mRpm.textContent = '$' + (metrics.proxyRpm || 0).toFixed(2);
+        if (mJson) mJson.textContent = JSON.stringify(data.rawReport || data, null, 2);
+      } catch (err) {
+        if (mJson) mJson.textContent = 'Lỗi kết nối khi gọi /api/analytics/test: ' + err.message;
+      }
+    }
+
+    if (btnReconnect) btnReconnect.addEventListener('click', triggerReconnect);
+    if (btnTest) btnTest.addEventListener('click', runAnalyticsApiTest);
+    if (btnReRunTest) btnReRunTest.addEventListener('click', runAnalyticsApiTest);
+
+    if (btnCloseModal) {
+      btnCloseModal.addEventListener('click', () => { modal.classList.remove('active'); });
+    }
+    if (btnCloseFooter) {
+      btnCloseFooter.addEventListener('click', () => { modal.classList.remove('active'); });
+    }
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('active');
+      });
+    }
+
+    // Check status on load
+    checkOAuthStatus();
   }
 
   if (document.readyState === 'loading') {

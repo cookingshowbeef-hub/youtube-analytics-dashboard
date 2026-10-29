@@ -1,0 +1,295 @@
+{
+  "source_dataset": "dataset.json",
+  "generated_at": "2026-10-29T01:12:05Z",
+  "notice": "Derived hierarchy preview. Read live counters from channels in dataset.json, do not maintain a second source of truth.",
+  "teams": [
+    {
+      "team_id": "TEAM-01",
+      "team_name": "Jazz & Lo-fi",
+      "members": [
+        {
+          "employee_id": "EMP-001",
+          "employee_name": "Nguyễn Văn An",
+          "channel_id": "UCL9VCEoz6M6JcUKxlJcr3LQ",
+          "channel_title": "Lunavia",
+          "video_ids": [
+            "jZuM99zY80U",
+            "W15j6CCN-uw",
+            "4W_S2p4Q3a4",
+            "WrcZ3nRS8U4",
+            "fOAJASp-7OE",
+            "fpnUTfoFc0s",
+            "JeO-osB9E-g",
+            "Wlb4BVgm9Jk",
+            "iEmaMecBgp8",
+            "r5lhiiWhuxE"
+          ]
+        },
+        {
+          "employee_id": "EMP-002",
+          "employee_name": "Lê Minh Anh",
+          "channel_id": "UCSJ4gkVC6NrvII8umztf0Ow",
+          "channel_title": "Lofi Girl",
+          "video_ids": [
+            "mM-psG6erts",
+            "Ilq3WtuAUlc",
+            "hO1RtukCADg",
+            "0sfDth4lMLc",
+            "PVSOJyG5WKU",
+            "W7xNzV-oCCU",
+            "mSSXrDf85nI",
+            "Voo9w5SFwiI",
+            "vadHXNBy4jQ",
+            "_gLnVbexKr0"
+          ]
+        },
+        {
+          "employee_id": "EMP-003",
+          "employee_name": "Phạm Hà Linh",
+          "channel_id": "UCOxqgCwgOqC2lMqC5PYz_Dg",
+          "channel_title": "Chillhop Music",
+          "video_ids": [
+            "CFdbhw4bGPA",
+            "BJD3296ft3M",
+            "q6wD_NcVR24",
+            "xa8Irk-Gt84",
+            "d3aTtYB0PYE",
+            "498U6v_VO08",
+            "xO8bQKdpfX8",
+            "GG8h0ks8WkQ",
+            "Zoq-E_VhlsQ",
+            "Amon65q-x58"
+          ]
+        },
+        {
+          "employee_id": "EMP-004",
+          "employee_name": "Đỗ Gia Huy",
+          "channel_id": "UCi8wqezBudeAiTdKOX571ug",
+          "channel_title": "The Jazz Hop Café",
+          "video_ids": [
+            "cWJRvYR5YrI",
+            "p23xYtRcKPs",
+            "tNU8_JEIB5Y",
+            "whRXFuPwmDA",
+            "0u6KjmyGzO8",
+            "JG0n9mI01SY",
+            "hzRua2ns_1Y",
+            "77aaPKJ4Hho",
+            "a2yl4cHAF6E",
+            "BTMGRcej55o"
+          ]
+        },
+        {
+          "employee_id": "EMP-005",
+          "employee_name": "Trần Ngọc Mai",
+          "channel_id": "UCJhjE7wbdYAae1G25m0tHAA",
+          "channel_title": "Cafe Music BGM channel",
+          "video_ids": [
+            "ZDoBdxrN71U",
+            "S_0F8RCnen4",
+            "xhv0KZKDev0",
+            "Vyh_AAEjQ2g",
+            "Ri3L1tWGge0",
+            "cuLxPiwPYIE",
+            "C375jNZyFZM",
+            "CfYm4egKAv0",
+            "cJnIFSRvug0",
+            "uJ9B6Qyl5RY"
+          ]
+        }
+      ]
+    },
+    {
+      "team_id": "TEAM-02",
+      "team_name": "Retro & Electronic",
+      "members": [
+        {
+          "employee_id": "EMP-006",
+          "employee_name": "Trần Minh Bình",
+          "channel_id": "UCuNF36PtETqVFz_yK6C_v-g",
+          "channel_title": "80s Groove Machine",
+          "video_ids": [
+            "ys6YruLZvyg",
+            "V210PJ8sLVk",
+            "cGeClFVDvRw",
+            "E-u9ZaM5-w8",
+            "O2T414Oas1g",
+            "i7pBZTD-CzQ",
+            "RRfMSNuo4to",
+            "r5qqM85IFcY",
+            "EBDhJT9SbVQ",
+            "Y3bCOPJCvuk"
+          ]
+        },
+        {
+          "employee_id": "EMP-007",
+          "employee_name": "Nguyễn Hoàng Nam",
+          "channel_id": "UCmYTgpKxd-QOJCPDrmaXuqQ",
+          "channel_title": "ThePrimeThanatos",
+          "video_ids": [
+            "2iEAJg_18v8",
+            "8VPMP40_Vwc",
+            "oyN3WKgyy5c",
+            "R0D2eoTXLXo",
+            "-l19jZSxmRw",
+            "DXZZf07CgqY",
+            "8-z6KEb0zyA",
+            "skCnEpteZc8",
+            "XAkz96zBmuQ",
+            "k3EhY3wB3Zw"
+          ]
+        },
+        {
+          "employee_id": "EMP-008",
+          "employee_name": "Võ Thanh Tùng",
+          "channel_id": "UCD-4g5w1h8xQpLaNS_ghU4g",
+          "channel_title": "NewRetroWave",
+          "video_ids": [
+            "97kgHFzGjmE",
+            "ZHlWsXR-mDc",
+            "oLnDCPipXg4",
+            "eNqh6Xl7d1c",
+            "qes3zfEwOxw",
+            "-FUKsyTwxmE",
+            "Qqhg_JlOADc",
+            "GhwL5wMzE4Y",
+            "OZuY_G00704",
+            "vcijBlvDbuA"
+          ]
+        },
+        {
+          "employee_id": "EMP-009",
+          "employee_name": "Phan Bảo Ngọc",
+          "channel_id": "UC6ghlxmJNMd8BE_u1HR-bTg",
+          "channel_title": "The '80s Guy",
+          "video_ids": [
+            "XqQbElFD8Bs",
+            "EcWTyRCzWCg",
+            "NbiylEk6fZE",
+            "RyQfHItMUEE",
+            "38kWcPZRm2s",
+            "IosjNLdAlnk",
+            "iB1cMyq3Djw",
+            "4HvpWh1eyc0",
+            "aG456YU9LRA",
+            "ajYQONqqHlA"
+          ]
+        },
+        {
+          "employee_id": "EMP-010",
+          "employee_name": "Đặng Quốc Bảo",
+          "channel_id": "UCPzWlhG7QM56Y8MYB3qMVnQ",
+          "channel_title": "Electronic Gems",
+          "video_ids": [
+            "6P1K7k63-LI",
+            "WW5n1EtNsRk",
+            "kXXBvLaxp8o",
+            "trtdwXQXB_I",
+            "msOy0wP6ZAw",
+            "QdgarHp_vZI",
+            "14ZrTaxB6Ko",
+            "9lclspy-lo8",
+            "KXalUUYwT0c",
+            "5hQxw-N22K4"
+          ]
+        }
+      ]
+    },
+    {
+      "team_id": "TEAM-03",
+      "team_name": "Indie & Chill",
+      "members": [
+        {
+          "employee_id": "EMP-011",
+          "employee_name": "Hoàng Thảo Vy",
+          "channel_id": "UC5nc_ZtjKW1htCVZVRxlQAQ",
+          "channel_title": "MrSuicideSheep",
+          "video_ids": [
+            "um9HVGJPH-Y",
+            "M50_WwyKfaM",
+            "Z8xs8s4qQU4",
+            "NwhAqNsZhoA",
+            "Ru1EhxW48iA",
+            "DuKHHwt0Ovg",
+            "K2ffBmnatek",
+            "G_AxMZe2qgM",
+            "EUHnj5fGSDs",
+            "ktOMZ636mNY"
+          ]
+        },
+        {
+          "employee_id": "EMP-012",
+          "employee_name": "Trịnh Minh Khang",
+          "channel_id": "UCM9KEEuzacwVlkt9JfJad7g",
+          "channel_title": "Chill Nation",
+          "video_ids": [
+            "8ukot5dNMEE",
+            "nzCxr-vwuQc",
+            "6hoZ4ZlFU_o",
+            "JBBWPpThVDw",
+            "AVQ8FTcfeOA",
+            "9yokKDLtvtE",
+            "mANCmKDfivk",
+            "LbWjj_BquTo",
+            "TtbgY2PtE0o",
+            "CaAVYShgF0g"
+          ]
+        },
+        {
+          "employee_id": "EMP-013",
+          "employee_name": "Bùi Quỳnh Chi",
+          "channel_id": "UCWzZ5TIGoZ6o-KtbGCyhnhg",
+          "channel_title": "College Music",
+          "video_ids": [
+            "OcsV_jvQUE0",
+            "KjfvBlWxNGg",
+            "NJrXExl0XAM",
+            "3ooEOrmRPyI",
+            "ghlZWEmRgL4",
+            "Z2NOSaVnivw",
+            "_0el4iJcFOA",
+            "tSacs7oXmAc",
+            "X0tSWTaLsUQ",
+            "lM5K9rxp9yw"
+          ]
+        },
+        {
+          "employee_id": "EMP-014",
+          "employee_name": "Đinh Tuấn Kiệt",
+          "channel_id": "UCEi0EgWJ5m7gVBQ68a1L0TA",
+          "channel_title": "alexrainbirdMusic",
+          "video_ids": [
+            "j6OkcPtKs50",
+            "nIDTxtK3beo",
+            "okh39SQdPvk",
+            "3M8bkgxXpWY",
+            "h0z19v5fj9w",
+            "5Ccg7sW6_F4",
+            "4X-w9JXPlM4",
+            "95T99oqFvGk",
+            "JtcJTV823N4",
+            "ctCQwxy_odI"
+          ]
+        },
+        {
+          "employee_id": "EMP-015",
+          "employee_name": "Dương Khánh An",
+          "channel_id": "UCbuK8xxu2P_sqoMnDsoBrrg",
+          "channel_title": "WaveMusic",
+          "video_ids": [
+            "cvMOZVWLDGI",
+            "YjTqp6sZvqA",
+            "uEnGS2Rusog",
+            "1Z-nQjKBgxI",
+            "VQVNDaB1Uyo",
+            "6buYQ-edbt0",
+            "ZtG254VKtcc",
+            "Qn2GxwaRnIM",
+            "PEE6_xxp-60",
+            "un0ZBnd08ko"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "validated_at": "2026-10-29T01:12:05Z",
+  "passed": true,
+  "counts": {
+    "teams": 3,
+    "employees": 15,
+    "assignments": 15,
+    "channels": 15,
+    "videos": 150
+  },
+  "checks": {
+    "exactly_3_teams": true,
+    "exactly_15_employees": true,
+    "five_employees_per_team": true,
+    "exactly_15_unique_channels": true,
+    "one_active_channel_per_employee": true,
+    "one_employee_per_channel": true,
+    "valid_foreign_keys": true,
+    "unique_video_ids": true,
+    "videos_reference_valid_channels": true,
+    "max_10_videos_per_channel": true,
+    "all_public_sources_are_live_api_snapshots": true,
+    "all_analytics_metrics_unavailable": true,
+    "all_video_samples_successful": true,
+    "employee_names_preserve_unicode": true,
+    "no_secret_serialized": true
+  }
+}

@@ -91,7 +91,7 @@
               <span>Báo cáo theo kênh</span>
             </a>
             <a href="#view-report-network" class="nav-sub-item" data-view="view-report-network" id="nav-sub-network">
-              <i class="ri-share-network-line"></i>
+              <i class="ri-global-line"></i>
               <span>Báo cáo theo network</span>
             </a>
             <a href="#view-report-staff-chart" class="nav-sub-item highlight-red" data-view="view-report-staff-chart" id="nav-sub-staff-chart">
@@ -198,10 +198,10 @@
           <!-- Live API Indicator / Mode Badge -->
           <!-- Mode Switcher: Dữ Liệu Thật vs Xem Minh Họa -->
           <div class="mode-switcher-container" id="mode-switcher-container">
-            <button type="button" class="mode-btn active" id="btn-mode-live" data-mode="live" title="Dữ liệu thật (YouTube Data API v3 snapshot & OAuth)">
+            <button type="button" class="mode-btn" id="btn-mode-live" data-mode="live" title="Dữ liệu thật (YouTube Data API v3 snapshot & OAuth)">
               <i class="ri-broadcast-line"></i> <span>Dữ Liệu Thật</span>
             </button>
-            <button type="button" class="mode-btn" id="btn-mode-demo" data-mode="demo" title="Chế độ Xem Minh Họa (Dataset Analytics hư cấu cho 15 kênh)">
+            <button type="button" class="mode-btn active" id="btn-mode-demo" data-mode="demo" title="Chế độ Xem Minh Họa (Dataset Analytics hư cấu cho 15 kênh)">
               <i class="ri-sparkling-line"></i> <span>Xem Minh Họa</span>
             </button>
           </div>
@@ -258,6 +258,8 @@
               <option value="analytics_without_monetary">analytics_without_monetary (Có views, thiếu tiền)</option>
               <option value="delayed_monetary">delayed_monetary (Tiền xử lý trễ 48h)</option>
               <option value="zero_revenue_positive_views">zero_revenue_positive_views (Views dương, tiền $0)</option>
+              <option value="zero_denominator">zero_denominator (Views bằng 0, mẫu số 0)</option>
+              <option value="revoked">revoked (Một kênh bị thu hồi quyền)</option>
               <option value="empty_report">empty_report (Báo cáo không có dữ liệu)</option>
               <option value="public_only">public_only (Chỉ có public snapshot)</option>
             </select>
@@ -380,17 +382,6 @@
             <span id="scope-analytics-count"><i class="ri-line-chart-line" style="color:var(--text-muted);"></i> Analytics: <strong>0/15 kênh có dữ liệu</strong></span>
             <span class="oauth-sep">•</span>
             <span id="scope-revenue-count"><i class="ri-money-dollar-circle-line" style="color:var(--text-muted);"></i> Doanh thu: <strong>0/15 kênh có dữ liệu</strong></span>
-          </div>
-        </div>
-            </div>
-          </div>
-          <div class="oauth-bar-right">
-            <button type="button" class="btn-analytics-test" id="btn-trigger-analytics-test" title="Kiểm tra gọi trực tiếp YouTube Analytics API với views, phút xem và doanh thu ước tính">
-              <i class="ri-line-chart-line"></i> Kiểm Tra Analytics API
-            </button>
-            <button type="button" class="btn-oauth-reconnect" id="btn-trigger-oauth-reconnect" title="Cấp quyền lại hoặc chuyển tài khoản chủ kênh Google">
-              <i class="ri-login-circle-line"></i> Kết Nối Chủ Kênh
-            </button>
           </div>
         </div>
 
@@ -627,7 +618,7 @@
 
               <div class="table-footer" style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 12px; color: var(--text-dim);"><i class="ri-information-line"></i> Cố định cột STT, Kênh, Chỉ số, Tổng kỳ. Cuộn ngang để xem từng ngày/tháng trong kỳ Analytics.</span>
-                <span style="font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;" id="pivot-channels-counter">Hiển thị 4 kênh hệ thống</span>
+                <span style="font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;" id="pivot-channels-counter">Hiển thị 15 kênh hệ thống</span>
               </div>
             </div>
           </div>
@@ -1895,7 +1886,7 @@
           <div class="section-title-wrap" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
             <div>
               <h2 style="font-size: 20px; font-weight: 800; color: #F53F3F; display: flex; align-items: center; gap: 8px;">
-                <i class="ri-share-network-line"></i>
+                <i class="ri-global-line"></i>
                 Báo Cáo Tổng Quan Toàn Mạng Lưới BgMedia
               </h2>
               <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
@@ -1910,7 +1901,7 @@
           <!-- Network Filter Bar -->
           <div class="bgmedia-filter-bar">
             <div class="filter-field">
-              <label><i class="ri-share-network-line"></i> Mạng Lưới / MCN</label>
+              <label><i class="ri-global-line"></i> Mạng Lưới / MCN</label>
               <div class="filter-input-wrap">
                 <select id="network-filter-select">
                   <option value="net-bgmedia" selected>BgMedia Music Network (Mạng lưới chính)</option>
@@ -2497,6 +2488,8 @@
           </div>
         </section>
       </div>
+    </main>
+  </div>
 
   <!-- Modal: YouTube API v3 Settings & Real Data Fetcher -->
   <div class="modal-backdrop" id="api-modal">

@@ -147,6 +147,9 @@
     systemSummariesMap: new Map(),
     teamSummariesMap: new Map(),
     employeeSummariesMap: new Map(),
+    fxMap: new Map(),
+    videoSummaryMap: new Map(),
+    periodRollups: [],
     activeScenarioId: 'all_demo_ready',
 
     init(bundle) {
@@ -156,8 +159,9 @@
       if (!bundle) return false;
 
       this.meta = bundle.meta;
-      this.scenarios = bundle.scenarios || [];
-      this.summaries = bundle.summaries || [];
+      this.scenarios = Array.isArray(bundle.scenarios) ? bundle.scenarios : (bundle.scenarios?.rows || []);
+      this.summaries = Array.isArray(bundle.summaries) ? bundle.summaries : (bundle.summaries?.rows || []);
+      this.periodRollups = Array.isArray(bundle.period_rollups) ? bundle.period_rollups : (bundle.period_rollups?.rows || []);
 
       // Clear existing maps
       this.channelSummariesMap.clear();
@@ -166,6 +170,8 @@
       this.systemSummariesMap.clear();
       this.retentionMap.clear();
       this.channelDailyMap.clear();
+      this.fxMap.clear();
+      this.videoSummaryMap.clear();
 
       // Index summaries
       this.summaries.forEach(s => {
@@ -188,20 +194,42 @@
       });
 
       // Index retention
-      (bundle.retention || []).forEach(r => {
+      const retList = Array.isArray(bundle.retention) ? bundle.retention : (bundle.retention?.rows || []);
+      retList.forEach(r => {
         if (r.video_id) this.retentionMap.set(r.video_id, r.points || []);
       });
 
-      // Index daily rows
-      (bundle.daily_rows_2026 || []).forEach(row => {
+      // Index daily rows (2025 + 2026)
+      const dailyList = Array.isArray(bundle.daily_rows_2026) ? bundle.daily_rows_2026 : (bundle.daily_rows_2026?.rows || []);
+      dailyList.forEach(row => {
         const chId = row.channel_id;
         if (!this.channelDailyMap.has(chId)) this.channelDailyMap.set(chId, []);
         this.channelDailyMap.get(chId).push(row);
       });
 
+      // Index daily FX rates
+      const fxList = Array.isArray(bundle.daily_fx) ? bundle.daily_fx : (bundle.daily_fx?.rows || []);
+      fxList.forEach(fx => {
+        if (fx.day && fx.rate) this.fxMap.set(fx.day, Number(fx.rate));
+      });
+
+      // Index video summaries
+      const vidList = Array.isArray(bundle.video_summaries) ? bundle.video_summaries : (bundle.video_summaries?.rows || []);
+      vidList.forEach(vs => {
+        if (vs.video_id) this.videoSummaryMap.set(vs.video_id, vs);
+      });
+
       this.isLoaded = true;
-      console.log('DEMO_STORE initialized with', this.channelDailyMap.size, 'channels and', this.retentionMap.size, 'retention curves');
+      console.log('DEMO_STORE initialized with', this.channelDailyMap.size, 'channels,', dailyList.length, 'daily rows, and', this.retentionMap.size, 'retention curves');
       return true;
+    },
+
+    getFxRate(day) {
+      return this.fxMap.get(day) || null;
+    },
+
+    getVideoSummary(videoId) {
+      return this.videoSummaryMap.get(videoId) || null;
     },
 
     getChannelSummary(channelId, periodKey = 'last_28_days') {
@@ -253,15 +281,17 @@
   };
 
   // Helper adapter to get effective channel report across both Live and Demo modes
-  function getEffectiveChannelReport(channelId, startDate, endDate, currency) {
+  function getEffectiveChannelReport(channelId, startDate, endDate, currencyOrScenario) {
     if (!channelId) return null;
     startDate = startDate || state.startDate || '2026-10-01';
     endDate = endDate || state.endDate || '2026-10-28';
-    currency = currency || state.currency || 'USD';
+    const isScenarioArg = currencyOrScenario && currencyOrScenario !== 'USD' && currencyOrScenario !== 'VND';
+    const currency = (!isScenarioArg && currencyOrScenario) ? currencyOrScenario : (state.currency || 'USD');
+    const scenarioId = isScenarioArg ? currencyOrScenario : state.demoScenario;
 
-    if (state.viewMode === 'demo') {
+    if (state.viewMode === 'demo' || isScenarioArg) {
       if (!DEMO_STORE.isLoaded) DEMO_STORE.init();
-      const chState = DEMO_STORE.getChannelState(channelId, state.demoScenario);
+      const chState = DEMO_STORE.getChannelState(channelId, scenarioId);
       const isAnalyticsReady = chState.analytics_status === 'demo_ready';
       const isMonetaryReady = chState.monetary_status === 'demo_ready';
 
@@ -280,7 +310,7 @@
       const monEnd = chState.monetary_available_end || '2026-10-28';
 
       // Check scenario metric overrides
-      const scenario = DEMO_STORE.getScenario(state.demoScenario);
+      const scenario = DEMO_STORE.getScenario(scenarioId);
       const override = (scenario && scenario.metric_overrides) ? scenario.metric_overrides.find(o => o.channel_id === channelId) : null;
 
       const rows = rawRows.map(r => {
@@ -288,25 +318,40 @@
         const rawRev = (r.estimatedRevenue !== undefined && r.estimatedRevenue !== null) ? r.estimatedRevenue : (r.estimated_revenue_usd !== undefined ? r.estimated_revenue_usd : null);
         let revVal = hasMon ? rawRev : null;
         let vVal = (r.views !== undefined) ? r.views : 0;
-        const minWatched = (r.estimatedMinutesWatched !== undefined) ? r.estimatedMinutesWatched : (r.estimated_minutes_watched || 0);
-        const subsGain = (r.subscribersGained !== undefined) ? r.subscribersGained : ((r.netSubscribers && r.netSubscribers > 0) ? r.netSubscribers : 0);
-        const subsLost = (r.subscribersLost !== undefined) ? r.subscribersLost : ((r.netSubscribers && r.netSubscribers < 0) ? Math.abs(r.netSubscribers) : 0);
+        let minWatched = (r.estimatedMinutesWatched !== undefined) ? r.estimatedMinutesWatched : (r.estimated_minutes_watched || 0);
+        let subsGain = (r.subscribersGained !== undefined) ? r.subscribersGained : ((r.netSubscribers && r.netSubscribers > 0) ? r.netSubscribers : 0);
+        let subsLost = (r.subscribersLost !== undefined) ? r.subscribersLost : ((r.netSubscribers && r.netSubscribers < 0) ? Math.abs(r.netSubscribers) : 0);
+        let likesVal = r.likes || 0;
+        let commentsVal = r.comments || 0;
+        let sharesVal = r.shares || 0;
 
         if (override && override.metrics) {
-          if (override.metrics.views !== undefined) vVal = override.metrics.views;
-          if (override.metrics.estimatedRevenue !== undefined) revVal = override.metrics.estimatedRevenue;
+          const om = override.metrics;
+          if (om.views !== undefined) vVal = om.views;
+          if (om.estimatedRevenue !== undefined) revVal = hasMon ? om.estimatedRevenue : null;
+          if (om.estimatedMinutesWatched !== undefined) minWatched = om.estimatedMinutesWatched;
+          if (om.subscribersGained !== undefined) subsGain = om.subscribersGained;
+          if (om.subscribersLost !== undefined) subsLost = om.subscribersLost;
+          if (om.likes !== undefined) likesVal = om.likes;
+          if (om.comments !== undefined) commentsVal = om.comments;
+          if (om.shares !== undefined) sharesVal = om.shares;
         }
+
+        const fxRate = DEMO_STORE.getFxRate(r.day) || state.exchangeRate;
+        const revVND = revVal != null ? Math.round(revVal * fxRate) : null;
 
         return {
           day: r.day,
           views: vVal,
           estimatedRevenue: revVal,
+          estimatedRevenueVND: revVND,
+          fxRate: fxRate,
           estimatedMinutesWatched: minWatched,
           subscribersGained: subsGain,
           subscribersLost: subsLost,
-          likes: r.likes || 0,
-          comments: r.comments || 0,
-          shares: r.shares || 0
+          likes: likesVal,
+          comments: commentsVal,
+          shares: sharesVal
         };
       });
 
@@ -316,16 +361,23 @@
       const sumSubsLost = rows.reduce((a, b) => a + (b.subscribersLost || 0), 0);
       const hasAnyMon = rows.some(r => r.estimatedRevenue != null);
       const sumRev = hasAnyMon ? Number(rows.reduce((a, b) => a + (b.estimatedRevenue || 0), 0).toFixed(2)) : null;
+      const sumRevVND = hasAnyMon ? rows.reduce((a, b) => a + (b.estimatedRevenueVND || 0), 0) : null;
+      const viewsWithMonetary = rows.filter(r => r.estimatedRevenue != null).reduce((a, b) => a + (b.views || 0), 0);
+      const proxyRpm = (hasAnyMon && viewsWithMonetary > 0) ? Number((sumRev / (viewsWithMonetary / 1000)).toFixed(4)) : null;
 
       return {
         channel_id: channelId,
-        has_analytics: true,
+        has_analytics: rows.length > 0,
         has_monetary: isMonetaryReady && hasAnyMon,
-        status: 'demo_ready',
+        status: rows.length > 0 ? 'demo_ready' : 'no_rows',
+        monetary_available_end: monEnd,
         rows: rows,
         totals: {
           views: sumViews,
+          viewsWithMonetary: viewsWithMonetary,
           estimatedRevenue: sumRev,
+          estimatedRevenueVND: sumRevVND,
+          proxyRpm: proxyRpm,
           estimatedMinutesWatched: sumMin,
           subscribersGained: sumSubsGain,
           subscribersLost: sumSubsLost,
@@ -339,6 +391,11 @@
     // Live mode
     const cacheKey = `${channelId}_${startDate}_${endDate}_${currency}`;
     return analyticsReportCache.get(cacheKey) || null;
+  }
+  DEMO_STORE.getEffectiveChannelReport = getEffectiveChannelReport;
+  if (typeof window !== 'undefined') {
+    window.DEMO_STORE = DEMO_STORE;
+    window.getEffectiveChannelReport = getEffectiveChannelReport;
   }
 
 
@@ -521,9 +578,9 @@
     timeRange: '30',
     granularity: 'day', // 'day' | 'month' | 'quarter'
     matrixTab: 'month', // 'month' | 'quarter'
-    startDate: defaultInitialDates.startDate,
-    endDate: defaultInitialDates.endDate,
-    periodDays: 30,
+    startDate: '2026-10-01',
+    endDate: '2026-10-28',
+    periodDays: 28,
     activeMetric: 'views',
     activeChannel: 'lunavia', // 'lunavia' | '80sgroove' | 'network'
     activeView: 'view-report-overview',
@@ -532,14 +589,14 @@
     staffGranularity: 'month',
     teamFilterSelect: 'all',
     teamFilterType: 'day',
-    teamFilterStart: '2026-09-28',
-    teamFilterEnd: '2026-10-29',
+    teamFilterStart: '2026-10-01',
+    teamFilterEnd: '2026-10-28',
     teamHiddenDatasetsViews: new Set(),
     teamHiddenDatasetsRevenue: new Set(),
     compMetric: 'views',
     compareChannelIds: ['UCL9VCEoz6M6JcUKxlJcr3LQ', 'UCuNF36PtETqVFz_yK6C_v-g', 'UCSJ4gkVC6NrvII8umztf0Ow'],
     compareGranularity: 'day',
-    viewMode: 'live', // 'live' | 'demo'
+    viewMode: 'demo', // 'live' | 'demo'
     demoScenario: 'all_demo_ready',
     comparePrevious: true,
     cleanOutliers: true,
@@ -935,8 +992,9 @@
    * Default end date is ALWAYS the current date (today).
    */
   function getPresetDates(preset) {
-    const end = getTodayLocalDate();
-    let start = getTodayLocalDate();
+    let isDemo = false; try { isDemo = !!(state && state.viewMode === 'demo'); } catch (e) { isDemo = true; }
+    const end = isDemo ? new Date(2026, 9, 28) : getTodayLocalDate();
+    let start = isDemo ? new Date(2026, 9, 28) : getTodayLocalDate();
 
     if (preset === '7') {
       start.setDate(end.getDate() - 6); // exactly 7 days ending today
@@ -1174,11 +1232,22 @@
     }
 
     // 7. Update UI components
+    currentData.monthlyComparison = [];
+    currentData.quarterlyComparison = [];
     updateKpiCards();
     renderMainChart();
     renderInteractionsChart();
+    renderSubscriberDonutChart();
+    renderGeoRevenueChart();
     renderVideosTable();
     renderComparisonMatrix();
+    renderOverviewPivotTable();
+    if (state.activeView === 'view-report-staff-data') renderStaffDataPivotView();
+    if (state.activeView === 'view-report-channel') renderChannelComparisonView();
+    if (state.activeView === 'view-report-team') renderTeamReportView();
+    if (state.activeView === 'view-report-project') renderProjectReportView();
+    if (state.activeView === 'view-report-network') renderNetworkReportView();
+    if (state.activeView === 'view-report-staff-chart') renderStaffCharts();
 
     if (notifyUser) {
       showToast(`Đã áp dụng báo cáo: ${formattedBadge} (${state.periodDays} ngày)`);
@@ -1391,14 +1460,27 @@
     }
 
     // 2. Revenue
-    if (hasAnalytics && currentData.timeline.revenue && currentData.timeline.revenue.length > 0) {
-      const periodRevenueUSD = Number(currentData.timeline.revenue.reduce((a, b) => a + b, 0).toFixed(2));
-      elements.valRevenue.textContent = formatCurrency(periodRevenueUSD);
+    const validRevs = (currentData.timeline && currentData.timeline.revenue) ? currentData.timeline.revenue.filter(v => v !== null && v !== undefined) : [];
+    const hasMonetary = hasAnalytics && currentData.timeline.hasMonetary !== false && validRevs.length > 0;
+    if (hasMonetary) {
+      const periodRevenueUSD = Number(validRevs.reduce((a, b) => a + b, 0).toFixed(2));
+      if (state.currency === 'VND' && currentData.timeline.totals && currentData.timeline.totals.estimatedRevenueVND != null) {
+        elements.valRevenue.textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentData.timeline.totals.estimatedRevenueVND);
+      } else {
+        elements.valRevenue.textContent = formatCurrency(periodRevenueUSD);
+      }
       if (elements.trendRevenue) {
-        elements.trendRevenue.innerHTML = `<i class="ri-arrow-right-up-line"></i> Analytics`;
+        elements.trendRevenue.innerHTML = `<i class="ri-arrow-right-up-line"></i> ${state.viewMode === 'demo' ? 'Minh họa' : 'Analytics'}`;
       }
       const revSub = document.getElementById('kpi-subtext-revenue');
-      if (revSub) revSub.textContent = `Doanh thu ước tính theo kỳ`;
+      if (revSub) revSub.textContent = state.currency === 'VND' && state.viewMode === 'demo' ? `Doanh thu kỳ (Tỷ giá minh họa theo ngày)` : `Doanh thu ước tính theo kỳ`;
+    } else if (hasAnalytics) {
+      elements.valRevenue.textContent = '—';
+      if (elements.trendRevenue) {
+        elements.trendRevenue.innerHTML = `<span style="font-size:11px; color:#F59E0B; font-weight:normal;">Thiếu quyền tiền</span>`;
+      }
+      const revSub = document.getElementById('kpi-subtext-revenue');
+      if (revSub) revSub.textContent = `— · Chưa có quyền doanh thu`;
     } else {
       elements.valRevenue.textContent = '—';
       if (elements.trendRevenue) {
@@ -1408,20 +1490,30 @@
       if (revSub) revSub.textContent = `Chưa kết nối YouTube Analytics`;
     }
 
-    // 3. Interactions (Likes + Comments from loaded videos)
+    // 3. Interactions
     const totalVideoLikes = currentData.videos.reduce((sum, v) => sum + (v.likes || 0), 0);
     const totalVideoComments = currentData.videos.reduce((sum, v) => sum + (v.comments || 0), 0);
-    const displayLikes = totalVideoLikes;
-    const displayComments = totalVideoComments;
-    const displayInteractions = displayLikes + displayComments;
+    let displayLikes = totalVideoLikes;
+    let displayComments = totalVideoComments;
+    let displayShares = null;
+    if (hasAnalytics && currentData.timeline.interactions) {
+      displayLikes = (currentData.timeline.interactions.likes || []).reduce((a, b) => a + (b || 0), 0);
+      displayComments = (currentData.timeline.interactions.comments || []).reduce((a, b) => a + (b || 0), 0);
+      displayShares = (currentData.timeline.interactions.shares || []).reduce((a, b) => a + (b || 0), 0);
+    }
+    const displayInteractions = displayLikes + displayComments + (displayShares || 0);
 
     elements.valInteractions.textContent = formatNumber(displayInteractions);
     if (elements.trendInteractions) {
-      elements.trendInteractions.innerHTML = `<span style="font-size:11px; color:var(--text-dim); font-weight:normal;">${currentData.videos.length} video mẫu</span>`;
+      elements.trendInteractions.innerHTML = hasAnalytics
+        ? `<i class="ri-arrow-right-up-line"></i> ${state.viewMode === 'demo' ? 'Minh họa' : 'Analytics'}`
+        : `<span style="font-size:11px; color:var(--text-dim); font-weight:normal;">${currentData.videos.length} video mẫu</span>`;
     }
     const interSub = document.getElementById('kpi-subtext-interactions');
     if (interSub) {
-      interSub.textContent = `${formatNumber(displayLikes)} thích • ${formatNumber(displayComments)} bình luận`;
+      interSub.textContent = displayShares !== null
+        ? `${formatNumber(displayLikes)} thích • ${formatNumber(displayComments)} bình luận • ${formatNumber(displayShares)} chia sẻ`
+        : `${formatNumber(displayLikes)} thích • ${formatNumber(displayComments)} bình luận`;
     }
 
     // 4. Subscribers
@@ -1464,7 +1556,7 @@
     // Sub-stats inside deep dive
     if (elements.valTotalLikes) elements.valTotalLikes.textContent = formatNumber(displayLikes);
     if (elements.valTotalComments) elements.valTotalComments.textContent = formatNumber(displayComments);
-    if (elements.valTotalShares) elements.valTotalShares.textContent = '—';
+    if (elements.valTotalShares) elements.valTotalShares.textContent = displayShares !== null ? formatNumber(displayShares) : '—';
 
     if (elements.valUsRev) {
       const hasRev = hasAnalytics && currentData.timeline.revenue && currentData.timeline.revenue.length > 0;
@@ -1511,25 +1603,44 @@
       const rand = pseudoRandom(seed);
       const growthTrend = 1.0 + (i * 0.024);
 
-      let views = Math.round(baseMonthlyViews * m.factor * growthTrend * (0.92 + rand * 0.16));
-      let viewsPrevYear = Math.round(views * (0.78 + rand * 0.07));
+      let views = 0;
+      let viewsPrevYear = 0;
+      let revenue = 0;
+      let revenuePrevYear = 0;
+      let revenueUS = 0;
+      let subsGained = 0;
+      let watchTime = 0;
+      let rpm = 0;
 
-      // Uploads boost
-      const uploadsCount = (videos || []).filter(v => {
-        if (!v.publishedAt) return false;
-        const [vy, vm] = v.publishedAt.split('-').map(Number);
-        return vy === currentYear && vm === m.id;
-      }).length;
-      if (uploadsCount > 0) {
-        views += uploadsCount * 2200;
+      if (state.viewMode === 'demo' && channelInfo && channelInfo.id) {
+        const mm = String(m.id).padStart(2, '0');
+        const rep2026 = getEffectiveChannelReport(channelInfo.id, `2026-${mm}-01`, `2026-${mm}-31`, state.currency);
+        const rep2025 = getEffectiveChannelReport(channelInfo.id, `2025-${mm}-01`, `2025-${mm}-31`, state.currency);
+        views = (rep2026 && rep2026.has_analytics) ? (rep2026.totals.views || 0) : 0;
+        viewsPrevYear = (rep2025 && rep2025.has_analytics) ? (rep2025.totals.views || 0) : 0;
+        revenue = (rep2026 && rep2026.has_monetary && rep2026.totals.estimatedRevenue != null) ? rep2026.totals.estimatedRevenue : 0;
+        revenuePrevYear = (rep2025 && rep2025.has_monetary && rep2025.totals.estimatedRevenue != null) ? rep2025.totals.estimatedRevenue : 0;
+        revenueUS = revenue;
+        subsGained = (rep2026 && rep2026.has_analytics) ? ((rep2026.totals.subscribersGained || 0) - (rep2026.totals.subscribersLost || 0)) : 0;
+        watchTime = (rep2026 && rep2026.has_analytics) ? Number(((rep2026.totals.estimatedMinutesWatched || 0) / 60).toFixed(1)) : 0;
+        const denomV = (rep2026 && rep2026.totals && rep2026.totals.viewsWithMonetary !== undefined) ? rep2026.totals.viewsWithMonetary : views;
+        rpm = (rep2026 && rep2026.has_monetary && denomV > 0) ? Number((revenue / (denomV / 1000)).toFixed(2)) : 0;
+      } else {
+        views = Math.round(baseMonthlyViews * m.factor * growthTrend * (0.92 + rand * 0.16));
+        viewsPrevYear = Math.round(views * (0.78 + rand * 0.07));
+        const uploadsCount = (videos || []).filter(v => {
+          if (!v.publishedAt) return false;
+          const [vy, vm] = v.publishedAt.split('-').map(Number);
+          return vy === currentYear && vm === m.id;
+        }).length;
+        if (uploadsCount > 0) views += uploadsCount * 2200;
+        rpm = 2.45 + (m.id >= 10 ? 0.35 : 0) + (rand * 0.2);
+        revenue = Number(((views / 1000) * rpm).toFixed(2));
+        revenuePrevYear = Number(((viewsPrevYear / 1000) * (rpm * 0.92)).toFixed(2));
+        revenueUS = Number((revenue * 0.58).toFixed(2));
+        subsGained = Math.max(12, Math.round(views * 0.0055));
+        watchTime = Number((views * 0.05).toFixed(1));
       }
-
-      const rpm = 2.45 + (m.id >= 10 ? 0.35 : 0) + (rand * 0.2);
-      const revenue = Number(((views / 1000) * rpm).toFixed(2));
-      const revenuePrevYear = Number(((viewsPrevYear / 1000) * (rpm * 0.92)).toFixed(2));
-      const revenueUS = Number((revenue * 0.58).toFixed(2));
-      const subsGained = Math.max(12, Math.round(views * 0.0055));
-      const watchTime = Number((views * 0.05).toFixed(1));
 
       let momViewsPct = 0;
       let momRevPct = 0;
@@ -2643,7 +2754,15 @@
     pageItems.forEach((item, index) => {
       const tr = document.createElement('tr');
       const rowNum = startIdx + index + 1;
-      const formattedRev = formatCurrency(item.revenue);
+      let vidRev = item.revenue;
+      if (state.viewMode === 'demo' && DEMO_STORE.isLoaded) {
+        const chState = DEMO_STORE.getChannelState(item.channelId || (state.channelInfo && state.channelInfo.id), state.demoScenario);
+        const vs = DEMO_STORE.getVideoSummary(item.id);
+        if (chState && chState.monetary_status === 'demo_ready' && vs && vs.metrics && vs.metrics.estimatedRevenue != null) {
+          vidRev = vs.metrics.estimatedRevenue;
+        }
+      }
+      const formattedRev = formatCurrency(vidRev);
 
       const isInPeriod = state.startDate && state.endDate && item.publishedAt >= state.startDate && item.publishedAt <= state.endDate;
       const periodBadgeHtml = isInPeriod ? `<span class="badge-in-period" title="Xuất bản trong kỳ báo cáo"><i class="ri-check-line"></i> Trong kỳ</span>` : '';
@@ -2991,18 +3110,22 @@
       let hasData = false;
       channelReports.forEach(({ report }) => {
         if (report && report.has_analytics && report.rows) {
-          const r = report.rows.find(row => {
-            if (d.type === 'month') return row.day && row.day.startsWith(d.key);
-            if (d.type === 'week') return row.day && row.day >= d.startKey && row.day <= d.endKey;
-            return row.day === d.key;
-          });
-          if (r) {
+          let matchedRows = [];
+          if (d.type === 'month') {
+            matchedRows = report.rows.filter(row => row.day && row.day.startsWith(d.key));
+          } else if (d.type === 'week') {
+            matchedRows = report.rows.filter(row => row.day && row.day >= d.startKey && row.day <= d.endKey);
+          } else {
+            const r = report.rows.find(row => row.day === d.key);
+            if (r) matchedRows.push(r);
+          }
+          matchedRows.forEach(r => {
             const val = extractRowMetricValue(r, primaryMet.id);
             if (val !== null) {
               sum += val;
               hasData = true;
             }
-          }
+          });
         }
       });
       if (hasData) {
@@ -3985,7 +4108,8 @@ function switchView(viewId) {
         const hoursKy = hasAnalytics ? (totals.estimatedMinutesWatched ? formatNumber(Number((totals.estimatedMinutesWatched / 60).toFixed(1))) + 'h' : '0h') : '<span style="color:var(--text-dim);">— <small>(Chưa kết nối)</small></span>';
         const netSubs = hasAnalytics ? ((totals.subscribersGained || 0) - (totals.subscribersLost || 0)) : null;
         const subsKy = netSubs != null ? (netSubs >= 0 ? `+${formatNumber(netSubs)}` : formatNumber(netSubs)) : '<span style="color:var(--text-dim);">— <small>(Chưa kết nối)</small></span>';
-        const rpmKy = hasAnalytics && totals.estimatedRevenue != null && totals.views ? formatCurrency(totals.estimatedRevenue / (totals.views / 1000)) : '<span style="color:var(--text-dim);">—</span>';
+        const denomViews = totals.viewsWithMonetary !== undefined ? totals.viewsWithMonetary : (totals.views || 0);
+        const rpmKy = hasAnalytics && report.has_monetary && totals.estimatedRevenue != null && denomViews > 0 ? formatCurrency(totals.estimatedRevenue / (denomViews / 1000)) : '<span style="color:var(--text-dim);">—</span>';
 
         tbodyHtml += `
           <tr>
@@ -4132,23 +4256,23 @@ function switchView(viewId) {
       const barLabels = selectedChannels.map(c => c.title);
       const barColors = selectedChannels.map((c, i) => CHANNEL_COLORS[i % CHANNEL_COLORS.length]);
       const barData = selectedChannels.map(c => {
-        const cacheKey = `${c.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
-        const report = analyticsReportCache.get(cacheKey);
+        const report = getEffectiveChannelReport(c.id, state.startDate || '2026-10-01', state.endDate || '2026-10-28', state.currency);
         const hasAnalytics = report && report.has_analytics;
         const totals = hasAnalytics ? (report.totals || {}) : {};
+        const denomViews = totals.viewsWithMonetary !== undefined ? totals.viewsWithMonetary : (totals.views || 0);
 
         if (state.compareMetric === 'views') {
-          return hasAnalytics ? (totals.views || 0) : (c.viewCount || 0);
+          return hasAnalytics ? (totals.views || 0) : null;
         } else if (state.compareMetric === 'subs') {
-          return hasAnalytics ? ((totals.subscribersGained || 0) - (totals.subscribersLost || 0)) : (c.subscriberCount || 0);
+          return hasAnalytics ? ((totals.subscribersGained || 0) - (totals.subscribersLost || 0)) : null;
         } else if (state.compareMetric === 'revenue') {
-          return hasAnalytics && totals.estimatedRevenue != null ? totals.estimatedRevenue : 0;
+          return hasAnalytics && report.has_monetary && totals.estimatedRevenue != null ? totals.estimatedRevenue : null;
         } else if (state.compareMetric === 'watchtime') {
-          return hasAnalytics && totals.estimatedMinutesWatched ? Number((totals.estimatedMinutesWatched / 60).toFixed(1)) : 0;
+          return hasAnalytics && totals.estimatedMinutesWatched != null ? Number((totals.estimatedMinutesWatched / 60).toFixed(1)) : null;
         } else if (state.compareMetric === 'rpm') {
-          return hasAnalytics && totals.estimatedRevenue && totals.views ? Number((totals.estimatedRevenue / (totals.views / 1000)).toFixed(2)) : 0;
+          return hasAnalytics && report.has_monetary && totals.estimatedRevenue != null && denomViews > 0 ? Number((totals.estimatedRevenue / (denomViews / 1000)).toFixed(4)) : null;
         }
-        return 0;
+        return null;
       });
 
       channelMultiBarChart = new Chart(canvasBar.getContext('2d'), {
@@ -4351,28 +4475,39 @@ function switchView(viewId) {
 
   function exportStaffDataCsv() {
     const employees = DATA_STORE.employees;
+    const isDemo = state.viewMode === 'demo';
     let csv = '\uFEFF';
-    csv += 'Ma_NV,Ten_NV,Username,Team,Kenh_Phu_Trach,Tong_Video,Tong_Views_CongKhai,Tong_Sub_CongKhai,GioXem_Ky,DoanhThu_Ky,TrangThai_OAuth\n';
+    csv += `# BAO CAO NHAN VIEN BGMEDIA\n`;
+    csv += `# Nguon: ${isDemo ? 'Du lieu minh hoa (synthetic_demo - data/demo-analytics)' : 'Du lieu cong khai YouTube & OAuth'}\n`;
+    csv += `# is_demo: ${isDemo}\n`;
+    csv += `# Kich ban: ${isDemo ? state.demoScenario : 'live'}\n`;
+    csv += `# Pham vi ky: ${state.startDate} den ${state.endDate} (Timezone: America/Los_Angeles)\n`;
+    csv += `# Tien te: ${state.currency}\n\n`;
+    csv += 'Ma_NV,Ten_NV,Username,Team,Kenh_Phu_Trach,Tong_Video,Tong_Views_CongKhai,Tong_Sub_CongKhai,Views_Ky,GioXem_Ky,DoanhThu_Ky,TrangThai_Nguon\n';
 
     employees.forEach(emp => {
       const ch = DATA_STORE.channelMap.get(emp.channelId) || {};
       const team = DATA_STORE.teamMap.get(emp.teamId) || {};
-        const report = getEffectiveChannelReport(emp.channelId, state.startDate, state.endDate, state.currency);
+      const report = getEffectiveChannelReport(emp.channelId, state.startDate, state.endDate, state.currency);
       const hasAnalytics = report && report.has_analytics;
       const totals = hasAnalytics ? (report.totals || {}) : {};
+      const statusLabel = hasAnalytics
+        ? (isDemo ? 'DEMO Analytics (synthetic_demo)' : 'LIVE OAuth')
+        : (isDemo ? `Thieu quyen (${report ? report.status : 'not_connected'})` : 'Chua ket noi');
 
       const row = [
         `"${emp.id}"`,
-        `"${emp.name.replace(/"/g, '""')}"`,
-        `"${emp.username}"`,
+        `"${(emp.name || '').replace(/"/g, '""')}"`,
+        `"${emp.username || emp.id}"`,
         `"${(team.name || 'BgMedia').replace(/"/g, '""')}"`,
         `"${(ch.title || emp.channelId).replace(/"/g, '""')}"`,
         ch.videoCount || 0,
         ch.viewCount || 0,
         ch.subscriberCount || 0,
-        hasAnalytics ? (totals.estimatedMinutesWatched ? (totals.estimatedMinutesWatched / 60).toFixed(1) : 0) : 'Chua ket noi',
-        hasAnalytics ? (totals.estimatedRevenue != null ? totals.estimatedRevenue : 'Chua cap quyen') : 'Chua ket noi',
-        hasAnalytics ? 'LIVE OAuth' : 'Chua ket noi'
+        hasAnalytics ? (totals.views || 0) : 'Chua ket noi',
+        hasAnalytics ? (totals.estimatedMinutesWatched != null ? (totals.estimatedMinutesWatched / 60).toFixed(1) : 0) : 'Chua ket noi',
+        hasAnalytics ? (report.has_monetary && totals.estimatedRevenue != null ? totals.estimatedRevenue : 'Chua co quyen doanh thu') : 'Chua ket noi',
+        `"${statusLabel}"`
       ];
       csv += row.join(',') + '\n';
     });
@@ -4590,14 +4725,25 @@ function switchView(viewId) {
 
     if (ctxRev) {
       if (teamChartRevenue) teamChartRevenue.destroy();
+      const isDemo = state.viewMode === 'demo';
       teamChartRevenue = new Chart(ctxRev, {
         type: 'bar',
         data: {
           labels: teams.map(t => t.name),
           datasets: [{
-            label: 'Tổng Subscribers Công Khai',
+            label: isDemo ? `Doanh Thu Kỳ (${state.currency})` : 'Tổng Subscribers Công Khai',
             data: teams.map(t => {
               const teamChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
+              if (isDemo) {
+                let sumR = 0;
+                teamChans.forEach(c => {
+                  const r = getEffectiveChannelReport(c.id, state.startDate, state.endDate, state.currency);
+                  if (r && r.has_monetary && r.totals.estimatedRevenue != null) {
+                    sumR += (state.currency === 'VND' && r.totals.estimatedRevenueVND != null) ? r.totals.estimatedRevenueVND : r.totals.estimatedRevenue;
+                  }
+                });
+                return Number(sumR.toFixed(2));
+              }
               return teamChans.reduce((sum, c) => sum + (c.subscriberCount || 0), 0);
             }),
             backgroundColor: ['rgba(56, 189, 248, 0.75)', 'rgba(245, 63, 63, 0.75)', 'rgba(16, 185, 129, 0.75)'],
@@ -6577,10 +6723,26 @@ function switchView(viewId) {
       }
     }
 
-    // Always ensure default end date is current date (today)
-    const initialDates = getPresetDates(state.timeRange || '30');
-    state.startDate = initialDates.startDate;
-    state.endDate = initialDates.endDate;
+    if (!DEMO_STORE.isLoaded) DEMO_STORE.init();
+    if (state.viewMode === 'demo') {
+      state.startDate = '2026-10-01';
+      state.endDate = '2026-10-28';
+      state.periodDays = 28;
+      const demoBanner = document.getElementById('demo-mode-banner');
+      if (demoBanner) demoBanner.style.display = 'flex';
+      const btnLive = document.getElementById('btn-mode-live');
+      const btnDemo = document.getElementById('btn-mode-demo');
+      if (btnLive) btnLive.classList.remove('active');
+      if (btnDemo) btnDemo.classList.add('active');
+      const scopeAnalytics = document.getElementById('scope-analytics-count');
+      const scopeRevenue = document.getElementById('scope-revenue-count');
+      if (scopeAnalytics) scopeAnalytics.innerHTML = `<i class="ri-line-chart-line" style="color:#F59E0B;"></i> Analytics: <strong>15/15 kênh có dữ liệu (Demo)</strong>`;
+      if (scopeRevenue) scopeRevenue.innerHTML = `<i class="ri-money-dollar-circle-line" style="color:#F59E0B;"></i> Doanh thu: <strong>15/15 kênh có dữ liệu (Demo)</strong>`;
+    } else {
+      const initialDates = getPresetDates(state.timeRange || '30');
+      state.startDate = initialDates.startDate;
+      state.endDate = initialDates.endDate;
+    }
 
     // Set max date attribute on date inputs to today to prevent future dates
     const todayIso = formatIsoLocalDate(getTodayLocalDate());
@@ -6634,6 +6796,9 @@ function switchView(viewId) {
     const btnReRunTest = document.getElementById('btn-re-run-analytics-test');
 
     async function checkOAuthStatus() {
+      if (state.viewMode === 'demo' || (typeof window !== 'undefined' && window.location && window.location.hostname.includes('github.io'))) {
+        return;
+      }
       try {
         const res = await fetch('/api/oauth/status');
         if (!res.ok) return;
@@ -6658,9 +6823,9 @@ function switchView(viewId) {
             }
           }
 
-          // Register authorized channel as "Kênh đã kết nối · Chưa phân công" if not in mock catalog
+          // Register authorized channel as "Kênh đã kết nối · Chưa phân công" if not in mock catalog (only in live mode)
           const exists = CHANNELS_REGISTRY.find(c => c.id === authChan.id);
-          if (!exists) {
+          if (!exists && state.viewMode === 'live') {
             CHANNELS_REGISTRY.unshift({
               id: authChan.id,
               title: authChan.title,

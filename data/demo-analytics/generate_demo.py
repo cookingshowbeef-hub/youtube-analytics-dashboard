@@ -156,17 +156,32 @@ def main():
     # Synthetic scenarios are assigned by fixture order, never fitted to the real
     # channels' public views/subscribers; none of these figures estimate real money.
     baseline = [850, 18000, 13500, 3600, 24000, 950, 9800, 12500, 5000, 6400, 21000, 16800, 5400, 4600, 14000]
+    publication = {v["id"]: pacific_day(v["published_at"]) for v in videos}
+    durations = {v["id"]: duration_seconds(v["duration_iso8601"]) for v in videos}
+    first_pub_by_channel = {
+        cid: min(publication[v["id"]] for v in by_channel[cid] if durations[v["id"]] > 0)
+        for cid in channel_ids
+    }
     channel_raw = {}
     all_days = dates(START, END)
     for ci, channel_id in enumerate(channel_ids):
+        first_pub = first_pub_by_channel[channel_id]
         for di, day in enumerate(all_days):
             r = rng(f"channel:{ci}:{day}")
             weekly = 1.18 if day.weekday() >= 5 else 0.94
             trend = 0.82 + (di / len(all_days)) * (0.16 + (ci % 5) * 0.12)
             seasonal = 1 + 0.16 * math.sin(di / 29 + ci) + 0.08 * math.cos(di / 9 + ci * 0.6)
             spike = 1.7 if (di + ci * 13) % 83 in (0, 1) else 1
-            views = max(20, round(baseline[ci] * weekly * trend * seasonal * spike * r.uniform(0.86, 1.14)))
-            avg_seconds = (550 + (ci % 6) * 280) * r.uniform(0.86, 1.14)
+            release_wave = 1.0
+            if first_pub > DEFAULT_START and DEFAULT_START <= day <= END:
+                active_oct_days = (END - first_pub).days + 1
+                inactive_oct_days = (first_pub - DEFAULT_START).days
+                if day < first_pub:
+                    release_wave = 0.34
+                else:
+                    release_wave = max(1.35, min(3.4, (0.72 * inactive_oct_days * 0.34 / (0.28 * active_oct_days))))
+            views = max(20, round(baseline[ci] * weekly * trend * seasonal * spike * release_wave * r.uniform(0.86, 1.14)))
+            avg_seconds = (300 + (ci % 6) * 70) * r.uniform(0.88, 1.12)
             ad_impressions = round(views * r.uniform(0.32, 1.05))
             monetized = min(views, round(ad_impressions / r.uniform(1.3, 2.0)))
             gross_cents = round(ad_impressions * (2.2 + ci % 6 * 0.9) * r.uniform(0.78, 1.24) / 10)
@@ -189,15 +204,26 @@ def main():
             channel_raw[channel_id, day] = raw
 
     # Modeled sample activity + one explicitly non-video aggregate bucket.
+    # Calibrated so the 10 sample videos represent 40%-65% of each channel's 28-day views.
     video_raw, residual_raw = {}, {}
-    publication = {v["id"]: pacific_day(v["published_at"]) for v in videos}
-    durations = {v["id"]: duration_seconds(v["duration_iso8601"]) for v in videos}
     for ci, channel_id in enumerate(channel_ids):
+        first_pub = first_pub_by_channel[channel_id]
+        total_28d_views = sum(channel_raw[channel_id, d]["views"] for d in dates(DEFAULT_START, END))
+        eligible_28d_views = sum(channel_raw[channel_id, d]["views"] for d in dates(DEFAULT_START, END) if d >= first_pub)
+        target_28d_share = 0.45 + (ci % 5) * 0.032  # 0.45 .. 0.578
+        base_oct_ratio = (target_28d_share * total_28d_views / eligible_28d_views) if eligible_28d_views else 0.50
+        base_oct_ratio = min(0.84, max(0.44, base_oct_ratio))
         for day in dates(DETAIL_START, END):
             raw = channel_raw[channel_id, day]
             eligible = [v for v in by_channel[channel_id] if publication[v["id"]] <= day and durations[v["id"]] > 0]
             r = rng(f"sample:{ci}:{day}")
-            target = round(raw["views"] * r.uniform(0.32, 0.69)) if eligible else 0
+            if not eligible:
+                target = 0
+            elif day >= DEFAULT_START:
+                day_ratio = min(0.86, max(0.42, base_oct_ratio * r.uniform(0.96, 1.04)))
+                target = round(raw["views"] * day_ratio)
+            else:
+                target = round(raw["views"] * r.uniform(0.44, 0.58))
             weights = [(1 + rng(v["id"]).random()) / (1 + (day - publication[v["id"]]).days / 22) for v in eligible]
             sample_views = allocate(target, weights) if eligible else []
             split_weights = sample_views + [raw["views"] - sum(sample_views)]
@@ -237,22 +263,53 @@ def main():
 
     video_summaries = []
     retention = []
-    for video in videos:
+    last_7_start = END - dt.timedelta(days=6)
+    for vi, video in enumerate(videos):
         vid = video["id"]
+        pub_day = publication[vid]
         parts = [raw for (video_id, _), raw in video_raw.items() if video_id == vid]
-        aggregate = summed(parts)
-        active = aggregate["views"] > 0
-        video_summaries.append(dict(video_id=vid, channel_id=video["channel_id"],
-            period_start=str(DETAIL_START), period_end=str(END), published_day_pacific=str(publication[vid]),
+        parts_28d = [raw for (video_id, d), raw in video_raw.items() if video_id == vid and DEFAULT_START <= d <= END]
+        parts_7d = [raw for (video_id, d), raw in video_raw.items() if video_id == vid and last_7_start <= d <= END]
+        aggregate_90d = summed(parts)
+        aggregate_28d = summed(parts_28d)
+        aggregate_7d = summed(parts_7d)
+        active = aggregate_90d["views"] > 0
+        has_snapshot_since_publish = bool(pub_day >= DETAIL_START)
+        if not active or durations[vid] == 0:
+            views_first_7d = None
+            views_first_7d_status = "no_activity"
+        elif not has_snapshot_since_publish:
+            views_first_7d = None
+            views_first_7d_status = "before_snapshot_start"
+        elif pub_day + dt.timedelta(days=6) > END:
+            views_first_7d = None
+            views_first_7d_status = "pending_7d"
+        else:
+            views_first_7d = sum(
+                video_raw[vid, d]["views"]
+                for d in dates(pub_day, pub_day + dt.timedelta(days=6))
+                if (vid, d) in video_raw
+            )
+            views_first_7d_status = "ready"
+        video_summaries.append(dict(
+            video_id=vid, channel_id=video["channel_id"],
+            period_start=str(DETAIL_START), period_end=str(END), published_day_pacific=str(pub_day),
             duration_seconds=durations[vid], status="demo_ready" if active else "no_activity_in_demo_period",
-            metrics=metrics(aggregate) if active else None))
+            has_snapshot_since_publish=has_snapshot_since_publish,
+            views_first_7d=views_first_7d, views_first_7d_status=views_first_7d_status,
+            privacy_status="public",
+            likes_hidden=(vi == 14),
+            comments_disabled=(vi == 29),
+            metrics=metrics(aggregate_90d) if active else None,
+            metrics_28d=metrics(aggregate_28d) if active else None,
+            metrics_7d=metrics(aggregate_7d) if active else None))
         if not active:
             continue
         r = rng(f"retention:{vid}")
         shape = [math.exp(-(0.9 + r.random() * 0.5) * i / 50) + 0.10 * math.exp(-((i / 50 - 0.55) / 0.10) ** 2)
                  for i in range(51)]
         integral = sum((shape[i] + shape[i + 1]) / 2 / 50 for i in range(50))
-        target = aggregate["estimatedMinutesWatched"] * 60 / aggregate["views"] / durations[vid]
+        target = aggregate_90d["estimatedMinutesWatched"] * 60 / aggregate_90d["views"] / durations[vid]
         points = [dict(elapsedVideoTimeRatio=round(i / 50, 2), audienceWatchRatio=round(y / integral * target, 5),
                        relativeRetentionPerformance=round(max(0, min(1, 0.55 + 0.13 * math.sin(i / 7) + r.uniform(-0.08, 0.08))), 4))
                   for i, y in enumerate(shape)]
@@ -408,6 +465,123 @@ def main():
                 report_timezone="America/Los_Angeles", currency="USD", **{k: v for k, v in row["metrics"].items() if k != "aggregation_components"}))
     written.append((csv_path.name, 15))
 
+    # Daily Snapshot fixture (Data API v3 daily cron at 00:05 PT -> snapshot_date_pt = yesterday PT)
+    def rounding_step_3sig(n):
+        if n < 1000:
+            return 1
+        elif n < 10000:
+            return 10
+        elif n < 100000:
+            return 100
+        elif n < 1000000:
+            return 1000
+        elif n < 10000000:
+            return 10000
+        return 100000
+
+    snapshot_rows = []
+    channel_snapshot_profiles = {}
+    for ci, cid in enumerate(channel_ids):
+        ch_28d = next(r["metrics"]["views"] for r in summaries if r["period_key"] == "last_28_days" and r["entity_type"] == "channel" and r["entity_id"] == cid)
+        # Calibrate demo subscribers so 28d views is ~2.2x-2.8x subscriber base (total ~2.1M subs across 15 channels for ~5.4M 28d views)
+        base_subs_start = max(12000, round(ch_28d * (0.34 + (ci % 4) * 0.04)))
+        cum_subs = base_subs_start
+        cum_views = round(ch_28d * (14.5 + (ci % 5) * 1.8))
+        prev_pub_subs = (cum_subs // rounding_step_3sig(cum_subs)) * rounding_step_3sig(cum_subs)
+        for day in dates(DETAIL_START, END):
+            raw = channel_raw[cid, day]
+            net_s = raw["subscribersGained"] - raw["subscribersLost"]
+            cum_subs = max(1000, cum_subs + net_s)
+            step = rounding_step_3sig(cum_subs)
+            pub_subs = (cum_subs // step) * step
+            pub_sub_delta = pub_subs - prev_pub_subs
+            prev_pub_subs = pub_subs
+
+            is_neg_anom = (ci == 2 and day == dt.date(2026, 8, 19))
+            raw_v_delta = -1420 if is_neg_anom else raw["views"]
+            anom_reason = "youtube_audit_adjustment" if is_neg_anom else None
+            cum_views = max(0, cum_views + raw_v_delta)
+            next_day = day + dt.timedelta(days=1)
+            captured_utc = f"{next_day.isoformat()}T07:05:00Z"
+            ch_videos = [v for v in by_channel[cid] if publication[v["id"]] <= day]
+            last_pub = max((publication[v["id"]] for v in ch_videos), default=first_pub_by_channel[cid])
+            snapshot_rows.append(dict(
+                channel_id=cid,
+                snapshot_date_pt=day.isoformat(),
+                captured_at_utc=captured_utc,
+                demo_subscriber_count_exact=cum_subs,
+                sub_rounding_step=step,
+                subscriber_count_public=pub_subs,
+                public_sub_delta=pub_sub_delta,
+                sub_delta_below_step=bool(abs(pub_sub_delta) < step),
+                view_count_cumulative=cum_views,
+                raw_daily_views_delta=raw_v_delta,
+                is_negative_anomaly=is_neg_anom,
+                anomaly_reason=anom_reason,
+                video_count_public=max(10, 45 + ci * 8 + len(ch_videos)),
+                last_video_published_pt=str(last_pub),
+                expected_upload_cycle_days=7))
+        # Build profile for 28d and 7d snapshot window
+        ch_snaps = [s for s in snapshot_rows if s["channel_id"] == cid]
+        snap_end = ch_snaps[-1]
+        snap_28_start = next(s for s in ch_snaps if s["snapshot_date_pt"] == str(DEFAULT_START))
+        snap_7_start = next(s for s in ch_snaps if s["snapshot_date_pt"] == str(END - dt.timedelta(days=6)))
+        pub_delta_28d = snap_end["subscriber_count_public"] - snap_28_start["subscriber_count_public"]
+        pub_delta_7d = snap_end["subscriber_count_public"] - snap_7_start["subscriber_count_public"]
+        channel_snapshot_profiles[cid] = dict(
+            channel_id=cid,
+            snapshot_date_pt=snap_end["snapshot_date_pt"],
+            captured_at_utc=snap_end["captured_at_utc"],
+            subscriber_count_public=snap_end["subscriber_count_public"],
+            demo_subscriber_count_exact=snap_end["demo_subscriber_count_exact"],
+            sub_rounding_step=snap_end["sub_rounding_step"],
+            public_sub_delta_28d=pub_delta_28d,
+            sub_delta_28d_below_step=bool(abs(pub_delta_28d) < snap_end["sub_rounding_step"]),
+            public_sub_delta_7d=pub_delta_7d,
+            sub_delta_7d_below_step=bool(abs(pub_delta_7d) < snap_end["sub_rounding_step"]),
+            view_count_cumulative=snap_end["view_count_cumulative"],
+            video_count_public=snap_end["video_count_public"],
+            last_video_published_pt=snap_end["last_video_published_pt"],
+            expected_upload_cycle_days=7,
+            has_negative_anomaly_90d=any(s["is_negative_anomaly"] for s in ch_snaps),
+            negative_anomalies=[
+                dict(snapshot_date_pt=s["snapshot_date_pt"], raw_daily_views_delta=s["raw_daily_views_delta"], anomaly_reason=s["anomaly_reason"])
+                for s in ch_snaps if s["is_negative_anomaly"]
+            ])
+    write("channel_snapshot_daily.json", snapshot_rows, period_start=str(DETAIL_START), period_end=str(END),
+          cron_schedule="00:05 America/Los_Angeles -> snapshot_date_pt = DATE(captured_at_pt) - 1 day",
+          rounding_rule="3 significant digits for public subscriberCount; deltas smaller than sub_rounding_step are flagged sub_delta_below_step=true")
+
+    # Pre-aggregate breakdowns by period for fast UI rendering in demo_bundle.js
+    channel_breakdowns = {}
+    bd_periods = [
+        ("last_7_days", END - dt.timedelta(days=6), END),
+        ("last_28_days", DEFAULT_START, END),
+        ("last_30_days", END - dt.timedelta(days=29), END),
+        ("last_90_days", DETAIL_START, END),
+    ]
+    for cid in channel_ids:
+        channel_breakdowns[cid] = {}
+        for pkey, pstart, pend in bd_periods:
+            s_str, e_str = str(pstart), str(pend)
+            dim_map = defaultdict(lambda: defaultdict(lambda: {"views": 0, "estimatedMinutesWatched": 0, "estimatedRevenueCents": 0}))
+            for b in breakdowns:
+                if b["channel_id"] == cid and s_str <= b["day"] <= e_str:
+                    bucket = dim_map[b["dimension"]][b["value"]]
+                    bucket["views"] += b["views"]
+                    bucket["estimatedMinutesWatched"] += b["estimatedMinutesWatched"]
+                    if "estimatedRevenue" in b and b["estimatedRevenue"] is not None:
+                        bucket["estimatedRevenueCents"] += round(b["estimatedRevenue"] * 100)
+            channel_breakdowns[cid][pkey] = {
+                dim: [
+                    dict(value=val, views=vals["views"], estimatedMinutesWatched=vals["estimatedMinutesWatched"],
+                         estimatedHoursWatched=round(vals["estimatedMinutesWatched"] / 60, 2),
+                         estimatedRevenue=round(vals["estimatedRevenueCents"] / 100, 2) if dim == "country" else None)
+                    for val, vals in sorted(val_map.items(), key=lambda x: -x[1]["views"])
+                ]
+                for dim, val_map in dim_map.items()
+            }
+
     # Validation uses raw integer counters/cents to avoid float rounding drift.
     checks = []
 
@@ -471,6 +645,24 @@ def main():
     validation = dict(meta=meta(), passed=True, check_count=len(checks), checks=checks, counts=manifest["counts"],
                       public_snapshot_sha256=public_hash, public_bundle_sha256=bundle_hash)
     (OUT / "validation.json").write_text(json.dumps(validation, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    bundle_payload = dict(
+        meta=manifest,
+        default_period=dict(period_key="last_28_days", start_date=str(DEFAULT_START), end_date=str(END)),
+        scenarios=scenarios,
+        summaries=summaries,
+        retention=retention,
+        daily_rows_2026=channel_rows,
+        daily_fx=fx_rows,
+        video_summaries=video_summaries,
+        period_rollups=rollups,
+        channel_snapshot_profiles=channel_snapshot_profiles,
+        channel_breakdowns=channel_breakdowns,
+    )
+    (OUT / "demo_bundle.js").write_text(
+        "window.__DEMO_ANALYTICS__ = " + json.dumps(bundle_payload, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + ";\n",
+        encoding="utf-8",
+    )
     print(json.dumps({"passed": True, "checks": len(checks), "counts": manifest["counts"], "generated_at": generated_at,
                       "total_data_bytes": sum(file["bytes"] for file in files)}, ensure_ascii=False))
 

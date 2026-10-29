@@ -219,9 +219,21 @@
         if (vs.video_id) this.videoSummaryMap.set(vs.video_id, vs);
       });
 
+      this.channelSnapshotProfiles = bundle.channel_snapshot_profiles || {};
+      this.channelBreakdowns = bundle.channel_breakdowns || {};
+
       this.isLoaded = true;
       console.log('DEMO_STORE initialized with', this.channelDailyMap.size, 'channels,', dailyList.length, 'daily rows, and', this.retentionMap.size, 'retention curves');
       return true;
+    },
+
+    getChannelSnapshotProfile(channelId) {
+      return (this.channelSnapshotProfiles && this.channelSnapshotProfiles[channelId]) || null;
+    },
+
+    getChannelBreakdowns(channelId, periodKey = 'last_28_days') {
+      const chBd = this.channelBreakdowns && this.channelBreakdowns[channelId];
+      return chBd ? (chBd[periodKey] || chBd['last_28_days'] || null) : null;
     },
 
     getFxRate(day) {
@@ -2945,6 +2957,15 @@
     // Update UI
     applyChannelDataToUI();
 
+    if (window.__REPORT_V3__) {
+      if (channelKey && channelKey !== 'network') {
+        window.__REPORT_V3__.selectedChannelId = channelKey;
+      }
+      if (state.activeView === 'view-report-channel' && typeof window.__REPORT_V3__.refreshActiveView === 'function') {
+        window.__REPORT_V3__.refreshActiveView();
+      }
+    }
+
     if (state.activeView === 'view-report-channel') {
       renderChannelCompareView();
     } else if (state.activeView === 'view-report-staff-chart') {
@@ -4139,14 +4160,27 @@
 function switchView(viewId) {
     if (!viewId) return;
 
-    // Handle Guide TOC anchors (e.g. guide-sec-1) without hiding dashboard views
-    if (viewId.startsWith('guide-sec-')) {
+    // Handle Guide TOC anchors (e.g. guide-sec-1 or guide-engagement) without hiding dashboard views
+    if (viewId.startsWith('guide-')) {
       switchView('view-report-guide');
       const sec = document.getElementById(viewId);
       if (sec) {
-        setTimeout(() => sec.scrollIntoView({ behavior: 'smooth' }), 50);
+        setTimeout(() => {
+          sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          sec.classList.add('v3-guide-highlight');
+          setTimeout(() => sec.classList.remove('v3-guide-highlight'), 2400);
+        }, 60);
       }
       return;
+    }
+
+    // Backward-compatible hash redirects for consolidated Staff page (3 tabs)
+    if (viewId === 'view-report-staff-chart') {
+      state.staffActiveTab = 'compare';
+      viewId = 'view-report-staff';
+    } else if (viewId === 'view-report-staff-data') {
+      state.staffActiveTab = 'matrix';
+      viewId = 'view-report-staff';
     }
 
     const targetEl = document.getElementById(viewId);
@@ -4182,14 +4216,15 @@ function switchView(viewId) {
     // Update Breadcrumbs & Heading
     if (elements.mainPageHeading) {
       const headingMap = {
-        'view-report-overview': 'Báo Cáo Hiệu Suất Kênh',
-        'view-report-channel': 'Báo Cáo So Sánh 2 Kênh (Lunavia vs 80s Groove Machine)',
-        'view-report-staff-chart': 'Báo Cáo Theo Nhân Viên (Biểu Đồ)',
-        'view-report-staff-data': 'Báo Cáo Theo Nhân Viên (Số Liệu & Đối Soát)',
-        'view-report-team': 'Báo Cáo Theo Nhóm / Team Sản Xuất',
+        'view-report-overview': 'Báo Cáo Tổng Quan Công Ty',
+        'view-report-channel': 'Báo Cáo Theo Kênh YouTube',
+        'view-report-staff': 'Báo Cáo Theo Nhân Viên',
+        'view-report-staff-chart': 'Báo Cáo Theo Nhân Viên',
+        'view-report-staff-data': 'Báo Cáo Theo Nhân Viên',
+        'view-report-team': 'Báo Cáo Theo Team Sản Xuất',
         'view-report-project': 'Báo Cáo Theo Dự Án',
-        'view-report-network': 'Báo Cáo Toàn Mạng Lưới BgMedia',
-        'view-report-guide': 'Hướng Dẫn Sử Dụng Báo Cáo BgMedia',
+        'view-report-network': 'Báo Cáo Theo Network (MCN)',
+        'view-report-guide': 'Hướng Dẫn & Từ Điển Chỉ Số BgMedia',
         'view-mgmt-team': 'Quản Lý Đội Ngũ (Teams)',
         'view-mgmt-channel': 'Quản Lý Hệ Thống Kênh YouTube',
         'view-mgmt-video': 'Quản Lý Danh Sách Video',
@@ -4201,7 +4236,16 @@ function switchView(viewId) {
       elements.mainPageHeading.textContent = headingMap[viewId] || 'Báo Cáo Phân Tích BgMedia';
     }
 
-    // Trigger View-specific Render
+    // Delegate v3 Report Pages to window.__REPORT_V3__ when initialized
+    if (typeof window !== 'undefined' && window.__REPORT_V3__ && typeof window.__REPORT_V3__.onViewSwitch === 'function') {
+      const handledByV3 = window.__REPORT_V3__.onViewSwitch(viewId);
+      if (handledByV3) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    }
+
+    // Trigger View-specific Render (Fallback / Management views)
     if (viewId === 'view-report-channel') {
       renderChannelCompareView();
     } else if (viewId === 'view-report-staff-chart') {
@@ -6138,6 +6182,9 @@ function switchView(viewId) {
         elements.currencyToggle.querySelectorAll('.curr-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         state.currency = btn.getAttribute('data-currency');
+        if (window.__REPORT_V3__ && typeof window.__REPORT_V3__.refreshActiveView === 'function') {
+          window.__REPORT_V3__.refreshActiveView();
+        }
         updateKpiCards();
         renderMainChart();
         renderVideosTable();
@@ -7021,10 +7068,12 @@ function switchView(viewId) {
     // 7. Browser Hashchange Navigation (Support Back/Forward and Guide Anchors)
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash.startsWith('guide-sec-')) {
-        switchView('view-report-guide');
-        const sec = document.getElementById(hash);
-        if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+      if (hash.startsWith('guide-')) {
+        switchView(hash);
+        return;
+      }
+      if (hash === 'view-report-staff-chart' || hash === 'view-report-staff-data') {
+        switchView(hash);
         return;
       }
       const el = document.getElementById(hash);
@@ -7103,9 +7152,29 @@ function switchView(viewId) {
     setupEnterpriseEvents();
     setupOAuthIntegration();
 
+    if (typeof window !== 'undefined') {
+      window.__BGMEDIA_CORE__ = {
+        DATA_STORE,
+        DEMO_STORE,
+        getChannelsRegistry: () => CHANNELS_REGISTRY,
+        state,
+        switchView,
+        switchViewMode,
+        showToast,
+        formatNumber,
+        formatCompactNumber,
+        formatCurrency,
+        escapeHtml,
+        getEffectiveChannelReport
+      };
+      if (window.__REPORT_V3__ && typeof window.__REPORT_V3__.init === 'function') {
+        window.__REPORT_V3__.init();
+      }
+    }
+
     // Check for initial URL hash or default to overview view
     const initialHash = window.location.hash.replace('#', '');
-    if (initialHash && document.getElementById(initialHash)) {
+    if (initialHash && (document.getElementById(initialHash) || initialHash.startsWith('guide-') || initialHash === 'view-report-staff-chart' || initialHash === 'view-report-staff-data')) {
       switchView(initialHash);
     } else {
       switchView('view-report-overview');

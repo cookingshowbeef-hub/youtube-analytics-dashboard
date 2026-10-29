@@ -13,7 +13,7 @@
     "seed": "antigravity-analytics-demo-v1-20261029"
   },
   "passed": true,
-  "check_count": 21,
+  "check_count": 27,
   "checks": [
     {
       "name": "manifest_hashes_match_all_listed_files",
@@ -98,6 +98,30 @@
     {
       "name": "csv_15_channels_matches_json_and_labels_demo",
       "passed": true
+    },
+    {
+      "name": "sample_video_share_28d_between_40_and_65_percent_for_all_15_channels",
+      "passed": true
+    },
+    {
+      "name": "avd_and_rpm_within_realistic_music_channel_bounds",
+      "passed": true
+    },
+    {
+      "name": "cross_page_reconciliation_teams_employees_channels_equal_system_kpis",
+      "passed": true
+    },
+    {
+      "name": "snapshot_daily_schema_timezone_rounding_and_anomalies_valid",
+      "passed": true
+    },
+    {
+      "name": "views_first_7d_honors_snapshot_start_and_7d_maturity",
+      "passed": true
+    },
+    {
+      "name": "partial_and_delayed_monetary_scenarios_reconcile_views_with_monetary",
+      "passed": true
     }
   ],
   "counts": {
@@ -111,10 +135,5 @@
     "retention_videos": 145,
     "summary_entities_per_period": 34
   },
-  "verified_at": "2026-10-29T06:28:07+00:00",
-  "byte_identical_regeneration": {
-    "passed": true,
-    "files_compared": 13,
-    "generated_at": "2026-10-29T04:27:28Z"
-  }
+  "verified_at": "2026-10-29T15:38:03+00:00"
 }

@@ -82,25 +82,21 @@
               <i class="ri-file-list-3-line"></i>
               <span>Báo cáo theo team</span>
             </a>
-            <a href="#view-report-project" class="nav-sub-item" data-view="view-report-project" id="nav-sub-project">
-              <i class="ri-table-line"></i>
-              <span>Báo cáo theo dự án</span>
-            </a>
             <a href="#view-report-channel" class="nav-sub-item" data-view="view-report-channel" id="nav-sub-channel">
               <i class="ri-tv-line"></i>
               <span>Báo cáo theo kênh</span>
             </a>
-            <a href="#view-report-network" class="nav-sub-item" data-view="view-report-network" id="nav-sub-network">
+            <a href="#view-report-staff" class="nav-sub-item" data-view="view-report-staff" id="nav-sub-staff">
+              <i class="ri-user-star-line"></i>
+              <span>Báo cáo theo nhân viên</span>
+            </a>
+            <a href="#view-report-project" class="nav-sub-item" data-view="view-report-project" id="nav-sub-project">
+              <i class="ri-table-line"></i>
+              <span>Báo cáo theo dự án</span>
+            </a>
+            <a href="#view-report-network" class="nav-sub-item" data-view="view-report-network" id="nav-sub-network" style="display: none;">
               <i class="ri-global-line"></i>
               <span>Báo cáo theo network</span>
-            </a>
-            <a href="#view-report-staff-chart" class="nav-sub-item highlight-red" data-view="view-report-staff-chart" id="nav-sub-staff-chart">
-              <i class="ri-line-chart-line"></i>
-              <span>Báo cáo theo NV (biểu đồ)</span>
-            </a>
-            <a href="#view-report-staff-data" class="nav-sub-item" data-view="view-report-staff-data" id="nav-sub-staff-data">
-              <i class="ri-grid-line"></i>
-              <span>Báo cáo theo NV (số liệu)</span>
             </a>
             <a href="#view-report-guide" class="nav-sub-item" data-view="view-report-guide" id="nav-sub-guide">
               <i class="ri-questionnaire-line"></i>
@@ -270,9 +266,13 @@
         </div>
       </div>
 
-      <!-- VIEW 1: BÁO CÁO TỔNG QUAN HIỆU SUẤT (CLEAN MINIMALIST DESIGN) -->
-      <div class="dashboard-view active" id="view-report-overview">
+      <!-- SHARED REPORT SCOPE BAR & UNIFIED TIME FILTER (One Question Per Page v3) -->
+      <div id="v3-shared-report-header" class="v3-shared-report-header"></div>
 
+      <!-- VIEW 1: BÁO CÁO TỔNG QUAN HIỆU SUẤT -->
+      <div class="dashboard-view active" id="view-report-overview">
+        <div id="v3-overview-root" class="v3-page-root"></div>
+        <div class="v3-legacy-dom" style="display:none !important;" aria-hidden="true">
         <!-- Controls Toolbar: Date Filter, Presets, Compare, Export -->
         <section class="controls-toolbar">
           <div class="toolbar-left">
@@ -935,11 +935,13 @@
             </section>
           </div>
         </section>
-
+        </div> <!-- /v3-legacy-dom -->
       </div> <!-- /view-report-overview -->
 
-      <!-- VIEW 2: BÁO CÁO THEO KÊNH (SO SÁNH HIỆU SUẤT ĐA KÊNH) -->
+      <!-- VIEW 2: BÁO CÁO THEO KÊNH (1 KÊNH CHI TIẾT & SO SÁNH 2-5 KÊNH) -->
       <div class="dashboard-view" id="view-report-channel">
+        <div id="v3-channel-root" class="v3-page-root"></div>
+        <div class="v3-legacy-dom" style="display:none !important;" aria-hidden="true">
         <section class="channel-compare-section">
           <!-- 1. Header Toolbar -->
           <div class="section-title-wrap" style="margin-bottom: 20px;">
@@ -1081,9 +1083,15 @@
             </div>
           </div>
         </section>
+        </div> <!-- /v3-legacy-dom -->
       </div>
 
-      <!-- VIEW 3: BÁO CÁO THEO NHÂN VIÊN (BIỂU ĐỒ - CHUẨN BG MEDIA SCREENSHOT) -->
+      <!-- VIEW 3: BÁO CÁO THEO NHÂN VIÊN (GỘP 3 TAB: XẾP HẠNG, SO SÁNH, ĐỐI SOÁT) -->
+      <div class="dashboard-view" id="view-report-staff">
+        <div id="v3-staff-root" class="v3-page-root"></div>
+      </div>
+
+      <!-- LEGACY VIEW 3A: BÁO CÁO THEO NHÂN VIÊN (BIỂU ĐỒ) -->
       <div class="dashboard-view" id="view-report-staff-chart">
         <section class="staff-report-section">
           <!-- Page Header -->
@@ -1428,9 +1436,10 @@
 
       
 
-      <!-- VIEW 5: BÁO CÁO THEO TEAM / NHÓM (Chuẩn BgMedia bgmusic.group/report/team) -->
+      <!-- VIEW 5: BÁO CÁO THEO TEAM / NHÓM -->
       <div class="dashboard-view" id="view-report-team">
-        <section class="team-report-section">
+        <div id="v3-team-root" class="v3-page-root"></div>
+        <section class="team-report-section" id="v3-legacy-team-section">
           <!-- Page Header matching screenshot -->
           <div class="section-title-wrap" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
             <div>
@@ -1691,7 +1700,8 @@
 
       <!-- VIEW 6: BÁO CÁO THEO DỰ ÁN -->
       <div class="dashboard-view" id="view-report-project">
-        <section class="project-report-section">
+        <div id="v3-project-root" class="v3-page-root"></div>
+        <section class="project-report-section" id="v3-legacy-project-section">
           <!-- Section Title -->
           <div class="section-title-wrap" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
             <div>
@@ -1870,7 +1880,8 @@
 
       <!-- VIEW 7: BÁO CÁO THEO NETWORK -->
       <div class="dashboard-view" id="view-report-network">
-        <section class="network-report-section">
+        <div id="v3-network-root" class="v3-page-root"></div>
+        <section class="network-report-section" id="v3-legacy-network-section">
           <div class="section-title-wrap" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
             <div>
               <h2 style="font-size: 20px; font-weight: 800; color: #F53F3F; display: flex; align-items: center; gap: 8px;">
@@ -2024,7 +2035,17 @@
 
       <!-- VIEW 8: HƯỚNG DẪN -->
       <div class="dashboard-view" id="view-report-guide">
-        <section class="guide-section">
+        <div id="v3-guide-root" class="v3-page-root"></div>
+        <div id="v3-guide-anchors" style="position:relative;">
+          <div id="guide-engagement"></div>
+          <div id="guide-rpm"></div>
+          <div id="guide-timezone"></div>
+          <div id="guide-sub-rounding"></div>
+          <div id="guide-views-7d"></div>
+          <div id="guide-data-states"></div>
+          <div id="guide-oauth"></div>
+        </div>
+        <section class="guide-section" id="v3-legacy-guide-section">
           <div class="section-title-wrap" style="margin-bottom: 24px;">
             <h2 style="font-size: 20px; font-weight: 800; color: #F53F3F; display: flex; align-items: center; gap: 8px;">
               <i class="ri-questionnaire-line"></i>
@@ -2479,8 +2500,8 @@
     </main>
   </div>
 
-  <!-- Modal: YouTube API v3 Settings & Real Data Fetcher -->
-  <div class="modal-backdrop" id="api-modal">
+  <!-- Modal: YouTube API v3 Settings & Real Data Fetcher (Disabled in Public UI for Security) -->
+  <div class="modal-backdrop" id="api-modal" style="display: none !important;" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-header">
         <div class="modal-title-wrap">
@@ -2831,6 +2852,7 @@
   <script src="data/demo-analytics/demo_bundle.js"></script>
   <!-- Application Logic -->
   <script src="app.js?v=10.0_oauth"></script>
+  <script src="report_v3.js?v=3.0"></script>
   <!-- Off-Canvas Video Detail & Audience Retention Drawer -->
   <div class="video-drawer-backdrop" id="video-detail-drawer" role="dialog" aria-modal="true" aria-label="Chi tiết video và tỷ lệ giữ chân">
     <div class="video-drawer-panel">

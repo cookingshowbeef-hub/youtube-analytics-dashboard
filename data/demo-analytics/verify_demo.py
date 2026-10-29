@@ -122,6 +122,67 @@ def main():
     expected = {r["entity_id"]: r for r in summaries if r["period_key"] == "last_28_days" and r["entity_type"] == "channel"}
     check("csv_15_channels_matches_json_and_labels_demo", len(csv_rows) == 15 and all(r["source_kind"] == "synthetic_demo" and r["is_demo"] == "True" and cents(r["estimatedRevenue"]) == cents(expected[r["channel_id"]]["metrics"]["estimatedRevenue"]) for r in csv_rows))
 
+    # Phase 0 additional normalization & reconciliation checks
+    sample_28d_by_ch = defaultdict(int)
+    for v in video_summary:
+        if v.get("metrics_28d") and v["metrics_28d"].get("views"):
+            sample_28d_by_ch[v["channel_id"]] += v["metrics_28d"]["views"]
+    check("sample_video_share_28d_between_40_and_65_percent_for_all_15_channels",
+          len(expected) == 15 and all(0.40 <= (sample_28d_by_ch[cid] / row["metrics"]["views"]) <= 0.65 for cid, row in expected.items()))
+
+    check("avd_and_rpm_within_realistic_music_channel_bounds",
+          all(180 <= row["metrics"]["averageViewDuration"] <= 900 and 0.80 <= row["metrics"]["proxyRpm"] <= 3.50 for row in expected.values()))
+
+    reconcile_periods_ok = True
+    for pkey in {r["period_key"] for r in summaries}:
+        p_rows = [r for r in summaries if r["period_key"] == pkey]
+        sys_row = next(r for r in p_rows if r["entity_type"] == "system")
+        team_rows = [r for r in p_rows if r["entity_type"] == "team"]
+        emp_rows = [r for r in p_rows if r["entity_type"] == "employee"]
+        ch_rows = [r for r in p_rows if r["entity_type"] == "channel"]
+        for f in additive + ["netSubscribers"]:
+            reconcile_periods_ok &= (sum(r["metrics"][f] for r in team_rows) == sum(r["metrics"][f] for r in emp_rows) == sum(r["metrics"][f] for r in ch_rows) == sys_row["metrics"][f])
+        for f in money:
+            reconcile_periods_ok &= (sum(cents(r["metrics"][f]) for r in team_rows) == sum(cents(r["metrics"][f]) for r in emp_rows) == sum(cents(r["metrics"][f]) for r in ch_rows) == cents(sys_row["metrics"][f]))
+    check("cross_page_reconciliation_teams_employees_channels_equal_system_kpis", reconcile_periods_ok)
+
+    snaps = load("channel_snapshot_daily.json")["rows"]
+    latest_snaps = [s for s in snaps if s["snapshot_date_pt"] == "2026-10-28"]
+    total_demo_subs = sum(s["subscriber_count_public"] for s in latest_snaps)
+    check("snapshot_daily_schema_timezone_rounding_and_anomalies_valid",
+          len(snaps) == 1350 and len(latest_snaps) == 15 and 1000000 <= total_demo_subs <= 5000000 and
+          all(dt.date.fromisoformat(s["captured_at_utc"][:10]) == dt.date.fromisoformat(s["snapshot_date_pt"]) + dt.timedelta(days=1) and
+              s["sub_delta_below_step"] == (abs(s["public_sub_delta"]) < s["sub_rounding_step"]) for s in snaps) and
+          sum(1 for s in snaps if s["is_negative_anomaly"] and s["raw_daily_views_delta"] < 0 and s["anomaly_reason"] is not None) >= 1)
+
+    video_daily_index = defaultdict(int)
+    for r in videos:
+        video_daily_index[r["video_id"], r["day"]] += r["views"]
+    first_7d_ok = True
+    for v in video_summary:
+        pub_d = dt.date.fromisoformat(v["published_day_pacific"])
+        if v["status"] != "demo_ready":
+            first_7d_ok &= (v["views_first_7d"] is None)
+        elif pub_d < dt.date(2026, 7, 31):
+            first_7d_ok &= (v["has_snapshot_since_publish"] is False and v["views_first_7d"] is None and v["views_first_7d_status"] == "before_snapshot_start")
+        elif pub_d + dt.timedelta(days=6) > dt.date(2026, 10, 28):
+            first_7d_ok &= (v["has_snapshot_since_publish"] is True and v["views_first_7d"] is None and v["views_first_7d_status"] == "pending_7d")
+        else:
+            exp_7d = sum(video_daily_index[v["video_id"], (pub_d + dt.timedelta(days=k)).isoformat()] for k in range(7))
+            first_7d_ok &= (v["has_snapshot_since_publish"] is True and v["views_first_7d"] == exp_7d and v["views_first_7d_status"] == "ready")
+    check("views_first_7d_honors_snapshot_start_and_7d_maturity", first_7d_ok)
+
+    partial_sc = next(s for s in scenarios if s["scenario_id"] == "partial_monetary")
+    mon_cids = [c["channel_id"] for c in partial_sc["channel_states"] if c["monetary_status"] == "demo_ready"]
+    partial_rows = [r for r in daily if r["channel_id"] in mon_cids and "2026-10-01" <= r["day"] <= "2026-10-28"]
+    partial_agg = aggregate(partial_rows)
+    delayed_sc = next(s for s in scenarios if s["scenario_id"] == "delayed_monetary")
+    delayed_rows = [r for r in daily if "2026-10-01" <= r["day"] <= "2026-10-26"]
+    delayed_agg = aggregate(delayed_rows)
+    check("partial_and_delayed_monetary_scenarios_reconcile_views_with_monetary",
+          len(mon_cids) == 1 and partial_agg["proxyRpm"] == expected[mon_cids[0]]["metrics"]["proxyRpm"] and
+          delayed_agg["proxyRpm"] == round(delayed_agg["estimatedRevenue"] / delayed_agg["views"] * 1000, 4))
+
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())
     (HERE / "independent_validation.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -64,50 +64,50 @@
     {
       "path": "channel_daily.json",
       "row_count": 9990,
-      "bytes": 7051584,
-      "sha256": "5821167587598ed15ba8bd4bb09c8ce1a07e20fccaf94b5f47c57875150f5117"
+      "bytes": 7037347,
+      "sha256": "30b752c174624a05053a9a2f84a5603c7b8d9198279bb4bb1cac7581c0b61eed"
     },
     {
       "path": "video_daily.json",
       "row_count": 4394,
-      "bytes": 3115333,
-      "sha256": "bd4f8b4166d11484e276e2ec7f5ab4fc2a5358226c0933377896bb5b78402984"
+      "bytes": 3113108,
+      "sha256": "06423df3cc1ec875b22d03493ebc520be25b9e50608da59d3ca64c8b72cfee8d"
     },
     {
       "path": "other_content_daily.json",
       "row_count": 1350,
-      "bytes": 956228,
-      "sha256": "189f68c10e3e26f218177268acfd9193c3cdb6dc6118cb4b7e2a14a20ba0973d"
+      "bytes": 953399,
+      "sha256": "e87f4a3294240de08709628d625f3a647c4c3bf4e6ad894ba448d3040ebf3dd6"
     },
     {
       "path": "video_summaries.json",
       "row_count": 150,
-      "bytes": 123221,
-      "sha256": "70f3a0c14461716b5b5b2fc40630debd705b9e1c4c77bd800f24f7f6d6e29af3"
+      "bytes": 332330,
+      "sha256": "6068a531e525330ea4899b79578437251b61be43852beb27a3c6ff735febb1ba"
     },
     {
       "path": "retention.json",
       "row_count": 145,
-      "bytes": 733512,
-      "sha256": "8e593465b7c1b63f24dd6a1fb58ff760dabd0bee221615e33555153040b4da26"
+      "bytes": 733422,
+      "sha256": "6d133e763f5e7009cb27b8a13afed893ee39782868b9e9c44049e86d450c446e"
     },
     {
       "path": "breakdown_daily.json",
       "row_count": 21600,
-      "bytes": 3449329,
-      "sha256": "9734b045a3e841df64f20eb1b77dff530e20afdad47c6fb4c740faffe9d904f2"
+      "bytes": 3439535,
+      "sha256": "005d62a64644c9c84421c63ea8c18ec92ddf57673721bce590ae23ae6e006d92"
     },
     {
       "path": "summaries.json",
       "row_count": 272,
-      "bytes": 458230,
-      "sha256": "f88b9c7cb0097e96d1de75aaddd2d294d3801cd616cee4937757c2dde5e6c9df"
+      "bytes": 457618,
+      "sha256": "ca17c9d203dc8f5687309826e09363434e601ebb7e500408482d2a06d71551a3"
     },
     {
       "path": "period_rollups.json",
       "row_count": 1020,
-      "bytes": 1049690,
-      "sha256": "8b427f7331f62d74669389921c58ab1239239e22da14e7043c31918b8a0daba0"
+      "bytes": 1048159,
+      "sha256": "ec3a92437a1f9c11e181feb5ca959bf831b3d7aeb9eba947a7d22ca9489eda54"
     },
     {
       "path": "daily_fx.json",
@@ -124,8 +124,14 @@
     {
       "path": "channel_summary_28d.csv",
       "row_count": 15,
-      "bytes": 5096,
-      "sha256": "4fcbbd7c91d1c26e85afa777bef0fcbf451c8832b2d4a26f145b80067000c716"
+      "bytes": 5051,
+      "sha256": "d978abc4e5aaddc9b75f5c20eed03c3cda3e6ef77fb16cec4358880d321df8f3"
+    },
+    {
+      "path": "channel_snapshot_daily.json",
+      "row_count": 1350,
+      "bytes": 626948,
+      "sha256": "639271b300b1039f76b76919b01786406bec5bdf8f05fc161a4d5096011f2715"
     }
   ]
 }

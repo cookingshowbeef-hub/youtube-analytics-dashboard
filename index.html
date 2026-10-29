@@ -19,7 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css?v=11.0_channel_data">
+  <link rel="stylesheet" href="styles.css?v=10.0_oauth">
 </head>
 <body>
   <!-- Layout Container -->
@@ -2267,31 +2267,23 @@
           <div class="mgmt-kpi-summary-grid">
             <div class="comp-kpi-card">
               <span class="comp-kpi-label">Tổng Số Kênh Trực Thuộc</span>
-              <div class="comp-kpi-value text-emerald" id="mgmt-stat-total-channels">—</div>
-              <span class="comp-kpi-sub" id="mgmt-stat-active-channels">Đang tải danh mục kênh</span>
+              <div class="comp-kpi-value text-emerald" id="mgmt-stat-total-channels">8 Kênh</div>
+              <span class="comp-kpi-sub" id="mgmt-stat-active-channels">8/8 Kênh đang hoạt động</span>
             </div>
             <div class="comp-kpi-card">
               <span class="comp-kpi-label">Tổng Khán Giả (Subscribers)</span>
-              <div class="comp-kpi-value text-cyan" id="mgmt-stat-total-subs">—</div>
-              <span class="comp-kpi-sub" id="mgmt-stat-subs-note">Subscribers công khai · Đã làm tròn</span>
+              <div class="comp-kpi-value text-cyan" id="mgmt-stat-total-subs">2.45M người</div>
+              <span class="comp-kpi-sub">+18.4% tăng trưởng ròng</span>
             </div>
             <div class="comp-kpi-card">
-              <span class="comp-kpi-label" id="mgmt-stat-views-label">Tổng lượt xem cộng dồn</span>
-              <div class="comp-kpi-value text-sky" id="mgmt-stat-total-views">—</div>
-              <span class="comp-kpi-sub" id="mgmt-stat-views-note">Bộ đếm công khai tại lần lấy dữ liệu</span>
+              <span class="comp-kpi-label">Tổng Lượt Xem (30 Ngày)</span>
+              <div class="comp-kpi-value text-sky" id="mgmt-stat-total-views">141.2M lượt</div>
+              <span class="comp-kpi-sub">Bình quân 17.65M / kênh</span>
             </div>
             <div class="comp-kpi-card">
-              <span class="comp-kpi-label">Doanh thu trong kỳ</span>
-              <div class="comp-kpi-value text-amber" id="mgmt-stat-total-rev">—</div>
-              <span class="comp-kpi-sub" id="mgmt-stat-revenue-note">Chưa có dữ liệu doanh thu cho kỳ này</span>
-            </div>
-          </div>
-
-          <div class="mgmt-data-notice" role="status">
-            <strong id="mgmt-data-source">Dữ liệu công khai YouTube</strong>
-            <div id="mgmt-data-hint">
-              <span>Bộ đếm công khai không có doanh thu. Chọn minh họa để xem hiệu suất và doanh thu mẫu.</span>
-              <button type="button" class="action-btn-outline" onclick="window.appSwitchViewMode('demo')">Xem dữ liệu minh họa</button>
+              <span class="comp-kpi-label">Doanh Thu 30 Ngày Hợp Nhất</span>
+              <div class="comp-kpi-value text-amber" id="mgmt-stat-total-rev">$35,463.10</div>
+              <span class="comp-kpi-sub">RPM trung bình mạng lưới $2.51</span>
             </div>
           </div>
 
@@ -2348,8 +2340,8 @@
                     <th>Team Quản Lý</th>
                     <th>Thể Loại</th>
                     <th class="text-right">Người Đăng Ký</th>
-                    <th class="text-right" id="mgmt-table-views-label">Lượt xem cộng dồn</th>
-                    <th class="text-right">Doanh thu trong kỳ</th>
+                    <th class="text-right">Lượt Xem (30N)</th>
+                    <th class="text-right">Doanh Thu (30N)</th>
                     <th class="text-center">Trạng Thái</th>
                     <th class="text-center">Thao Tác</th>
                   </tr>
@@ -2857,7 +2849,7 @@
   <script src="data/mock-hierarchy/dataset.js"></script>
   <script src="data/demo-analytics/demo_bundle.js"></script>
   <!-- Application Logic -->
-  <script src="app.js?v=11.0_channel_data"></script>
+  <script src="app.js?v=10.0_oauth"></script>
   <!-- Off-Canvas Video Detail & Audience Retention Drawer -->
   <div class="video-drawer-backdrop" id="video-detail-drawer" role="dialog" aria-modal="true" aria-label="Chi tiết video và tỷ lệ giữ chân">
     <div class="video-drawer-panel">

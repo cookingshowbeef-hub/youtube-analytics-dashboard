@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
   <title>Báo Cáo Kênh YouTube - Lunavia Analytics Hub</title>
   <meta name="description" content="Hệ thống báo cáo và thống kê chuyên sâu kênh YouTube thời gian thực, tích hợp YouTube Data API v3. Giao diện thiết kế theo chuẩn UI/UX taste-skill hiện đại.">
 
@@ -195,6 +196,16 @@
           </div>
 
           <!-- Live API Indicator / Mode Badge -->
+          <!-- Mode Switcher: Dữ Liệu Thật vs Xem Minh Họa -->
+          <div class="mode-switcher-container" id="mode-switcher-container">
+            <button type="button" class="mode-btn active" id="btn-mode-live" data-mode="live" title="Dữ liệu thật (YouTube Data API v3 snapshot & OAuth)">
+              <i class="ri-broadcast-line"></i> <span>Dữ Liệu Thật</span>
+            </button>
+            <button type="button" class="mode-btn" id="btn-mode-demo" data-mode="demo" title="Chế độ Xem Minh Họa (Dataset Analytics hư cấu cho 15 kênh)">
+              <i class="ri-sparkling-line"></i> <span>Xem Minh Họa</span>
+            </button>
+          </div>
+
           <div class="data-source-badge" id="data-source-badge" title="Chế độ dữ liệu">
             <span class="badge-dot"></span>
             <span class="badge-dot prototype-dot" style="background:#F59E0B;box-shadow:0 0 8px #F59E0B;"></span>
@@ -229,6 +240,33 @@
           </div>
         </div>
       </header>
+
+      <!-- Demo Mode Information & Scenario Toolbar Banner -->
+      <div class="demo-mode-banner" id="demo-mode-banner" style="display: none;">
+        <div class="demo-banner-left">
+          <span class="demo-mode-badge"><i class="ri-sparkling-fill"></i> DEMO ANALYTICS</span>
+          <span class="demo-mode-text">
+            <strong>Chế độ Xem Minh Họa:</strong> Sử dụng bộ dữ liệu Analytics hư cấu (666 ngày × 15 kênh · Pacific Time) để đối soát biểu đồ & giao diện.
+          </span>
+        </div>
+        <div class="demo-banner-right">
+          <div class="demo-scenario-select-wrap">
+            <label for="demo-scenario-select"><i class="ri-flask-line"></i> Kịch bản:</label>
+            <select id="demo-scenario-select" class="demo-scenario-select">
+              <option value="all_demo_ready">all_demo_ready (Đầy đủ 15 kênh · Có tiền)</option>
+              <option value="partial_monetary">partial_monetary (1 phần kênh có tiền)</option>
+              <option value="analytics_without_monetary">analytics_without_monetary (Có views, thiếu tiền)</option>
+              <option value="delayed_monetary">delayed_monetary (Tiền xử lý trễ 48h)</option>
+              <option value="zero_revenue_positive_views">zero_revenue_positive_views (Views dương, tiền $0)</option>
+              <option value="empty_report">empty_report (Báo cáo không có dữ liệu)</option>
+              <option value="public_only">public_only (Chỉ có public snapshot)</option>
+            </select>
+          </div>
+          <button type="button" class="btn-exit-demo" id="btn-exit-demo-mode" title="Trở về chế độ Dữ Liệu Thật">
+            <i class="ri-close-line"></i> Thoát Demo
+          </button>
+        </div>
+      </div>
 
       <!-- VIEW 1: BÁO CÁO TỔNG QUAN HIỆU SUẤT (CLEAN MINIMALIST DESIGN) -->
       <div class="dashboard-view active" id="view-report-overview">
@@ -2829,6 +2867,7 @@
   <!-- Application Logic -->
   <!-- Mock Hierarchy Dataset (Single Source of Truth) -->
   <script src="data/mock-hierarchy/dataset.js"></script>
+  <script src="data/demo-analytics/demo_bundle.js"></script>
   <!-- Application Logic -->
   <script src="app.js?v=10.0_oauth"></script>
   <!-- Off-Canvas Video Detail & Audience Retention Drawer -->

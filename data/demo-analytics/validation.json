@@ -1,0 +1,116 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "source_kind": "synthetic_demo",
+    "is_demo": true,
+    "oauth_authorized": false,
+    "source_api": null,
+    "label": "Dữ liệu Analytics minh họa",
+    "disclaimer": "Toàn bộ chỉ số Analytics, doanh thu, phân rã và tỷ giá trong bộ này là giả lập; không phải hiệu suất, doanh thu hay quyền truy cập thực của các kênh YouTube được tham chiếu.",
+    "currency": "USD",
+    "report_timezone": "America/Los_Angeles",
+    "generated_at": "2026-10-29T04:27:28Z",
+    "seed": "antigravity-analytics-demo-v1-20261029"
+  },
+  "passed": true,
+  "check_count": 21,
+  "checks": [
+    {
+      "name": "hierarchy_3_teams_15_employees_15_unique_channels_150_sample_videos",
+      "passed": true
+    },
+    {
+      "name": "channel_daily_9990_unique_continuous_days",
+      "passed": true
+    },
+    {
+      "name": "all_additive_values_are_nonnegative_integers",
+      "passed": true
+    },
+    {
+      "name": "video_foreign_keys_and_no_activity_before_publication",
+      "passed": true
+    },
+    {
+      "name": "video_views_fit_duration_watch_time",
+      "passed": true
+    },
+    {
+      "name": "sample_plus_other_content_exactly_reconciles_90_day_channel_metrics",
+      "passed": true
+    },
+    {
+      "name": "revenue_components_add_exactly_in_cents",
+      "passed": true
+    },
+    {
+      "name": "hours_and_net_subscribers_derive_from_base_units",
+      "passed": true
+    },
+    {
+      "name": "proxy_is_ratio_of_matching_totals",
+      "passed": true
+    },
+    {
+      "name": "rollups_and_named_summaries_reconcile_with_daily_raw_values",
+      "passed": true
+    },
+    {
+      "name": "all_breakdown_partitions_match_daily_totals",
+      "passed": true
+    },
+    {
+      "name": "retention_axes_and_relative_scores_valid",
+      "passed": true
+    },
+    {
+      "name": "all_150_video_summary_ids_unique",
+      "passed": true
+    },
+    {
+      "name": "zero_revenue_positive_views_retains_zero_proxy",
+      "passed": true
+    },
+    {
+      "name": "zero_views_undefined_rates_remain_null",
+      "passed": true
+    },
+    {
+      "name": "october_and_q4_explicitly_partial",
+      "passed": true
+    },
+    {
+      "name": "foreign_keys_in_entity_summaries_valid",
+      "passed": true
+    },
+    {
+      "name": "fx_is_positive_and_explicitly_fictional",
+      "passed": true
+    },
+    {
+      "name": "public_snapshot_and_js_bundle_unchanged",
+      "passed": true
+    },
+    {
+      "name": "public_analytics_null_and_original_assignments_preserved",
+      "passed": true
+    },
+    {
+      "name": "every_generated_json_carries_demo_provenance",
+      "passed": true
+    }
+  ],
+  "counts": {
+    "teams": 3,
+    "employees": 15,
+    "channels": 15,
+    "sample_videos": 150,
+    "channel_daily": 9990,
+    "video_daily": 4394,
+    "breakdown_daily": 21600,
+    "retention_videos": 145,
+    "summary_entities_per_period": 34
+  },
+  "public_snapshot_sha256": "1d190ed98af7346cad3440acdd4fdd37d7db47fa4825e3d7317251a7ca7d1660",
+  "public_bundle_sha256": "7ca367c4f21a04febc7a6a1f40d6b99ca4dd86e0dd4b4b389b6f24fb2f42c921"
+}

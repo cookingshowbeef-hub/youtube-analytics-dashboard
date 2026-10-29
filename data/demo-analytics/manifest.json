@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "source_kind": "synthetic_demo",
+    "is_demo": true,
+    "oauth_authorized": false,
+    "source_api": null,
+    "label": "Dữ liệu Analytics minh họa",
+    "disclaimer": "Toàn bộ chỉ số Analytics, doanh thu, phân rã và tỷ giá trong bộ này là giả lập; không phải hiệu suất, doanh thu hay quyền truy cập thực của các kênh YouTube được tham chiếu.",
+    "currency": "USD",
+    "report_timezone": "America/Los_Angeles",
+    "generated_at": "2026-10-29T04:27:28Z",
+    "seed": "antigravity-analytics-demo-v1-20261029"
+  },
+  "integration_status": "data_only_not_wired_to_template",
+  "available_period": {
+    "start": "2025-01-01",
+    "end": "2026-10-28",
+    "days": 666
+  },
+  "detail_period": {
+    "start": "2026-07-31",
+    "end": "2026-10-28",
+    "days": 90
+  },
+  "default_period": {
+    "start": "2026-10-01",
+    "end": "2026-10-28",
+    "key": "last_28_days"
+  },
+  "counts": {
+    "teams": 3,
+    "employees": 15,
+    "channels": 15,
+    "sample_videos": 150,
+    "channel_daily": 9990,
+    "video_daily": 4394,
+    "breakdown_daily": 21600,
+    "retention_videos": 145,
+    "summary_entities_per_period": 34
+  },
+  "source_public_snapshot": {
+    "path": "../mock-hierarchy/dataset.json",
+    "sha256": "1d190ed98af7346cad3440acdd4fdd37d7db47fa4825e3d7317251a7ca7d1660",
+    "unchanged": true
+  },
+  "content_types": [
+    "VIDEO"
+  ],
+  "missing_content_types": [
+    "SHORTS",
+    "LIVE"
+  ],
+  "attribution_mode": "demo_current_portfolio",
+  "attribution_notice": "Team/employee totals are fictional current-portfolio views, not historical employee achievements; original assignments remain effective 2026-10-29.",
+  "data_model_notes": [
+    "Synthetic metrics are not inferred real earnings of public channels.",
+    "Revenue model includes only fictional ad + Premium components.",
+    "AverageViewPercentage uses a fictional view-weighted model; not a substitute for Google's aggregate reporting.",
+    "Country/device/traffic partitions are independent; never sum them together.",
+    "No projects, networks, costs, OAuth grants, or real YPP status were created."
+  ],
+  "files": [
+    {
+      "path": "channel_daily.json",
+      "row_count": 9990,
+      "bytes": 7051584,
+      "sha256": "5821167587598ed15ba8bd4bb09c8ce1a07e20fccaf94b5f47c57875150f5117"
+    },
+    {
+      "path": "video_daily.json",
+      "row_count": 4394,
+      "bytes": 3115333,
+      "sha256": "bd4f8b4166d11484e276e2ec7f5ab4fc2a5358226c0933377896bb5b78402984"
+    },
+    {
+      "path": "other_content_daily.json",
+      "row_count": 1350,
+      "bytes": 956228,
+      "sha256": "189f68c10e3e26f218177268acfd9193c3cdb6dc6118cb4b7e2a14a20ba0973d"
+    },
+    {
+      "path": "video_summaries.json",
+      "row_count": 150,
+      "bytes": 123221,
+      "sha256": "70f3a0c14461716b5b5b2fc40630debd705b9e1c4c77bd800f24f7f6d6e29af3"
+    },
+    {
+      "path": "retention.json",
+      "row_count": 145,
+      "bytes": 733512,
+      "sha256": "8e593465b7c1b63f24dd6a1fb58ff760dabd0bee221615e33555153040b4da26"
+    },
+    {
+      "path": "breakdown_daily.json",
+      "row_count": 21600,
+      "bytes": 3449329,
+      "sha256": "9734b045a3e841df64f20eb1b77dff530e20afdad47c6fb4c740faffe9d904f2"
+    },
+    {
+      "path": "summaries.json",
+      "row_count": 272,
+      "bytes": 458230,
+      "sha256": "f88b9c7cb0097e96d1de75aaddd2d294d3801cd616cee4937757c2dde5e6c9df"
+    },
+    {
+      "path": "period_rollups.json",
+      "row_count": 1020,
+      "bytes": 1049690,
+      "sha256": "8b427f7331f62d74669389921c58ab1239239e22da14e7043c31918b8a0daba0"
+    },
+    {
+      "path": "daily_fx.json",
+      "row_count": 666,
+      "bytes": 55374,
+      "sha256": "bfd7f07572894412d06dec7c511045320195be0d03516ef17cb614e4ff6c1bd0"
+    },
+    {
+      "path": "scenarios.json",
+      "row_count": 9,
+      "bytes": 32516,
+      "sha256": "aa5a5c9288a26d81c17b10bf2e28010561ee809f194972e4439e0399ae61a063"
+    },
+    {
+      "path": "channel_summary_28d.csv",
+      "row_count": 15,
+      "bytes": 5096,
+      "sha256": "4fcbbd7c91d1c26e85afa777bef0fcbf451c8832b2d4a26f145b80067000c716"
+    }
+  ]
+}

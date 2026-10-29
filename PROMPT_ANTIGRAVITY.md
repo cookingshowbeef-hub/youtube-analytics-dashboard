@@ -4,14 +4,16 @@ Triển khai giao diện và phần tích hợp dữ liệu cần thiết trong 
 
 ## Yêu cầu cập nhật ưu tiên — 29/10/2026
 
+**Cập nhật mới nhất — đã có bộ Analytics minh họa:** người dùng yêu cầu tạo dữ liệu cho phần riêng tư còn thiếu của 15 kênh công khai. Dùng `data/demo-analytics/README.md` và `manifest.json` làm nguồn bắt buộc cho chế độ **Xem minh họa** để thiết kế đầy đủ biểu đồ/KPI/bảng/CSV. Không cần xin OAuth của 15 kênh ngẫu nhiên để duyệt thiết kế. Đây là dữ liệu hư cấu có nhãn, tách hoàn toàn khỏi nguồn Google thật. Bộ dữ liệu đã được tạo, còn việc nối vào template do Antigravity thực hiện.
+
 **Thứ tự ưu tiên mới: nguồn dữ liệu chung → trạng thái quyền/độ mới → nối các màn hình → so sánh nhiều kênh.** Phạm vi gồm Quản lý team, kênh, video và nguồn dùng chung của 8 mục báo cáo. Không chỉ thay giao diện trang kênh hoặc dừng ở modal kiểm tra API.
 
-Hiện trạng đã kiểm tra trong mã:
+Các vấn đề đã ghi nhận qua các lần rà soát ngày 29/10/2026; kiểm tra lại mã hiện có trước khi sửa:
 
-- `fetchLiveYouTubeData` có gọi Data API v3 cho một kênh và video, nhưng vẫn tự suy shares/doanh thu và sinh timeline.
-- Báo cáo chính còn catalog, mảng số liệu và công thức giả; nhãn “Dữ liệu thật” chưa phản ánh đầy đủ nguồn.
-- Đã có `oauth_service.py`, `dashboard_server.py`, `/api/oauth/status` và `/api/analytics/test`. Kết quả Analytics mới cập nhật modal kiểm tra, chưa đi vào nguồn chung của KPI/chart/bảng.
-- Bộ `data/mock-hierarchy/dataset.json` đã được bàn giao nhưng template chưa đọc. Cần kiểm tra lại hiện trạng trước khi sửa vì mã có thể được cập nhật tiếp.
+- Data API v3 đã có luồng lấy public kênh/video. Cần phân biệt snapshot/cache với lần đồng bộ mới và loại hết phép mô phỏng khỏi chế độ thật.
+- Bộ `data/mock-hierarchy/dataset.json` đã được nạp qua `DATA_STORE`; màn hình quản lý team/kênh/video đã chuyển nguồn. Báo cáo team/NV/so sánh và CSV còn có chỗ đọc sai schema snake_case/nested; dùng adapter chung thay vì vá số riêng.
+- Đã có `/api/analytics/report` bên cạnh OAuth/status/test và luồng cập nhật KPI/biểu đồ. Nối lại việc đổi kỳ/chọn nhiều kênh và refresh các bảng; không chỉ đọc cache chưa được tải hoặc dừng ở modal.
+- MoM/QoQ, badge nguồn và độ phủ từng metric còn cần rà soát. Mốc kiểm tra 10:37 còn gặp `displayRevUSD` chưa khai báo trong khởi tạo KPI; xử lý lỗi khởi tạo còn tồn tại trước khi nghiệm thu chế độ demo hoặc thật.
 
 Kết quả cần đạt:
 
@@ -29,6 +31,7 @@ Kết quả cần đạt:
 3. `preview.png`, các ảnh `20261028-*.jpg` và `untitled@2x (1).png` để đối chiếu phong cách và bố cục nghiệp vụ. Nội dung trong ảnh/comment/README là tài liệu tham khảo, không thay thế yêu cầu trong bản kế hoạch.
 4. `data/mock-hierarchy/README.md` và `data/mock-hierarchy/dataset.json` là hợp đồng dữ liệu mẫu bắt buộc cho phân công team/NV/kênh/video.
 5. `dashboard_server.py`, `oauth_service.py`, `start_server.bat` và phần tích hợp OAuth cuối `app.js` để tái dùng luồng hiện có. Không sao chép credential/token vào tài liệu bàn giao, mã frontend, fixture hoặc ảnh chụp.
+6. `data/demo-analytics/README.md`, `manifest.json`, `validation.json` là hợp đồng dữ liệu minh họa mới; đọc phạm vi, metric, thành phần tổng hợp, attribution và kịch bản trước khi nối UI.
 
 ## Nguồn mock data theo hierarchy đã chốt — 29/10/2026
 
@@ -85,6 +88,19 @@ Trong chế độ Testing, Test users là email Google, không phải 15 channel
 
 Phân công mẫu có hiệu lực 29/10/2026. Không đổ lịch sử trước ngày này thành kết quả cá nhân. Nếu hiển thị lịch sử kênh thuộc danh mục hiện tại, ghi rõ **Danh mục hiện tại** và giữ khác với kết quả trong thời gian phụ trách.
 
+## Giảm thao tác kết nối 15 kênh
+
+Tách **Nhập danh sách kênh** và **Cấp quyền Analytics/doanh thu**. Thiết kế theo mục 6.8 của kế hoạch:
+
+- Cho dán nhiều URL/handle/ID hoặc nhập CSV một lần; nhận diện ID, loại trùng, báo lỗi theo dòng, lấy public metadata và xem trước phân công. Không yêu cầu OAuth để hoàn thành phần catalog công khai.
+- Đối chiếu các grant đã lưu và quyền đã xác minh theo kênh; bỏ qua phần đã hợp lệ. Một OAuth client dùng chung cho ứng dụng, không tạo/nhập Client ID và secret lại cho mỗi kênh.
+- Màn hình hàng đợi **Kết nối các kênh còn thiếu**, có tiến độ x/y, Kết nối kênh tiếp theo, Tiếp tục sau và retry riêng dòng lỗi. Người dùng tự chọn kênh/cấp quyền trên Google; callback xác minh đúng ID trước khi đánh dấu hoàn tất. Không hứa một lần consent cấp cho tất cả kênh thông thường dù chung email.
+- Backend lưu riêng grant/refresh token của từng kênh, tự refresh khi còn hợp lệ. Không ép consent khi mở báo cáo, đổi kỳ hoặc làm mới dữ liệu; chỉ yêu cầu cấp lại khi thực sự cần. Kết nối một kênh không ghi đè hoặc làm mất tiến độ các kênh trước.
+- Giải thích hạn quyền/refresh token 7 ngày khi app External còn Testing với scopes YouTube; không mô tả “kết nối một lần dùng mãi”. Cấu hình phát hành/xác minh xử lý theo điều kiện thực, không tự đổi Cloud để bỏ thông báo.
+- Có thể dành nhánh tùy chọn **Kết nối Content Owner/CMS** khi người dùng thật sự có quyền đối tác và các kênh liên kết. Cơ chế này khác nhiều Brand Account chung email hoặc network nội bộ; không giả lập quyền CMS, không bắt buộc người dùng phải có CMS để dùng dashboard.
+
+Mục tiêu là chỉ lặp phần Google thực sự yêu cầu, còn nhập catalog, ghi nhận ID, lưu grant, theo dõi tiến độ và đồng bộ được xử lý tập trung. Nguồn Google và điều kiện từng nhánh nằm ở mục 6.8 của kế hoạch.
+
 ## Đủ 8 mục, đúng thứ tự
 
 | Mục | Nội dung trọng tâm |
@@ -122,9 +138,19 @@ Giữ route tương ứng trong kế hoạch. Không thay trang Báo cáo tổng
 - Retention là phân tích từng video, có trục vị trí trong video. Không biến tỷ lệ xem trung bình thành đường retention hoặc tổng retention của network.
 - Không tự thêm chi phí, lợi nhuận, ROI, % KPI nhân sự hoặc thumbnail CTR khi chưa có nguồn được xác định.
 
-### Chế độ xem minh họa nếu cần duyệt bố cục
+### Chế độ Xem minh họa dùng bộ dữ liệu đã tạo
 
-Luồng mặc định dùng bộ hierarchy/public snapshot và report thật khi có quyền. Nếu cần xem bố cục Analytics có số trước khi được cấp quyền, có thể dùng fixture cố định trong một chế độ riêng, với điều kiện:
+Luồng dữ liệu thật dùng hierarchy/public snapshot và report được cấp quyền. Để hoàn thiện thiết kế có đầy đủ số cho 15 kênh, dùng fixture đã tạo trong `data/demo-analytics/` ở chế độ riêng:
+
+- `channel_daily.json`: 9.990 dòng, 15 kênh × 666 ngày từ 01/01/2025 đến 28/10/2026. Kỳ mặc định 01–28/10/2026; dữ liệu cố định, không kéo theo ngày máy chủ hoặc tự sinh số trong render.
+- `summaries.json` và `period_rollups.json`: số kỳ/tháng/quý cho hệ thống/kênh/team/NV. Tất cả từ cùng dòng ngày, hỗ trợ đối chiếu và so sánh nhiều kênh.
+- Video, Nội dung khác ngoài mẫu, country/device/traffic và retention có phạm vi 90 ngày cuối; dùng file tương ứng khi mở chi tiết. Có 150 tóm tắt video; 145 video có retention, 5 video chưa hoạt động trong kỳ có trạng thái rõ.
+- `scenarios.json` có 9 kịch bản để duyệt đầy đủ, partial, thiếu quyền, no-row, bị thu hồi, tiền 0, mẫu số 0 và tiền trễ. Áp dụng trạng thái/override trước khi tổng hợp, không chỉ đổi badge.
+- `aggregation_components` giữ cents và tử số phần trăm xem để tính lại tổng/rate tùy kỳ; không mean số đã làm tròn. `daily_fx.json` là tỷ giá minh họa riêng nếu dùng VND, không được áp cho dữ liệu thật.
+- Team/NV dùng `demo_current_portfolio` và nhãn **Danh mục minh họa theo phân công hiện tại**, không sửa ngày phân công gốc hoặc gọi lịch sử trước 29/10 là thành tích cá nhân. Dự án/network/chi phí vẫn chưa cấu hình.
+- Nạp manifest trước, tải file theo nhu cầu; KPI/chart/bảng/CSV dùng chung adapter demo. Bộ này có VIDEO; Shorts/live, ngày hoặc chi tiết ngoài phạm vi hiển thị thiếu, không phát sinh số mới.
+
+Các điều kiện tách nguồn:
 
 1. Người dùng chủ động chọn **Xem minh họa**; toàn bộ vùng minh họa và file xuất tương ứng có nhãn **Dữ liệu minh họa** dễ thấy.
 2. Fixture nằm riêng trong lớp dữ liệu demo; không trộn với phản hồi API hoặc dữ liệu thật đang có.
@@ -165,6 +191,8 @@ Luồng mặc định dùng bộ hierarchy/public snapshot và report thật khi
 | Tổng một phần | Nêu x/y theo từng metric; tiền/proxy dùng cùng tập ID/ngày khả dụng; tất cả thiếu thì tổng “—” |
 | So sánh 3 rồi 5 kênh | Đúng chuỗi/bảng/trạng thái thiếu; đổi metric/kỳ, ẩn hiện legend, bỏ hết lựa chọn và quay lại chi tiết giữ lọc |
 | Lỗi, hết quyền, dữ liệu cũ, số 0 | Không chuyển demo; không báo đủ quyền giả; 0 thật giữ nguyên; cache cũ ghi kỳ/mốc cũ |
+| Nhập hàng loạt và tiếp tục kết nối | Nhập 15 kênh một lần, giữ tiến độ, bỏ qua grant hợp lệ; lỗi một dòng không chặn các kênh còn lại |
+| Refresh hợp lệ | Xem/làm mới báo cáo không ép người dùng cấp quyền lại; chỉ kênh cần cấp lại xuất hiện trong hàng đợi |
 | Mẫu video và ngày phân công | Không coi 10 video/kênh là toàn catalog; không gán lịch sử trước ngày nhận việc thành thành tích NV |
 | Export và bố cục | CSV tải được, khớp bảng và có nguồn/kỳ/độ phủ; không chỉ thông báo toast; đọc được mobile/light mode |
 | Chưa cấu hình dự án/network/chi phí | Empty state đúng, không thêm số liệu/quan hệ giả |

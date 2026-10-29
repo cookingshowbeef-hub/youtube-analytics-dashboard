@@ -98,6 +98,8 @@ Trên Quản lý video hoặc báo cáo danh mục, ghi “10 video mẫu của 
 
 ## Analytics chưa có dữ liệu
 
+**Cập nhật thiết kế 29/10/2026:** đã tạo bộ Analytics giả lập riêng tại [`../demo-analytics/README.md`](../demo-analytics/README.md), liên kết cùng 15 channel ID và 150 video ID để duyệt biểu đồ/KPI/bảng. Các trường Analytics trong snapshot công khai này vẫn giữ `null`/`not_connected`; số giả lập chỉ xuất hiện trong chế độ **Xem minh họa**, không chứng minh chủ kênh đã cấp OAuth và không phải số thực của các kênh.
+
 `meta.analytics_status` là `not_connected`; trong từng kênh, `analytics.reason` là `youtube_analytics_oauth_not_connected`. Các trường `estimatedRevenue`, `rpm`, `estimatedMinutesWatched`, `subscribersGained`, `subscribersLost`, `shares`, `period_metrics` hiện là **`null`**.
 
 Giữ nguyên `null` khi bàn giao. Giao diện hiển thị “— · Chưa kết nối Analytics” cho phần cần dữ liệu này; không chuyển thành 0 và không tạo doanh thu, giờ xem, RPM, gained/lost hoặc shares từ công thức giả định. Không dựng biểu đồ ngày/tháng từ bộ đếm lifetime, không nhân views với RPM cố định, không lấy độ dài video nhân views để giả lập watch time.

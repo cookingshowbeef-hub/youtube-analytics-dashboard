@@ -6,15 +6,16 @@ Ngày lập: 28/10/2026. Cập nhật: 29/10/2026, sau khi kiểm tra nguồn d�
 
 Lượt tiếp theo của Antigravity phải nối nguồn dữ liệu chung vào các màn hình quản lý và báo cáo, đồng thời giữ thiết kế so sánh nhiều kênh ở mục 5.4. Không giới hạn lượt này ở việc thay bố cục trang kênh hoặc thêm một cửa sổ kiểm tra API. Mục tiêu là số liệu trên KPI, biểu đồ, bảng và CSV đi qua cùng nguồn, cùng kỳ và đúng channel ID.
 
-### 0.1. Hiện trạng đã kiểm tra trong mã ngày 29/10/2026
+### 0.1. Mốc kiểm tra mã lúc 10:37 ngày 29/10/2026
 
 | Thành phần | Hiện trạng | Việc Antigravity cần làm |
 |---|---|---|
 | Data API v3 | Có luồng gọi kênh/video trong `fetchLiveYouTubeData`; áp dụng một kênh và lưu cache. Dữ liệu mặc định vẫn có mảng cố định | Nối catalog công khai vào nguồn chung; hiện timestamp và phân biệt cache với lần đồng bộ mới |
-| Biểu đồ và báo cáo chính | Còn bộ sinh timeline, mảng team/NV và các công thức như views × 0.0025 cho tiền, views × 0.05 cho giờ xem | Loại số mô phỏng khỏi chế độ dữ liệu thật; dùng báo cáo Analytics hoặc trạng thái thiếu |
-| OAuth và Analytics | `oauth_service.py`, `dashboard_server.py` đã có luồng kết nối và `/api/analytics/test`; frontend mới đưa kết quả vào modal kiểm tra | Tái sử dụng phần đang có, bổ sung lớp truy vấn báo cáo và đưa kết quả vào nguồn chung của các màn hình |
-| Bộ hierarchy | `data/mock-hierarchy/dataset.json` đã có 3 team, 15 NV, 15 kênh, 150 video mẫu; chưa được runtime của template đọc | Nạp bộ này và dùng cùng quan hệ ID cho quản lý, bộ lọc, báo cáo và drill-down |
-| Badge trạng thái | Có nhãn “Dữ liệu thật/Đã cấp đủ quyền” gắn sẵn hoặc suy từ thông tin kênh/token | Gắn nhãn theo nguồn từng phần, quyền đã xác minh và lần truy vấn thành công; token tồn tại chưa chứng minh đọc được doanh thu |
+| Biểu đồ và báo cáo chính | Đã có so sánh nhiều kênh nhưng một số report/CSV đọc sai schema; đổi kỳ chưa truy vấn lại xuyên suốt và MoM/QoQ còn sinh số | Chuẩn hóa adapter/join và luồng refresh; mô phỏng chỉ ở chế độ minh họa riêng |
+| OAuth và Analytics | Đã có `/api/analytics/report` theo ngày, kiểm tra đúng channel ID và fallback không monetary; frontend có adapter KPI/chart | Hoàn thiện thay kỳ/so sánh/refresh bảng, grant riêng theo kênh, null/0 và ngày khả dụng |
+| Bộ hierarchy | `DATA_STORE` đã nạp 3 team, 15 NV, 15 kênh và 150 video qua dataset; quản lý team/kênh/video đã dùng nguồn này | Giữ nguồn chung; sửa các report còn đọc nhầm `full_name/team_id/snippet/statistics` thành trường phẳng |
+| Badge trạng thái | Dải độ phủ còn suy từ token/scopes hoặc hardcode 1/15 | Đếm theo report/metric/tập ID đang chọn và trạng thái xác minh, không suy từ tên/avatar hoặc token tồn tại |
+| Khởi tạo | Kiểm tra hàm KPI còn gặp `displayRevUSD` chưa khai báo | Kiểm tra lỗi còn tồn tại và sửa trước khi nghiệm thu template; kiểm tra cú pháp không thay kiểm thử chạy |
 
 Đây là kiểm tra đường đi dữ liệu trong mã, không xác nhận mọi token đang hợp lệ hoặc đã truy vấn API thành công ở thời điểm chạy. Antigravity cần kiểm tra lại mã trước khi sửa vì dự án có thể được cập nhật tiếp.
 
@@ -30,6 +31,14 @@ Lượt tiếp theo của Antigravity phải nối nguồn dữ liệu chung và
 ### 0.3. Phạm vi bàn giao cho Antigravity
 
 Tái sử dụng HTML/CSS/JavaScript, backend và OAuth client đang có. Bổ sung phần lấy/chuẩn hóa dữ liệu cần thiết để nối frontend với nguồn thực; không yêu cầu viết lại toàn bộ backend, đổi framework hoặc hoàn thiện phát hành OAuth công khai trước khi làm giao diện. Khi môi trường chưa có grant hợp lệ, hoàn thiện trạng thái thiếu và ghi rõ phần kiểm tra API còn chờ; không báo đã tích hợp live thành công chỉ từ modal test hoặc badge.
+
+### 0.4. Bộ Analytics minh họa đã được yêu cầu và tạo riêng
+
+Người dùng đã yêu cầu tạo số minh họa cho phần còn thiếu vì 15 kênh công khai ngẫu nhiên không thể cấp dữ liệu riêng tư cho ứng dụng. Bộ bàn giao mới nằm tại `data/demo-analytics/`, xem `README.md` và `manifest.json`. Đây là nguồn dùng để Antigravity hoàn thiện bố cục và tương tác báo cáo trong chế độ **Xem minh họa**, không yêu cầu chủ 15 kênh cấp OAuth.
+
+Phạm vi: **9.990 dòng kênh/ngày** từ 01/01/2025 đến 28/10/2026; video mẫu, quốc gia, thiết bị, nguồn truy cập và retention có phạm vi 90 ngày cuối. Có sẵn tổng tháng/quý, tổng hệ thống/team/NV, CSV xem nhanh và 9 tình huống trạng thái. Dữ liệu công khai gốc giữ nguyên; số Analytics hư cấu không được điền vào các trường `null` của snapshot.
+
+Các yêu cầu nguồn thật/thiếu quyền ở phần còn lại vẫn áp dụng cho chế độ dữ liệu thật. Ở chế độ minh họa, dùng fixture mới qua một adapter chung, gắn nhãn rõ và không trộn với report Google hoặc biến trạng thái OAuth thành đã xác minh. Phần 6.9 quy định cách sử dụng. Lần cập nhật này chỉ tạo dữ liệu/tài liệu, chưa tự nối fixture vào mã template.
 
 ## 1. Định hướng và nguồn dữ liệu
 
@@ -458,6 +467,50 @@ Tổng nhóm dùng các kênh có dữ liệu hợp lệ cho metric đang hiển
 
 Phân công mẫu bắt đầu ngày 29/10/2026. Nếu báo cáo kết quả theo thời gian phụ trách thì không gán doanh thu trước ngày này cho nhân viên. Góc nhìn danh mục đang phụ trách có thể xem lịch sử kênh với nhãn rõ **Danh mục hiện tại**, không gọi đó là thành tích cá nhân từ ngày nhận phân công.
 
+### 6.8. Giảm thao tác kết nối nhiều kênh
+
+**Phản hồi người dùng:** nhập và cấp quyền từng kênh bằng cùng một quy trình lặp lại tốn thời gian. Thiết kế tách nhập catalog công khai khỏi cấp quyền Analytics/doanh thu; tự động hóa phần đã được cho phép, giữ bước chọn kênh/cấp quyền của Google khi còn cần thiết.
+
+**Luồng mặc định cho kênh thông thường:**
+
+1. **Nhập danh sách:** dán nhiều URL/handle/channel ID hoặc nhập CSV. Chuẩn hóa ID, phát hiện trùng/sai, lấy metadata/public counters theo lô phù hợp, cho xem trước danh sách và phân công. Public catalog có thể xem được trước khi có OAuth; nhập danh sách chưa cấp quyền tiền.
+2. **Kiểm tra kết nối sẵn có:** đối chiếu grant lưu tại backend và khả năng truy cập đã xác minh theo đúng channel ID. Phân biệt Đã kết nối, Thiếu Analytics, Thiếu quyền doanh thu, Cần kết nối lại; không gọi mọi kênh chưa có tiền là chưa thêm kênh.
+3. **Kết nối các kênh còn thiếu:** một màn hình hàng đợi có tiến độ x/y, thao tác Kết nối kênh tiếp theo và Tiếp tục sau. Người dùng tự chọn/xác nhận trên Google; app nhận callback, xác minh channel ID, lưu grant riêng rồi gợi ý kênh tiếp theo. Không phải nhập lại URL, Client ID hoặc client secret cho từng kênh.
+4. **Tiếp tục đúng tiến độ:** bỏ qua grant còn hợp lệ, giữ những kênh đã kết nối khi một kênh thất bại, có retry cho riêng dòng lỗi. Cùng một email có thể giảm việc nhập tài khoản lại, nhưng không hứa một lần consent cấp cho mọi Brand Account/kênh.
+5. **Tự đồng bộ sau khi được cấp quyền:** yêu cầu offline access phù hợp, lưu refresh token ở backend theo kênh và refresh access token khi cần. Không mở lại consent khi chỉ xem báo cáo/đổi bộ lọc/làm mới dữ liệu. Chỉ yêu cầu cấp lại khi quyền bị thu hồi, refresh token hết hiệu lực, bổ sung scope hoặc Google yêu cầu. Không cam kết token tồn tại vĩnh viễn. [OAuth offline access](https://developers.google.com/youtube/data/guides/auth/server-side-web-apps#offline).
+
+App External còn ở **Testing** với scopes YouTube có quyền/refresh token hết hạn sau 7 ngày. UI và hướng dẫn cần giải thích vì sao có thể phải kết nối lại trong giai đoạn này. Khi chuẩn bị dùng ổn định, xử lý trạng thái phát hành và xác minh theo điều kiện thực; không tự đổi cài đặt Google Cloud chỉ để bỏ thông báo. [Google Auth Platform Audience](https://support.google.com/cloud/answer/15549945?hl=en).
+
+**Nhánh tùy chọn khi thật sự có YouTube CMS/Content Owner:** nếu người dùng có tài khoản CMS liên kết với content owner và quyền phù hợp, có thể xác thực ở cấp content owner, lấy danh sách kênh liên kết bằng `managedByMe`/`onBehalfOfContentOwner` và truy vấn báo cáo `contentOwner==...` theo phạm vi được phép. Đây là cơ chế đối tác thật của YouTube; một email sở hữu nhiều Brand Account, tham gia YPP thông thường hoặc nhóm “network” nội bộ không tự trở thành CMS. Chỉ bật nhánh này khi có quyền/ID content owner hợp lệ, không đặt làm điều kiện cho bộ 15 kênh mẫu. [Channels.list](https://developers.google.com/youtube/data/reference/rest/v3/channels/list), [Content owner reports](https://developers.google.com/youtube/analytics/content_owner_reports).
+
+**Nghiệm thu:** nhập 15 kênh trong một lần; grant hợp lệ được bỏ qua; kết nối thành công từng kênh không ghi đè kênh trước; thoát/tiếp tục vẫn giữ tiến độ; lỗi một kênh không chặn danh mục còn lại; xem/làm mới báo cáo không hiện consent lặp lại khi refresh token vẫn hợp lệ. Luồng nhập hàng loạt không được mô tả là cấp quyền hàng loạt cho kênh thông thường.
+
+### 6.9. Bộ Analytics minh họa cho phần dữ liệu còn thiếu
+
+**Nguồn:** `data/demo-analytics/manifest.json` và `data/demo-analytics/README.md`. Các file có `source_kind: synthetic_demo`, `is_demo: true`, `oauth_authorized: false`, `source_api: null`. Không phải doanh thu/hiệu suất thực, không ước lượng tiền của các chủ kênh dựa trên public views. Không có credential hoặc grant được tạo bởi bộ này.
+
+| Dữ liệu minh họa | Phạm vi/cách dùng |
+|---|---|
+| `channel_daily.json` | 15 kênh × 666 ngày, 01/01/2025–28/10/2026; views, giờ xem, tương tác, gained/lost, tiền, CPM và tỷ số |
+| `summaries.json`, `period_rollups.json` | Cùng nguồn ngày, tổng kỳ đặt tên/tháng/quý cho hệ thống, kênh, team, NV; không nhập tổng riêng |
+| `video_daily.json`, `video_summaries.json` | 150 video mẫu, hoạt động từ ngày công khai theo Pacific trong phạm vi 31/07–28/10/2026; 5 video không hoạt động trong kỳ giữ trạng thái thiếu phù hợp |
+| `other_content_daily.json` | Bucket Nội dung khác ngoài mẫu, không có video ID giả; đối soát metric cộng được của kênh/ngày trong 90 ngày |
+| `breakdown_daily.json` | Quốc gia/thiết bị/nguồn truy cập độc lập trong 90 ngày; không join chéo hoặc hứa API hỗ trợ mọi tổ hợp |
+| `retention.json` | 145 video mẫu có hoạt động, mỗi video 51 vị trí 0..1; không tổng hợp thành retention nhóm |
+| `daily_fx.json` | Tỷ giá USD/VND hư cấu phục vụ giao diện; không dùng cho báo cáo thật |
+| `scenarios.json` | Đủ demo, public-only, thiếu tiền, tổng một phần, thu hồi, no-row, doanh thu 0/views dương, mẫu số 0, tiền trễ |
+| `channel_summary_28d.csv`, `validation.json` | Bảng xem nhanh 15 kênh và kết quả kiểm tra dữ liệu; xem manifest để biết số lượng/hash |
+
+**Luồng thiết kế:** vào **Xem minh họa** → nạp manifest → chọn mặc định 01–28/10/2026 → đọc file cần thiết cho trang → adapter demo dùng chung → KPI/chart/bảng/CSV. Ghi **Dữ liệu Analytics minh họa** tại vùng số liệu; nguồn ảnh/public counters vẫn giữ nhãn riêng. Tải video, breakdown, retention khi mở phần tương ứng để tránh nạp toàn bộ file ngay từ đầu. Bộ hiện có VIDEO; Shorts/live hoặc ngày ngoài phạm vi hiện thiếu dữ liệu, không sinh thêm số.
+
+Tổng và derived metric phải tính lại từ thành phần gốc. `aggregation_components` cung cấp cents tiền và tử số phần trăm xem có trọng số để tổng hợp tùy kỳ chính xác; đây là trường hỗ trợ riêng của fixture, không phải metric YouTube. Doanh thu 0/views dương cho tỷ số 0; mẫu số 0 hoặc thiếu thành phần cho `null`. Không lấy trung bình các rate/average ngày hoặc cộng số đã format. Dùng cùng adapter và cùng scenario cho chart/bảng/CSV.
+
+**Phân công:** dữ liệu gốc bắt đầu 29/10/2026; lịch sử minh họa trước đó dùng `attribution_mode: demo_current_portfolio`, hiển thị **Danh mục minh họa theo phân công hiện tại**, không gọi là thành tích cá nhân trong thời gian phụ trách. Không sửa ngày phân công gốc. `projects`, `networks`, `costs` tiếp tục trống vì lượt này chỉ bổ sung phần Analytics, không tạo thêm cơ cấu nghiệp vụ.
+
+Demo và nguồn thật có namespace/cache/export riêng. Không ghi fixture vào kho report thật, không trả fixture như phản hồi Google, không tự fallback sang demo khi API lỗi. Chuyển sang nguồn thật thì bỏ toàn bộ lớp số minh họa và áp dụng trạng thái quyền/thực có dữ liệu. Kết quả kiểm tra fixture không xác nhận app đã nhận dữ liệu Google thành công.
+
+**Nghiệm thu demo:** 15 kênh có số để so sánh 3/5 kênh; tổng ngày–tháng–quý–nhóm khớp; kỳ tháng 10/quý IV thiếu ngày có nhãn; video không có hoạt động trước ngày công khai; partial/zero/no-row khác nhau; source/currency/kỳ/trạng thái theo CSV. Có thể dựng đủ luồng thiết kế mà không cấp quyền cho các kênh ngẫu nhiên.
+
 ## 7. Quy tắc chống sai lệch
 
 1. Lifetime từ Data, số kỳ từ Analytics; không snapshot thay report.
@@ -522,6 +575,8 @@ Không đợi đủ 15 grant để hoàn thành P0/P1 hoặc kiểm tra P2 với
 | Đổi ngày/metric/currency | Query/cache key và KPI/chart/bảng cùng phạm vi; không lặp aggregate theo ngày, không giữ số kỳ cũ dưới nhãn kỳ mới |
 | Số 0, no-row, lỗi API | Số 0 hợp lệ vẫn là 0; no-row/lỗi/thiếu quyền có trạng thái; không dùng `||` thay số 0 bằng dữ liệu mẫu |
 | Lỗi/hết quyền hoặc cache cũ | Hiện lỗi hoặc số cũ với mốc cũ; không fallback demo, không báo “Đã cấp đủ quyền” chỉ vì còn token |
+| Nhập và kết nối nhiều kênh | Nhập 15 URL/ID một lần, nhận diện trùng/sai; chỉ xếp hàng các kênh cần cấp quyền; giữ tiến độ và không ghi đè grant |
+| Refresh và cấp lại | Grant còn hợp lệ được dùng/refresh tự động; xem báo cáo không ép consent lại; giải thích hạn 7 ngày trong Testing và lỗi cần cấp lại |
 | Phân công và mẫu video | Không gán lịch sử trước ngày nhận việc thành thành tích; 10 video mẫu không gọi là toàn bộ hoặc ép bằng tổng kênh |
 | CSV và responsive | Tải tệp thật khớp bảng, có nguồn/kỳ/phạm vi thiếu; dùng được ở 1440/768/390 px, dark/light và bàn phím |
 | Chưa có dự án/network/chi phí | Hiện Chưa cấu hình; không tạo MCN, cost/profit/ROI hoặc quan hệ mới để làm đầy trang |

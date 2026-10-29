@@ -48,16 +48,38 @@
       this.teams.forEach(t => this.teamMap.set(t.id, t));
 
       this.employeeMap.clear();
-      this.employees.forEach(e => this.employeeMap.set(e.id, e));
+      this.employees.forEach(e => {
+        e.name = e.name || e.full_name || e.id;
+        e.teamId = e.team_id || e.teamId;
+        this.employeeMap.set(e.id, e);
+      });
 
       this.assignmentMap.clear();
+      this.channelEmployeeMap = new Map();
+      this.channelTeamMap = new Map();
       this.assignments.forEach(a => {
         this.assignmentMap.set(a.channel_id, a);
         this.assignmentMap.set(a.employee_id, a);
+        if (a.channel_id && a.employee_id) {
+          this.channelEmployeeMap.set(a.channel_id, a.employee_id);
+          const emp = this.employeeMap.get(a.employee_id);
+          if (emp) {
+            emp.channelId = a.channel_id;
+            if (emp.teamId) this.channelTeamMap.set(a.channel_id, emp.teamId);
+          }
+        }
       });
 
       this.channelMap.clear();
-      this.channels.forEach(c => this.channelMap.set(c.id, c));
+      this.channels.forEach(c => {
+        c.teamId = c.team_id || this.channelTeamMap.get(c.id) || c.teamId;
+        c.employeeId = c.employee_id || this.channelEmployeeMap.get(c.id) || c.employeeId;
+        c.title = (c.snippet && c.snippet.title) || c.title || c.id;
+        c.viewCount = (c.statistics && c.statistics.viewCount) ? Number(c.statistics.viewCount) : (c.views || c.viewCount || 0);
+        c.subscriberCount = (c.statistics && c.statistics.subscriberCount) ? Number(c.statistics.subscriberCount) : (c.subscribers || c.subscriberCount || 0);
+        c.videoCount = (c.statistics && c.statistics.videoCount) ? Number(c.statistics.videoCount) : (c.videoCount || 0);
+        this.channelMap.set(c.id, c);
+      });
 
       this.videosByChannel.clear();
       this.videos.forEach(v => {
@@ -110,6 +132,215 @@
   }
 
   DATA_STORE.init();
+
+  // =========================================================================
+  // DEMO ANALYTICS STORE (Loaded from data/demo-analytics/demo_bundle.js)
+  // =========================================================================
+  const DEMO_STORE = {
+    isLoaded: false,
+    meta: null,
+    scenarios: [],
+    summaries: [],
+    retentionMap: new Map(),
+    channelSummariesMap: new Map(),
+    channelDailyMap: new Map(),
+    systemSummariesMap: new Map(),
+    teamSummariesMap: new Map(),
+    employeeSummariesMap: new Map(),
+    activeScenarioId: 'all_demo_ready',
+
+    init(bundle) {
+      if (!bundle && typeof window !== 'undefined' && window.__DEMO_ANALYTICS__) {
+        bundle = window.__DEMO_ANALYTICS__;
+      }
+      if (!bundle) return false;
+
+      this.meta = bundle.meta;
+      this.scenarios = bundle.scenarios || [];
+      this.summaries = bundle.summaries || [];
+
+      // Clear existing maps
+      this.channelSummariesMap.clear();
+      this.teamSummariesMap.clear();
+      this.employeeSummariesMap.clear();
+      this.systemSummariesMap.clear();
+      this.retentionMap.clear();
+      this.channelDailyMap.clear();
+
+      // Index summaries
+      this.summaries.forEach(s => {
+        const type = s.entity_type;
+        const id = s.entity_id;
+        const pKey = s.period_key;
+
+        if (type === 'channel') {
+          if (!this.channelSummariesMap.has(id)) this.channelSummariesMap.set(id, new Map());
+          this.channelSummariesMap.get(id).set(pKey, s);
+        } else if (type === 'team') {
+          if (!this.teamSummariesMap.has(id)) this.teamSummariesMap.set(id, new Map());
+          this.teamSummariesMap.get(id).set(pKey, s);
+        } else if (type === 'employee') {
+          if (!this.employeeSummariesMap.has(id)) this.employeeSummariesMap.set(id, new Map());
+          this.employeeSummariesMap.get(id).set(pKey, s);
+        } else if (type === 'system') {
+          this.systemSummariesMap.set(pKey, s);
+        }
+      });
+
+      // Index retention
+      (bundle.retention || []).forEach(r => {
+        if (r.video_id) this.retentionMap.set(r.video_id, r.points || []);
+      });
+
+      // Index daily rows
+      (bundle.daily_rows_2026 || []).forEach(row => {
+        const chId = row.channel_id;
+        if (!this.channelDailyMap.has(chId)) this.channelDailyMap.set(chId, []);
+        this.channelDailyMap.get(chId).push(row);
+      });
+
+      this.isLoaded = true;
+      console.log('DEMO_STORE initialized with', this.channelDailyMap.size, 'channels and', this.retentionMap.size, 'retention curves');
+      return true;
+    },
+
+    getChannelSummary(channelId, periodKey = 'last_28_days') {
+      const map = this.channelSummariesMap.get(channelId);
+      return map ? map.get(periodKey) : null;
+    },
+
+    getSystemSummary(periodKey = 'last_28_days') {
+      return this.systemSummariesMap.get(periodKey);
+    },
+
+    getTeamSummary(teamId, periodKey = 'last_28_days') {
+      const map = this.teamSummariesMap.get(teamId);
+      return map ? map.get(periodKey) : null;
+    },
+
+    getEmployeeSummary(empId, periodKey = 'last_28_days') {
+      let map = this.employeeSummariesMap.get(empId);
+      if (!map && empId.startsWith('NV-')) {
+        const num = parseInt(empId.replace('NV-', ''), 10);
+        const empCode = `EMP-${String(num).padStart(3, '0')}`;
+        map = this.employeeSummariesMap.get(empCode);
+      }
+      return map ? map.get(periodKey) : null;
+    },
+
+    getDailyRows(channelId, startDate, endDate) {
+      const rows = this.channelDailyMap.get(channelId) || [];
+      if (!startDate && !endDate) return rows;
+      return rows.filter(r => (!startDate || r.day >= startDate) && (!endDate || r.day <= endDate));
+    },
+
+    getVideoRetention(videoId) {
+      return this.retentionMap.get(videoId);
+    },
+
+    getScenario(scenarioId) {
+      if (!scenarioId) scenarioId = state.demoScenario || 'all_demo_ready';
+      return (this.scenarios || []).find(s => s.scenario_id === scenarioId) || this.scenarios[0] || null;
+    },
+
+    getChannelState(channelId, scenarioId) {
+      const sc = this.getScenario(scenarioId);
+      if (!sc || !sc.channel_states) {
+        return { channel_id: channelId, analytics_status: 'demo_ready', monetary_status: 'demo_ready', analytics_available_end: '2026-10-28', monetary_available_end: '2026-10-28' };
+      }
+      return sc.channel_states.find(c => c.channel_id === channelId) || { channel_id: channelId, analytics_status: 'demo_ready', monetary_status: 'demo_ready', analytics_available_end: '2026-10-28', monetary_available_end: '2026-10-28' };
+    }
+  };
+
+  // Helper adapter to get effective channel report across both Live and Demo modes
+  function getEffectiveChannelReport(channelId, startDate, endDate, currency) {
+    if (!channelId) return null;
+    startDate = startDate || state.startDate || '2026-10-01';
+    endDate = endDate || state.endDate || '2026-10-28';
+    currency = currency || state.currency || 'USD';
+
+    if (state.viewMode === 'demo') {
+      if (!DEMO_STORE.isLoaded) DEMO_STORE.init();
+      const chState = DEMO_STORE.getChannelState(channelId, state.demoScenario);
+      const isAnalyticsReady = chState.analytics_status === 'demo_ready';
+      const isMonetaryReady = chState.monetary_status === 'demo_ready';
+
+      if (!isAnalyticsReady) {
+        return {
+          channel_id: channelId,
+          has_analytics: false,
+          has_monetary: false,
+          status: chState.analytics_status || 'not_connected',
+          rows: [],
+          totals: {}
+        };
+      }
+
+      const rawRows = DEMO_STORE.getDailyRows(channelId, startDate, endDate);
+      const monEnd = chState.monetary_available_end || '2026-10-28';
+
+      // Check scenario metric overrides
+      const scenario = DEMO_STORE.getScenario(state.demoScenario);
+      const override = (scenario && scenario.metric_overrides) ? scenario.metric_overrides.find(o => o.channel_id === channelId) : null;
+
+      const rows = rawRows.map(r => {
+        let hasMon = isMonetaryReady && (!chState.monetary_available_end || r.day <= monEnd);
+        const rawRev = (r.estimatedRevenue !== undefined && r.estimatedRevenue !== null) ? r.estimatedRevenue : (r.estimated_revenue_usd !== undefined ? r.estimated_revenue_usd : null);
+        let revVal = hasMon ? rawRev : null;
+        let vVal = (r.views !== undefined) ? r.views : 0;
+        const minWatched = (r.estimatedMinutesWatched !== undefined) ? r.estimatedMinutesWatched : (r.estimated_minutes_watched || 0);
+        const subsGain = (r.subscribersGained !== undefined) ? r.subscribersGained : ((r.netSubscribers && r.netSubscribers > 0) ? r.netSubscribers : 0);
+        const subsLost = (r.subscribersLost !== undefined) ? r.subscribersLost : ((r.netSubscribers && r.netSubscribers < 0) ? Math.abs(r.netSubscribers) : 0);
+
+        if (override && override.metrics) {
+          if (override.metrics.views !== undefined) vVal = override.metrics.views;
+          if (override.metrics.estimatedRevenue !== undefined) revVal = override.metrics.estimatedRevenue;
+        }
+
+        return {
+          day: r.day,
+          views: vVal,
+          estimatedRevenue: revVal,
+          estimatedMinutesWatched: minWatched,
+          subscribersGained: subsGain,
+          subscribersLost: subsLost,
+          likes: r.likes || 0,
+          comments: r.comments || 0,
+          shares: r.shares || 0
+        };
+      });
+
+      const sumViews = rows.reduce((a, b) => a + (b.views || 0), 0);
+      const sumMin = rows.reduce((a, b) => a + (b.estimatedMinutesWatched || 0), 0);
+      const sumSubsGain = rows.reduce((a, b) => a + (b.subscribersGained || 0), 0);
+      const sumSubsLost = rows.reduce((a, b) => a + (b.subscribersLost || 0), 0);
+      const hasAnyMon = rows.some(r => r.estimatedRevenue != null);
+      const sumRev = hasAnyMon ? Number(rows.reduce((a, b) => a + (b.estimatedRevenue || 0), 0).toFixed(2)) : null;
+
+      return {
+        channel_id: channelId,
+        has_analytics: true,
+        has_monetary: isMonetaryReady && hasAnyMon,
+        status: 'demo_ready',
+        rows: rows,
+        totals: {
+          views: sumViews,
+          estimatedRevenue: sumRev,
+          estimatedMinutesWatched: sumMin,
+          subscribersGained: sumSubsGain,
+          subscribersLost: sumSubsLost,
+          likes: rows.reduce((a, b) => a + (b.likes || 0), 0),
+          comments: rows.reduce((a, b) => a + (b.comments || 0), 0),
+          shares: rows.reduce((a, b) => a + (b.shares || 0), 0)
+        }
+      };
+    }
+
+    // Live mode
+    const cacheKey = `${channelId}_${startDate}_${endDate}_${currency}`;
+    return analyticsReportCache.get(cacheKey) || null;
+  }
+
 
   async function ensureDatasetLoaded() {
     if (DATA_STORE.channels && DATA_STORE.channels.length > 0) return true;
@@ -308,6 +539,8 @@
     compMetric: 'views',
     compareChannelIds: ['UCL9VCEoz6M6JcUKxlJcr3LQ', 'UCuNF36PtETqVFz_yK6C_v-g', 'UCSJ4gkVC6NrvII8umztf0Ow'],
     compareGranularity: 'day',
+    viewMode: 'live', // 'live' | 'demo'
+    demoScenario: 'all_demo_ready',
     comparePrevious: true,
     cleanOutliers: true,
     dataSource: 'live',
@@ -925,7 +1158,20 @@
     updateDateSummaryUI(startDateStr, endDateStr);
 
     // 6. Generate Timeline for this exact date range
-    currentData.timeline = generateTimelineForRange(state.channelInfo, currentData.videos, startDateStr, endDateStr);
+    if (state.viewMode === 'demo') {
+      const curChanId = state.channelInfo ? state.channelInfo.id : (DATA_STORE.channels[0]?.id);
+      if (curChanId) {
+        const rep = getEffectiveChannelReport(curChanId, startDateStr, endDateStr, state.currency);
+        applyAnalyticsResponse(rep);
+      }
+    } else {
+      const curChanId = state.channelInfo ? state.channelInfo.id : null;
+      if (curChanId) {
+        fetchAndApplyAnalytics(curChanId, startDateStr, endDateStr);
+      } else {
+        currentData.timeline = { hasAnalytics: false, hasMonetary: false, labels: [], views: [], revenue: [], subscribersGained: [], watchTimeHours: [], interactions: { likes: [], comments: [], shares: [], dislikes: [] } };
+      }
+    }
 
     // 7. Update UI components
     updateKpiCards();
@@ -2425,6 +2671,12 @@
     if (!startDate) startDate = state.startDate || '2026-10-01';
     if (!endDate) endDate = state.endDate || '2026-10-28';
 
+    if (state.viewMode === 'demo') {
+      const rep = getEffectiveChannelReport(channelId, startDate, endDate, state.currency);
+      applyAnalyticsResponse(rep);
+      return;
+    }
+
     const cacheKey = `${channelId}_${startDate}_${endDate}_${state.currency}`;
     if (analyticsReportCache.has(cacheKey)) {
       applyAnalyticsResponse(analyticsReportCache.get(cacheKey));
@@ -2635,8 +2887,7 @@
     let totalConnectedRev = 0;
     let hasAnyConnected = false;
     channels.forEach(ch => {
-      const cacheKey = `${ch.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
-      const report = analyticsReportCache.get(cacheKey);
+      const report = getEffectiveChannelReport(ch.id, state.startDate, state.endDate, state.currency);
       if (report && report.has_analytics && report.totals && report.totals.estimatedRevenue != null) {
         hasAnyConnected = true;
         totalConnectedRev += Number(report.totals.estimatedRevenue);
@@ -2656,8 +2907,7 @@
 
     // Channel Rows
     channels.forEach((ch, chIdx) => {
-      const cacheKey = `${ch.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
-      const report = analyticsReportCache.get(cacheKey);
+      const report = getEffectiveChannelReport(ch.id, state.startDate, state.endDate, state.currency);
       const hasAnalytics = report && report.has_analytics && report.rows && report.rows.length > 0;
       const totals = hasAnalytics ? (report.totals || {}) : {};
 
@@ -2744,8 +2994,7 @@
       employees.forEach(emp => {
         const ch = DATA_STORE.channelMap.get(emp.channelId) || {};
         const team = DATA_STORE.teamMap.get(emp.teamId) || {};
-        const cacheKey = `${emp.channelId}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
-        const report = analyticsReportCache.get(cacheKey);
+        const report = getEffectiveChannelReport(emp.channelId, state.startDate, state.endDate, state.currency);
         const hasAnalytics = report && report.has_analytics;
         const totals = hasAnalytics ? (report.totals || {}) : {};
 
@@ -2804,8 +3053,7 @@
     let tbodyHtml = '';
     employees.forEach((emp, idx) => {
       const ch = DATA_STORE.channelMap.get(emp.channelId) || {};
-      const cacheKey = `${emp.channelId}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
-      const report = analyticsReportCache.get(cacheKey);
+        const report = getEffectiveChannelReport(emp.channelId, state.startDate, state.endDate, state.currency);
       const hasAnalytics = report && report.has_analytics && report.rows;
       const totals = hasAnalytics ? (report.totals || {}) : {};
 
@@ -2925,8 +3173,22 @@
     if (ctx) {
       if (videoRetentionChartInstance) videoRetentionChartInstance.destroy();
 
-      const retentionLabels = ['0%', '10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'];
-      const retentionData = [100, 68.5, 59.2, 54.8, 51.5, 49.2, 47.5, 45.1, 42.8, 39.5, 34.2];
+      let retentionLabels = ['0%', '10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'];
+      let retentionData = [100, 68.5, 59.2, 54.8, 51.5, 49.2, 47.5, 45.1, 42.8, 39.5, 34.2];
+
+      if (state.viewMode === 'demo' && DEMO_STORE.isLoaded) {
+        const points = DEMO_STORE.getVideoRetention(videoId);
+        if (points && points.length > 0) {
+          retentionLabels = points.map(p => {
+            const elap = (p.elapsedVideoTimeRatio !== undefined) ? p.elapsedVideoTimeRatio : (p.elapsed_video_time_ratio || 0);
+            return `${Math.round(elap * 100)}%`;
+          });
+          retentionData = points.map(p => {
+            const watch = (p.audienceWatchRatio !== undefined) ? p.audienceWatchRatio : (p.audience_watch_ratio || 0);
+            return Number((watch * 100).toFixed(1));
+          });
+        }
+      }
 
       videoRetentionChartInstance = new Chart(ctx, {
         type: 'line',
@@ -2978,6 +3240,7 @@
       });
     }
 
+    window.videoRetentionChartInstance = videoRetentionChartInstance;
     drawer.classList.add('active');
   }
 
@@ -3103,9 +3366,92 @@
         showToast('Đang xuất file CSV Toàn Mạng Lưới BgMedia Network...');
       });
     }
+
+    // Demo Mode Buttons & Scenario Selector
+    const btnModeLive = document.getElementById('btn-mode-live');
+    const btnModeDemo = document.getElementById('btn-mode-demo');
+    const btnExitDemo = document.getElementById('btn-exit-demo-mode');
+    const selScenario = document.getElementById('demo-scenario-select');
+
+    if (btnModeLive) {
+      btnModeLive.addEventListener('click', () => switchViewMode('live'));
+    }
+    if (btnModeDemo) {
+      btnModeDemo.addEventListener('click', () => switchViewMode('demo'));
+    }
+    if (btnExitDemo) {
+      btnExitDemo.addEventListener('click', () => switchViewMode('live'));
+    }
+    if (selScenario) {
+      selScenario.addEventListener('change', (e) => {
+        state.demoScenario = e.target.value;
+        showToast(`Đã chuyển kịch bản minh họa: ${state.demoScenario}`);
+        // Refresh active channel data and active view
+        const curChanId = state.channelInfo ? state.channelInfo.id : (DATA_STORE.channels[0]?.id);
+        if (curChanId) {
+          const rep = getEffectiveChannelReport(curChanId, state.startDate, state.endDate, state.currency);
+          applyAnalyticsResponse(rep);
+        }
+        applyChannelDataToUI();
+        switchView(state.activeView || 'view-report-overview');
+      });
+    }
   }
 
-  function switchView(viewId) {
+  
+  function switchViewMode(mode) {
+    if (mode !== 'live' && mode !== 'demo') mode = 'live';
+    state.viewMode = mode;
+
+    const btnLive = document.getElementById('btn-mode-live');
+    const btnDemo = document.getElementById('btn-mode-demo');
+    const demoBanner = document.getElementById('demo-mode-banner');
+    const dsLabel = document.getElementById('data-source-label');
+
+    if (btnLive) btnLive.classList.toggle('active', mode === 'live');
+    if (btnDemo) btnDemo.classList.toggle('active', mode === 'demo');
+
+    if (mode === 'demo') {
+      if (!DEMO_STORE.isLoaded) DEMO_STORE.init();
+      if (demoBanner) demoBanner.style.display = 'flex';
+      if (dsLabel) {
+        dsLabel.textContent = 'Dữ Liệu Analytics Minh Họa · 15 Kênh';
+        dsLabel.style.color = '#F59E0B';
+      }
+      // Set default demo period (01-28 Oct 2026)
+      state.startDate = '2026-10-01';
+      state.endDate = '2026-10-28';
+      applyDateRange(state.startDate, state.endDate, '28', false);
+      showToast('Đã kích hoạt Chế độ Xem Minh Họa (Dữ liệu hư cấu data/demo-analytics)');
+    } else {
+      if (demoBanner) demoBanner.style.display = 'none';
+      if (dsLabel) {
+        dsLabel.textContent = 'Dữ Liệu Công Khai YouTube · 15 Kênh';
+        dsLabel.style.color = '#10B981';
+      }
+      const initialDates = getPresetDates('30');
+      state.startDate = initialDates.startDate;
+      state.endDate = initialDates.endDate;
+      applyDateRange(state.startDate, state.endDate, '30', false);
+      showToast('Đã trở về Chế độ Dữ Liệu Thật');
+    }
+
+    // Update current channel analytics
+    const currentChanId = state.channelInfo ? state.channelInfo.id : (DATA_STORE.channels[0]?.id);
+    if (currentChanId) {
+      if (mode === 'demo') {
+        const rep = getEffectiveChannelReport(currentChanId, state.startDate, state.endDate, state.currency);
+        applyAnalyticsResponse(rep);
+      } else {
+        fetchAndApplyAnalytics(currentChanId, state.startDate, state.endDate);
+      }
+    }
+
+    applyChannelDataToUI();
+    switchView(state.activeView || 'view-report-overview');
+  }
+
+function switchView(viewId) {
     if (!viewId) return;
     state.activeView = viewId;
 
@@ -3355,8 +3701,7 @@
     if (tbody) {
       let tbodyHtml = '';
       selectedChannels.forEach((ch, idx) => {
-        const cacheKey = `${ch.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
-        const report = analyticsReportCache.get(cacheKey);
+        const report = getEffectiveChannelReport(ch.id, state.startDate, state.endDate, state.currency);
         const hasAnalytics = report && report.has_analytics;
         const totals = hasAnalytics ? (report.totals || {}) : {};
 
@@ -3389,9 +3734,13 @@
             <td class="text-right font-mono" style="color:var(--accent-cyan); font-weight:700;">${subsKy}</td>
             <td class="text-right font-mono" style="color:var(--accent-emerald); font-weight:600;">${rpmKy}</td>
             <td class="text-center">
-              ${hasAnalytics 
-                ? '<span class="badge" style="background:rgba(16,185,129,0.15); color:#10B981; font-size:11px;"><i class="ri-checkbox-circle-line"></i> LIVE OAuth</span>' 
-                : '<span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-dim); font-size:11px;"><i class="ri-close-circle-line"></i> Chưa kết nối</span>'}
+              ${state.viewMode === 'demo'
+                ? (hasAnalytics 
+                    ? '<span class="badge" style="background:rgba(245,158,11,0.15); color:#F59E0B; font-size:11px;"><i class="ri-sparkling-fill"></i> DEMO Analytics</span>'
+                    : '<span class="badge" style="background:rgba(239,68,68,0.15); color:#EF4444; font-size:11px;"><i class="ri-alert-line"></i> Thiếu quyền</span>')
+                : (hasAnalytics 
+                    ? '<span class="badge" style="background:rgba(16,185,129,0.15); color:#10B981; font-size:11px;"><i class="ri-checkbox-circle-line"></i> LIVE OAuth</span>' 
+                    : '<span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-dim); font-size:11px;"><i class="ri-close-circle-line"></i> Chưa kết nối</span>')}
             </td>
             <td class="text-center">
               <button type="button" class="btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.appSwitchChannel('${ch.id}'); window.appSwitchView('view-report-overview');">
@@ -3416,8 +3765,7 @@
       let commonLabels = [];
 
       selectedChannels.forEach((ch, idx) => {
-        const cacheKey = `${ch.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
-        const report = analyticsReportCache.get(cacheKey);
+        const report = getEffectiveChannelReport(ch.id, state.startDate, state.endDate, state.currency);
         const color = CHANNEL_COLORS[idx % CHANNEL_COLORS.length];
 
         if (report && report.has_analytics && report.rows && report.rows.length > 0) {
@@ -3573,8 +3921,7 @@
     csv += 'STT,Kenh,Handle,Team,PIC,Subscribers_CongKhai,TongViews_CongKhai,Video_CongKhai,Views_Ky,DoanhThu_Ky,GioXem_Ky,TrangThai_OAuth\n';
 
     selectedChannels.forEach((ch, idx) => {
-      const cacheKey = `${ch.id}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
-      const report = analyticsReportCache.get(cacheKey);
+      const report = getEffectiveChannelReport(ch.id, state.startDate, state.endDate, state.currency);
       const hasAnalytics = report && report.has_analytics;
       const totals = hasAnalytics ? (report.totals || {}) : {};
 
@@ -3615,8 +3962,7 @@
     employees.forEach(emp => {
       const ch = DATA_STORE.channelMap.get(emp.channelId) || {};
       const team = DATA_STORE.teamMap.get(emp.teamId) || {};
-      const cacheKey = `${emp.channelId}_${state.startDate || '2026-10-01'}_${state.endDate || '2026-10-28'}_${state.currency}`;
-      const report = analyticsReportCache.get(cacheKey);
+        const report = getEffectiveChannelReport(emp.channelId, state.startDate, state.endDate, state.currency);
       const hasAnalytics = report && report.has_analytics;
       const totals = hasAnalytics ? (report.totals || {}) : {};
 
@@ -3766,7 +4112,21 @@
               <td class="text-right font-mono">${teamEmps.length}</td>
               <td class="text-right font-mono">${teamVids}</td>
               <td class="text-right font-mono" style="font-weight:700;">${formatNumber(teamViews)}</td>
-              <td class="text-right font-mono" style="color: var(--text-dim);">— <small>(Chưa kết nối)</small></td>
+              <td class="text-right font-mono">${(() => {
+                if (state.viewMode === 'demo') {
+                  let teamRev = 0;
+                  let hasMon = false;
+                  teamChans.forEach(c => {
+                    const r = getEffectiveChannelReport(c.id, state.startDate, state.endDate, state.currency);
+                    if (r && r.has_monetary && r.totals.estimatedRevenue != null) {
+                      hasMon = true;
+                      teamRev += Number(r.totals.estimatedRevenue);
+                    }
+                  });
+                  return hasMon ? `<span style="color:var(--accent-amber); font-weight:700;">${formatCurrency(teamRev)}</span>` : '<span style="color:var(--text-dim);">— (Chưa cấp quyền)</span>';
+                }
+                return '<span style="color:var(--text-dim);">— <small>(Chưa kết nối)</small></span>';
+              })()}</td>
               <td class="text-center">
                 <div class="quarter-share-bar" style="justify-content: center;">
                   <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: ${sharePct}%; background: ${color};"></div></div>
@@ -4868,7 +5228,12 @@
   // Expose global helpers for inline buttons
   window.appSwitchChannel = switchChannel;
   window.appSwitchView = switchView;
+  window.appSwitchViewMode = switchViewMode;
+  window.appDEMO_STORE = DEMO_STORE;
+  window.appGetEffectiveChannelReport = getEffectiveChannelReport;
   window.appToggleChannelStatus = toggleChannelStatus;
+  window.DATA_STORE = DATA_STORE;
+  window.state = state;
 
   function setupEvents() {
     elements.themeToggleBtn.addEventListener('click', () => {

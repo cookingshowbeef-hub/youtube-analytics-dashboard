@@ -2968,6 +2968,10 @@
   let projectChartRevenueInstance = null;
   let networkChartViewsInstance = null;
   let networkChartRevenueInstance = null;
+  let projectChartViews = null;
+  let projectChartRevenue = null;
+  let networkChartViews = null;
+  let networkChartRevenue = null;
   let videoRetentionChartInstance = null;
   let pivotExpandedChannels = new Set(['lunavia', '80sgroove']);
 
@@ -3451,42 +3455,341 @@
 
   // --- 3. PROJECT REPORT VIEW (VIEW 3) ---
   function renderProjectReportView() {
+    const isDemo = state.viewMode === 'demo';
+    const isDark = state.theme === 'dark';
+    const teams = DATA_STORE.teams || [];
+
+    // Update KPI cards from Demo / Snapshot data
+    let totalVideos = 0, totalViews = 0, totalMin = 0, totalRev = 0, hasMon = false;
+    DATA_STORE.channels.forEach(c => {
+      totalVideos += (c.sampleVideoCount || 10);
+      const r = getEffectiveChannelReport(c.id, state.startDate, state.endDate, state.currency);
+      if (r && r.has_analytics) {
+        totalViews += (r.totals.views || 0);
+        totalMin += (r.totals.estimatedMinutesWatched || 0);
+        if (r.has_monetary && r.totals.estimatedRevenue != null) {
+          hasMon = true;
+          totalRev += (state.currency === 'VND' && r.totals.estimatedRevenueVND != null) ? r.totals.estimatedRevenueVND : r.totals.estimatedRevenue;
+        }
+      }
+    });
+
+    const elVids = document.getElementById('val-prj-videos');
+    const elViews = document.getElementById('val-prj-views');
+    const elHours = document.getElementById('val-prj-hours');
+    const elRev = document.getElementById('val-prj-revenue');
+    if (elVids) elVids.textContent = `${totalVideos || 150} video`;
+    if (elViews) elViews.textContent = totalViews > 0 ? formatNumber(totalViews) : '—';
+    if (elHours) elHours.textContent = totalMin > 0 ? `${formatNumber(Math.round(totalMin / 60))} giờ` : '—';
+    if (elRev) elRev.textContent = hasMon ? (state.currency === 'VND' ? `${formatNumber(Math.round(totalRev))} ₫` : formatCurrency(totalRev)) : '—';
+
+    // Render Project Charts (Grouped by 3 Team Portfolios in Demo mode)
+    const ctxPrjViews = document.getElementById('projectChartViews');
+    const ctxPrjRev = document.getElementById('projectChartRevenue');
+    const TEAM_COLORS = ['#38BDF8', '#F53F3F', '#10B981'];
+
+    if (ctxPrjViews) {
+      if (projectChartViews) projectChartViews.destroy();
+      const firstRep = DATA_STORE.channels[0] ? getEffectiveChannelReport(DATA_STORE.channels[0].id, state.startDate, state.endDate, state.currency) : null;
+      const days = (firstRep && firstRep.rows) ? firstRep.rows.map(r => r.day.slice(5).replace('-', '/')) : ['10/01', '10/07', '10/14', '10/21', '10/28'];
+      const datasets = teams.map((t, idx) => {
+        const tChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
+        const daySums = new Array(days.length).fill(0);
+        tChans.forEach(c => {
+          const rep = getEffectiveChannelReport(c.id, state.startDate, state.endDate, state.currency);
+          if (rep && rep.rows) {
+            rep.rows.forEach((r, i) => { if (i < daySums.length) daySums[i] += (r.views || 0); });
+          }
+        });
+        return {
+          label: `Danh mục ${t.name}`,
+          data: daySums,
+          borderColor: TEAM_COLORS[idx % TEAM_COLORS.length],
+          backgroundColor: TEAM_COLORS[idx % TEAM_COLORS.length] + '22',
+          tension: 0.35,
+          borderWidth: 2
+        };
+      });
+      projectChartViews = new Chart(ctxPrjViews.getContext('2d'), {
+        type: 'line',
+        data: { labels: days, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { color: isDark ? '#CBD5E1' : '#334155', usePointStyle: true } } },
+          scales: {
+            x: { ticks: { color: isDark ? '#94A3B8' : '#64748B' } },
+            y: { ticks: { color: isDark ? '#94A3B8' : '#64748B', callback: v => formatCompactNumber(v) } }
+          }
+        }
+      });
+    }
+
+    if (ctxPrjRev) {
+      if (projectChartRevenue) projectChartRevenue.destroy();
+      const firstRep = DATA_STORE.channels[0] ? getEffectiveChannelReport(DATA_STORE.channels[0].id, state.startDate, state.endDate, state.currency) : null;
+      const days = (firstRep && firstRep.rows) ? firstRep.rows.map(r => r.day.slice(5).replace('-', '/')) : ['10/01', '10/07', '10/14', '10/21', '10/28'];
+      const datasets = teams.map((t, idx) => {
+        const tChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
+        const daySums = new Array(days.length).fill(0);
+        tChans.forEach(c => {
+          const rep = getEffectiveChannelReport(c.id, state.startDate, state.endDate, state.currency);
+          if (rep && rep.rows) {
+            rep.rows.forEach((r, i) => {
+              if (i < daySums.length && r.estimatedRevenue != null) {
+                daySums[i] = Number((daySums[i] + r.estimatedRevenue).toFixed(2));
+              }
+            });
+          }
+        });
+        return {
+          label: `Doanh thu ${t.name}`,
+          data: daySums,
+          borderColor: TEAM_COLORS[idx % TEAM_COLORS.length],
+          backgroundColor: TEAM_COLORS[idx % TEAM_COLORS.length] + '22',
+          tension: 0.35,
+          borderWidth: 2
+        };
+      });
+      projectChartRevenue = new Chart(ctxPrjRev.getContext('2d'), {
+        type: 'line',
+        data: { labels: days, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { color: isDark ? '#CBD5E1' : '#334155', usePointStyle: true } } },
+          scales: {
+            x: { ticks: { color: isDark ? '#94A3B8' : '#64748B' } },
+            y: { ticks: { color: isDark ? '#94A3B8' : '#64748B', callback: v => formatCurrency(v) } }
+          }
+        }
+      });
+    }
+
     const tableBody = document.getElementById('project-table-body');
     if (tableBody) {
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="14" style="text-align:center; padding: 48px 24px; color: var(--text-muted);">
-            <div style="font-size: 36px; margin-bottom: 12px; color: var(--accent-amber);"><i class="ri-folder-info-line"></i></div>
-            <div style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Chưa Cấu Hình Danh Mục Dự Án Riêng Biệt</div>
-            <div style="font-size: 13px; max-width: 580px; margin: 0 auto 16px; line-height: 1.6;">
-              Hệ thống hiện tại quản lý trực tiếp theo mô hình <strong>Đội Ngũ (Team) &rarr; Nhân Viên (PIC) &rarr; Kênh YouTube</strong>. Chưa có cấu hình danh mục dự án độc lập.
-            </div>
-            <a href="#view-mgmt-project" class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none; padding:8px 16px;" onclick="window.appSwitchView('view-mgmt-project')">
-              <i class="ri-settings-3-line"></i> Cấu hình Dự án trong Quản Lý
-            </a>
-          </td>
-        </tr>
-      `;
+      if (isDemo && teams.length > 0) {
+        let rowsHtml = '';
+        teams.forEach((t, idx) => {
+          const tChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
+          let vSum = 0, mSum = 0, rSum = 0, lSum = 0, cSum = 0, sSum = 0, monOk = false;
+          tChans.forEach(c => {
+            const rep = getEffectiveChannelReport(c.id, state.startDate, state.endDate, state.currency);
+            if (rep && rep.has_analytics) {
+              vSum += (rep.totals.views || 0);
+              mSum += (rep.totals.estimatedMinutesWatched || 0);
+              lSum += (rep.totals.likes || 0);
+              cSum += (rep.totals.comments || 0);
+              sSum += (rep.totals.shares || 0);
+              if (rep.has_monetary && rep.totals.estimatedRevenue != null) {
+                monOk = true;
+                rSum += rep.totals.estimatedRevenue;
+              }
+            }
+          });
+          const rpm = (monOk && vSum > 0) ? formatCurrency(rSum / (vSum / 1000)) : '—';
+          rowsHtml += `
+            <tr>
+              <td class="font-mono" style="color:var(--accent-cyan); font-weight:700;">PRJ-0${idx + 1}</td>
+              <td><strong>Danh Mục ${escapeHtml(t.name)} (Demo Portfolio)</strong></td>
+              <td><span class="badge" style="background:rgba(56,189,248,0.12); color:#38BDF8;">${escapeHtml(t.name)}</span></td>
+              <td>${tChans.length} kênh triển khai</td>
+              <td class="text-right font-mono">${tChans.length * 10}</td>
+              <td class="text-right font-mono" style="font-weight:700;">${formatNumber(vSum)}</td>
+              <td class="text-right font-mono">${formatNumber(Math.round(mSum / 60))}h</td>
+              <td class="text-right font-mono" style="color:var(--accent-amber); font-weight:700;">${monOk ? formatCurrency(rSum) : '—'}</td>
+              <td class="text-right font-mono" style="color:var(--accent-emerald);">${rpm}</td>
+              <td class="text-right font-mono">${formatNumber(lSum)}</td>
+              <td class="text-right font-mono">${formatNumber(cSum)}</td>
+              <td class="text-right font-mono">${formatNumber(sSum)}</td>
+              <td class="text-center font-mono">${state.endDate}</td>
+              <td class="text-center"><button type="button" class="btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.appSwitchView('view-mgmt-video')"><i class="ri-video-line"></i> Video</button></td>
+            </tr>
+          `;
+        });
+        tableBody.innerHTML = rowsHtml;
+      } else {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="14" style="text-align:center; padding: 48px 24px; color: var(--text-muted);">
+              <div style="font-size: 36px; margin-bottom: 12px; color: var(--accent-amber);"><i class="ri-folder-info-line"></i></div>
+              <div style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Chưa Cấu Hình Danh Mục Dự Án Riêng Biệt</div>
+              <div style="font-size: 13px; max-width: 580px; margin: 0 auto 16px; line-height: 1.6;">
+                Hệ thống hiện tại quản lý trực tiếp theo mô hình <strong>Đội Ngũ (Team) &rarr; Nhân Viên (PIC) &rarr; Kênh YouTube</strong>. Chưa có cấu hình danh mục dự án độc lập.
+              </div>
+              <a href="#view-mgmt-project" class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none; padding:8px 16px;" onclick="window.appSwitchView('view-mgmt-project')">
+                <i class="ri-settings-3-line"></i> Cấu hình Dự án trong Quản Lý
+              </a>
+            </td>
+          </tr>
+        `;
+      }
     }
   }
 
   function renderNetworkReportView() {
+    const isDemo = state.viewMode === 'demo';
+    const isDark = state.theme === 'dark';
+
+    // Update 4 Network KPI Cards
+    const netContainer = document.getElementById('view-report-network');
+    if (netContainer) {
+      const kpiVals = netContainer.querySelectorAll('.matrix-kpi-grid .comp-kpi-value');
+      const kpiSubs = netContainer.querySelectorAll('.matrix-kpi-grid .comp-kpi-sub');
+      const totalPubSubs = DATA_STORE.channels.reduce((s, c) => s + (c.subscriberCount || 0), 0);
+      let netViews = 0, netRev = 0, hasMon = false;
+      DATA_STORE.channels.forEach(c => {
+        const rep = getEffectiveChannelReport(c.id, state.startDate, state.endDate, state.currency);
+        if (rep && rep.has_analytics) {
+          netViews += (rep.totals.views || 0);
+          if (rep.has_monetary && rep.totals.estimatedRevenue != null) {
+            hasMon = true;
+            netRev += rep.totals.estimatedRevenue;
+          }
+        }
+      });
+      if (kpiVals[0]) kpiVals[0].textContent = `${DATA_STORE.channels.length} Kênh Trực Thuộc`;
+      if (kpiSubs[0]) kpiSubs[0].textContent = isDemo ? `15/15 kênh có dữ liệu Demo (${state.startDate} → ${state.endDate})` : 'Trạng thái quyền: Theo từng kênh';
+      if (kpiVals[1]) kpiVals[1].textContent = `${formatCompactNumber(totalPubSubs)} người`;
+      if (kpiVals[2]) kpiVals[2].textContent = isDemo ? `${formatNumber(netViews)} views` : '—';
+      if (kpiSubs[2]) kpiSubs[2].textContent = '150 video mẫu (15 kênh × 10 video)';
+      if (kpiVals[3]) kpiVals[3].textContent = (isDemo && hasMon) ? formatCurrency(netRev) : '—';
+      if (kpiSubs[3]) kpiSubs[3].innerHTML = (isDemo && hasMon && netViews > 0) ? `Doanh thu API/1.000 views: <strong>${formatCurrency(netRev / (netViews / 1000))}</strong>` : 'Chưa kết nối Monetary API';
+    }
+
+    // Render Network Charts
+    const ctxNetViews = document.getElementById('networkChartViews');
+    const ctxNetRev = document.getElementById('networkChartRevenue');
+    const firstRep = DATA_STORE.channels[0] ? getEffectiveChannelReport(DATA_STORE.channels[0].id, state.startDate, state.endDate, state.currency) : null;
+    const days = (firstRep && firstRep.rows) ? firstRep.rows.map(r => r.day.slice(5).replace('-', '/')) : ['10/01', '10/07', '10/14', '10/21', '10/28'];
+    const netViewsSeries = new Array(days.length).fill(0);
+    const netRevSeries = new Array(days.length).fill(0);
+
+    DATA_STORE.channels.forEach(c => {
+      const rep = getEffectiveChannelReport(c.id, state.startDate, state.endDate, state.currency);
+      if (rep && rep.rows) {
+        rep.rows.forEach((r, i) => {
+          if (i < days.length) {
+            netViewsSeries[i] += (r.views || 0);
+            if (r.estimatedRevenue != null) {
+              netRevSeries[i] = Number((netRevSeries[i] + r.estimatedRevenue).toFixed(2));
+            }
+          }
+        });
+      }
+    });
+
+    if (ctxNetViews) {
+      if (networkChartViews) networkChartViews.destroy();
+      networkChartViews = new Chart(ctxNetViews.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: days,
+          datasets: [{
+            label: 'Tổng Lượt Xem Toàn Network (15 Kênh)',
+            data: netViewsSeries,
+            borderColor: '#38BDF8',
+            backgroundColor: 'rgba(56, 189, 248, 0.15)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { color: isDark ? '#CBD5E1' : '#334155' } } },
+          scales: {
+            x: { ticks: { color: isDark ? '#94A3B8' : '#64748B' } },
+            y: { ticks: { color: isDark ? '#94A3B8' : '#64748B', callback: v => formatCompactNumber(v) } }
+          }
+        }
+      });
+    }
+
+    if (ctxNetRev) {
+      if (networkChartRevenue) networkChartRevenue.destroy();
+      networkChartRevenue = new Chart(ctxNetRev.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: days,
+          datasets: [{
+            label: 'Tổng Doanh Thu Ước Tính Toàn Network ($)',
+            data: netRevSeries,
+            borderColor: '#F53F3F',
+            backgroundColor: 'rgba(245, 63, 63, 0.15)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { color: isDark ? '#CBD5E1' : '#334155' } } },
+          scales: {
+            x: { ticks: { color: isDark ? '#94A3B8' : '#64748B' } },
+            y: { ticks: { color: isDark ? '#94A3B8' : '#64748B', callback: v => formatCurrency(v) } }
+          }
+        }
+      });
+    }
+
     const tableBody = document.getElementById('network-table-body');
     if (tableBody) {
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="11" style="text-align:center; padding: 48px 24px; color: var(--text-muted);">
-            <div style="font-size: 36px; margin-bottom: 12px; color: var(--accent-cyan);"><i class="ri-share-network-line"></i></div>
-            <div style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Chưa Cấu Hình Network / MCN</div>
-            <div style="font-size: 13px; max-width: 580px; margin: 0 auto 16px; line-height: 1.6;">
-              Hệ thống hiện tại quản lý trực tiếp theo mô hình <strong>Đội Ngũ &rarr; PIC &rarr; Kênh</strong>. Dữ liệu chưa liên kết với Multi-Channel Network (MCN) hoặc Content Owner CMS.
-            </div>
-            <a href="#view-mgmt-network" class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none; padding:8px 16px;" onclick="window.appSwitchView('view-mgmt-network')">
-              <i class="ri-settings-3-line"></i> Cấu hình Mạng lưới trong Quản Lý
-            </a>
-          </td>
-        </tr>
-      `;
+      if (isDemo && CHANNELS_REGISTRY.length > 0) {
+        let totalSysRev = 0;
+        const chanRows = CHANNELS_REGISTRY.map(ch => {
+          const rep = getEffectiveChannelReport(ch.id, state.startDate, state.endDate, state.currency);
+          const rev = (rep && rep.has_monetary && rep.totals.estimatedRevenue != null) ? rep.totals.estimatedRevenue : 0;
+          totalSysRev += rev;
+          return { ch, rep, rev };
+        });
+
+        tableBody.innerHTML = chanRows.map(({ ch, rep, rev }) => {
+          const t = (rep && rep.totals) || {};
+          const share = totalSysRev > 0 ? ((rev / totalSysRev) * 100).toFixed(1) : '0.0';
+          const rpm = (rep && rep.has_monetary && t.viewsWithMonetary > 0) ? formatCurrency(rev / (t.viewsWithMonetary / 1000)) : '—';
+          return `
+            <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <img src="${ch.avatar}" style="width:26px; height:26px; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'">
+                  <div>
+                    <strong style="color:var(--text-main); font-size:12.5px;">${escapeHtml(ch.title)}</strong>
+                    <div style="font-size:10.5px; color:var(--text-dim);">${escapeHtml(ch.pic)}</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge" style="background:rgba(255,255,255,0.06);">${escapeHtml(ch.team)}</span></td>
+              <td class="text-right font-mono" style="font-weight:700;">${formatNumber(t.views || 0)}</td>
+              <td class="text-right font-mono">${formatNumber(Math.round((t.estimatedMinutesWatched || 0) / 60))}h</td>
+              <td class="text-right font-mono" style="color:var(--accent-amber); font-weight:700;">${rep && rep.has_monetary ? formatCurrency(rev) : '—'}</td>
+              <td class="text-right font-mono" style="color:var(--accent-emerald);">${rpm}</td>
+              <td class="text-right font-mono" style="color:#10B981;">+${formatNumber(t.subscribersGained || 0)}</td>
+              <td class="text-right font-mono" style="color:#EF4444;">-${formatNumber(t.subscribersLost || 0)}</td>
+              <td class="text-right font-mono">${formatNumber(t.shares || 0)}</td>
+              <td class="text-center font-mono">${share}%</td>
+              <td class="text-center"><span class="badge" style="background:rgba(245,158,11,0.15); color:#F59E0B; font-size:11px;">DEMO Analytics · ${state.endDate}</span></td>
+            </tr>
+          `;
+        }).join('');
+      } else {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="11" style="text-align:center; padding: 48px 24px; color: var(--text-muted);">
+              <div style="font-size: 36px; margin-bottom: 12px; color: var(--accent-cyan);"><i class="ri-global-line"></i></div>
+              <div style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Chưa Cấu Hình Network / MCN</div>
+              <div style="font-size: 13px; max-width: 580px; margin: 0 auto 16px; line-height: 1.6;">
+                Hệ thống hiện tại quản lý trực tiếp theo mô hình <strong>Đội Ngũ &rarr; PIC &rarr; Kênh</strong>. Dữ liệu chưa liên kết với Multi-Channel Network (MCN) hoặc Content Owner CMS.
+              </div>
+              <a href="#view-mgmt-network" class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none; padding:8px 16px;" onclick="window.appSwitchView('view-mgmt-network')">
+                <i class="ri-settings-3-line"></i> Cấu hình Mạng lưới trong Quản Lý
+              </a>
+            </td>
+          </tr>
+        `;
+      }
     }
   }
   // --- 5. VIDEO RETENTION DRAWER ---
@@ -4124,8 +4427,11 @@ function switchView(viewId) {
               </div>
             </td>
             <td>
-              <div style="font-weight:600; color:var(--text-main); font-size:12px;">${escapeHtml(ch.picName || 'Chưa phân công')}</div>
-              <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(ch.team || 'BgMedia')}</div>
+              ${(() => {
+                const reg = CHANNELS_REGISTRY.find(c => c.id === ch.id) || ch;
+                return `<div style="font-weight:600; color:var(--text-main); font-size:12px;">${escapeHtml(reg.pic || ch.picName || 'Chưa phân công')}</div>
+                        <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(reg.team || ch.team || 'BgMedia')}</div>`;
+              })()}
             </td>
             <td class="text-right font-mono">${viewsKy}</td>
             <td class="text-right font-mono" style="color:var(--accent-amber); font-weight:700;">${revKy}</td>
@@ -4528,11 +4834,12 @@ function switchView(viewId) {
    */
   function renderStaffCharts() {
     const isDark = state.theme === 'dark';
+    const isDemo = state.viewMode === 'demo';
     const employees = DATA_STORE.employees;
 
     const selectEl = document.getElementById('staff-filter-user');
     if (selectEl && selectEl.options.length <= 3) {
-      let optionsHtml = '';
+      let optionsHtml = '<option value="all" selected>Tất cả 15 nhân viên</option>';
       employees.forEach(emp => {
         optionsHtml += `<option value="${emp.id}">${emp.name} (${emp.id})</option>`;
       });
@@ -4540,17 +4847,28 @@ function switchView(viewId) {
     }
 
     const labels = employees.map(e => e.name);
-    const viewsData = employees.map(e => {
+    const viewsData = [];
+    const revData = [];
+    const subsData = [];
+    const likesData = [];
+    const commentsData = [];
+
+    employees.forEach(e => {
       const ch = DATA_STORE.channelMap.get(e.channelId) || {};
-      return ch.viewCount || 0;
-    });
-    const subsData = employees.map(e => {
-      const ch = DATA_STORE.channelMap.get(e.channelId) || {};
-      return ch.subscriberCount || 0;
-    });
-    const vidsData = employees.map(e => {
-      const ch = DATA_STORE.channelMap.get(e.channelId) || {};
-      return ch.videoCount || 0;
+      const rep = getEffectiveChannelReport(e.channelId, state.startDate, state.endDate, state.currency);
+      if (isDemo && rep && rep.has_analytics) {
+        viewsData.push(rep.totals.views || 0);
+        revData.push(rep.has_monetary && rep.totals.estimatedRevenue != null ? rep.totals.estimatedRevenue : 0);
+        subsData.push((rep.totals.subscribersGained || 0) - (rep.totals.subscribersLost || 0));
+        likesData.push(rep.totals.likes || 0);
+        commentsData.push(rep.totals.comments || 0);
+      } else {
+        viewsData.push(ch.viewCount || 0);
+        revData.push(0);
+        subsData.push(ch.subscriberCount || 0);
+        likesData.push(ch.videoCount || 0);
+        commentsData.push(0);
+      }
     });
 
     if (staffChartViews) staffChartViews.destroy();
@@ -4559,7 +4877,7 @@ function switchView(viewId) {
     if (staffChartLikes) staffChartLikes.destroy();
     if (staffChartComments) staffChartComments.destroy();
 
-    const createSimpleBar = (canvasId, label, data, color) => {
+    const createSimpleBar = (canvasId, label, data, color, isCurr = false) => {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return null;
       return new Chart(canvas.getContext('2d'), {
@@ -4580,21 +4898,23 @@ function switchView(viewId) {
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: (ctx) => ` ${label}: ${formatNumber(ctx.raw)}`
+                label: (ctx) => ` ${label}: ${isCurr ? formatCurrency(ctx.raw) : formatNumber(ctx.raw)}`
               }
             }
           },
           scales: {
             x: { ticks: { color: isDark ? '#94A3B8' : '#64748B', font: { size: 10 } } },
-            y: { ticks: { color: isDark ? '#94A3B8' : '#64748B', callback: (v) => formatCompactNumber(v) } }
+            y: { ticks: { color: isDark ? '#94A3B8' : '#64748B', callback: (v) => isCurr ? formatCurrency(v) : formatCompactNumber(v) } }
           }
         }
       });
     };
 
-    staffChartViews = createSimpleBar('staffChartViews', 'Lượt xem công khai', viewsData, '#00F2FE');
-    staffChartSubs = createSimpleBar('staffChartSubs', 'Subscribers công khai', subsData, '#10B981');
-    staffChartLikes = createSimpleBar('staffChartLikes', 'Số video công khai', vidsData, '#F59E0B');
+    staffChartViews = createSimpleBar('staffChartViews', isDemo ? 'Lượt xem trong kỳ' : 'Lượt xem công khai', viewsData, '#00F2FE');
+    staffChartRevenue = createSimpleBar('staffChartRevenue', 'Doanh thu ước tính ($)', revData, '#F59E0B', true);
+    staffChartSubs = createSimpleBar('staffChartSubs', isDemo ? 'Subscribers ròng trong kỳ' : 'Subscribers công khai', subsData, '#10B981');
+    staffChartLikes = createSimpleBar('staffChartLikes', isDemo ? 'Lượt thích trong kỳ' : 'Số video công khai', likesData, '#EC4899');
+    staffChartComments = createSimpleBar('staffChartComments', 'Lượt bình luận trong kỳ', commentsData, '#8B5CF6');
   }
 
   function renderTeamReportView() {
@@ -4602,79 +4922,113 @@ function switchView(viewId) {
     if (!container) return;
 
     const teams = DATA_STORE.teams;
+    const isDemo = state.viewMode === 'demo';
+    const TEAM_COLORS = ['#38BDF8', '#F53F3F', '#10B981'];
+
+    // Calculate per-team stats
+    let totalViews = 0;
+    let totalSubs = 0;
+    let totalVideos = 0;
+    let totalSysRev = 0;
+    let anySysMon = false;
+
+    const teamStats = teams.map((t, idx) => {
+      const teamChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
+      const teamEmps = DATA_STORE.employees.filter(e => e.teamId === t.id);
+      const leaderName = t.leaderName || (teamEmps[0] ? teamEmps[0].name : '—');
+      let tViews = 0;
+      let tSubs = teamChans.reduce((sum, c) => sum + (c.subscriberCount || 0), 0);
+      let tVids = teamChans.reduce((sum, c) => sum + (c.videoCount || 0), 0);
+      let tRev = 0;
+      let hasMon = false;
+
+      if (isDemo) {
+        teamChans.forEach(c => {
+          const r = getEffectiveChannelReport(c.id, state.startDate, state.endDate, state.currency);
+          if (r && r.has_analytics) {
+            tViews += (r.totals.views || 0);
+            if (r.has_monetary && r.totals.estimatedRevenue != null) {
+              hasMon = true;
+              anySysMon = true;
+              tRev += Number(r.totals.estimatedRevenue);
+            }
+          }
+        });
+      } else {
+        tViews = teamChans.reduce((sum, c) => sum + (c.viewCount || 0), 0);
+      }
+
+      totalViews += tViews;
+      totalSubs += tSubs;
+      totalVideos += tVids;
+      totalSysRev += tRev;
+
+      return { t, idx, teamChans, teamEmps, leaderName, tViews, tSubs, tVids, tRev, hasMon, color: TEAM_COLORS[idx % TEAM_COLORS.length] };
+    });
+
+    // Update top header displays on charts
+    const elViewsSum = document.getElementById('team-views-sum-display');
+    const elRevSum = document.getElementById('team-revenue-sum-display');
+    if (elViewsSum) elViewsSum.textContent = formatNumber(totalViews);
+    if (elRevSum) elRevSum.textContent = anySysMon ? formatCurrency(totalSysRev) : '—';
+
+    // Update interactive legends
+    const legViews = document.getElementById('team-legend-views');
+    const legRev = document.getElementById('team-legend-revenue');
+    const legendHtml = teamStats.map(s => `
+      <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:16px; background:rgba(255,255,255,0.04); border:1px solid ${s.color}44; font-size:12px; color:var(--text-main);">
+        <span style="width:8px; height:8px; border-radius:50%; background:${s.color};"></span>
+        <strong>${escapeHtml(s.t.name)}</strong>
+        <span style="color:var(--text-muted); font-family:var(--font-mono);">(${s.teamChans.length} kênh)</span>
+      </span>
+    `).join('');
+    if (legViews) legViews.innerHTML = legendHtml;
+    if (legRev) legRev.innerHTML = legendHtml;
+
     const table = container.querySelector('table');
     if (table) {
       const tbody = table.querySelector('tbody');
       if (tbody) {
         let tbodyHtml = '';
-        let totalViews = 0;
-        let totalSubs = 0;
-        let totalVideos = 0;
-
-        teams.forEach(t => {
-          const teamChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
-          totalViews += teamChans.reduce((sum, c) => sum + (c.viewCount || 0), 0);
-          totalSubs += teamChans.reduce((sum, c) => sum + (c.subscriberCount || 0), 0);
-          totalVideos += teamChans.reduce((sum, c) => sum + (c.videoCount || 0), 0);
-        });
-
-        const TEAM_COLORS = ['#38BDF8', '#F53F3F', '#10B981'];
-
-        teams.forEach((t, idx) => {
-          const teamChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
-          const teamEmps = DATA_STORE.employees.filter(e => e.teamId === t.id);
-          const teamViews = teamChans.reduce((sum, c) => sum + (c.viewCount || 0), 0);
-          const teamSubs = teamChans.reduce((sum, c) => sum + (c.subscriberCount || 0), 0);
-          const teamVids = teamChans.reduce((sum, c) => sum + (c.videoCount || 0), 0);
-          const sharePct = totalViews > 0 ? ((teamViews / totalViews) * 100).toFixed(1) : '0.0';
-          const color = TEAM_COLORS[idx % TEAM_COLORS.length];
+        teamStats.forEach(s => {
+          const shareBase = (isDemo && totalSysRev > 0) ? ((s.tRev / totalSysRev) * 100) : (totalViews > 0 ? ((s.tViews / totalViews) * 100) : 0);
+          const sharePct = shareBase.toFixed(1);
+          const revCell = isDemo
+            ? (s.hasMon ? `<span style="color:var(--accent-amber); font-weight:700;">${formatCurrency(s.tRev)}</span>` : '<span style="color:var(--text-dim);">— (Chưa cấp quyền)</span>')
+            : '<span style="color:var(--text-dim);">— <small>(Chưa kết nối)</small></span>';
 
           tbodyHtml += `
             <tr>
               <td>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
-                  <strong>${escapeHtml(t.name)}</strong>
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: ${s.color};"></span>
+                  <strong>${escapeHtml(s.t.name)}</strong>
                 </div>
               </td>
-              <td>${escapeHtml(t.leaderName || '—')}</td>
-              <td><span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted);">${escapeHtml(t.description || 'Nội dung số')}</span></td>
-              <td class="text-right font-mono">${teamEmps.length}</td>
-              <td class="text-right font-mono">${teamVids}</td>
-              <td class="text-right font-mono" style="font-weight:700;">${formatNumber(teamViews)}</td>
-              <td class="text-right font-mono">${(() => {
-                if (state.viewMode === 'demo') {
-                  let teamRev = 0;
-                  let hasMon = false;
-                  teamChans.forEach(c => {
-                    const r = getEffectiveChannelReport(c.id, state.startDate, state.endDate, state.currency);
-                    if (r && r.has_monetary && r.totals.estimatedRevenue != null) {
-                      hasMon = true;
-                      teamRev += Number(r.totals.estimatedRevenue);
-                    }
-                  });
-                  return hasMon ? `<span style="color:var(--accent-amber); font-weight:700;">${formatCurrency(teamRev)}</span>` : '<span style="color:var(--text-dim);">— (Chưa cấp quyền)</span>';
-                }
-                return '<span style="color:var(--text-dim);">— <small>(Chưa kết nối)</small></span>';
-              })()}</td>
+              <td>${escapeHtml(s.leaderName)}</td>
+              <td><span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted);">${s.teamChans.length} kênh trực thuộc</span></td>
+              <td class="text-right font-mono">${s.teamEmps.length}</td>
+              <td class="text-right font-mono">${formatNumber(s.tVids)}</td>
+              <td class="text-right font-mono" style="font-weight:700;">${formatNumber(s.tViews)}</td>
+              <td class="text-right font-mono">${revCell}</td>
               <td class="text-center">
                 <div class="quarter-share-bar" style="justify-content: center;">
-                  <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: ${sharePct}%; background: ${color};"></div></div>
+                  <div class="quarter-bar-track"><div class="quarter-bar-fill" style="width: ${sharePct}%; background: ${s.color};"></div></div>
                   <span>${sharePct}%</span>
                 </div>
               </td>
-              <td class="text-center font-mono" style="color:var(--accent-cyan); font-weight:700;">${formatNumber(teamSubs)}</td>
-              <td class="text-center"><span class="badge" style="background: rgba(255, 255, 255, 0.08); color: var(--text-main);">Đang hoạt động</span></td>
+              <td class="text-center font-mono" style="color:var(--accent-cyan); font-weight:700;">${formatNumber(s.tSubs)}</td>
+              <td class="text-center"><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">Đang hoạt động</span></td>
             </tr>
           `;
         });
         tbodyHtml += `
           <tr style="font-weight: 800; background: rgba(245, 63, 63, 0.06);">
-            <td colspan="3"><strong>TỔNG HỢP TOÀN HỆ THỐNG (3 TEAMS)</strong></td>
+            <td colspan="3"><strong>TỔNG HỢP TOÀN HỆ THỐNG (3 TEAMS · 15 KÊNH)</strong></td>
             <td class="text-right font-mono">${DATA_STORE.employees.length}</td>
-            <td class="text-right font-mono">${totalVideos}</td>
+            <td class="text-right font-mono">${formatNumber(totalVideos)}</td>
             <td class="text-right font-mono" style="color: #38BDF8;">${formatNumber(totalViews)}</td>
-            <td class="text-right font-mono" style="color: var(--text-dim);">—</td>
+            <td class="text-right font-mono" style="color: var(--accent-amber); font-weight:800;">${isDemo && anySysMon ? formatCurrency(totalSysRev) : '—'}</td>
             <td class="text-center"><strong>100%</strong></td>
             <td class="text-center font-mono" style="color:var(--accent-cyan); font-weight:800;">${formatNumber(totalSubs)}</td>
             <td class="text-center"><span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-weight: 700;">15 Kênh</span></td>
@@ -4693,13 +5047,10 @@ function switchView(viewId) {
       teamChartViews = new Chart(ctxViews, {
         type: 'bar',
         data: {
-          labels: teams.map(t => t.name),
+          labels: teamStats.map(s => s.t.name),
           datasets: [{
-            label: 'Tổng Views Công Khai (Data API v3)',
-            data: teams.map(t => {
-              const teamChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
-              return teamChans.reduce((sum, c) => sum + (c.viewCount || 0), 0);
-            }),
+            label: isDemo ? 'Lượt Xem Trong Kỳ (Demo Analytics)' : 'Tổng Views Công Khai (Data API v3)',
+            data: teamStats.map(s => s.tViews),
             backgroundColor: ['rgba(56, 189, 248, 0.75)', 'rgba(245, 63, 63, 0.75)', 'rgba(16, 185, 129, 0.75)'],
             borderRadius: 6
           }]
@@ -4725,27 +5076,13 @@ function switchView(viewId) {
 
     if (ctxRev) {
       if (teamChartRevenue) teamChartRevenue.destroy();
-      const isDemo = state.viewMode === 'demo';
       teamChartRevenue = new Chart(ctxRev, {
         type: 'bar',
         data: {
-          labels: teams.map(t => t.name),
+          labels: teamStats.map(s => s.t.name),
           datasets: [{
-            label: isDemo ? `Doanh Thu Kỳ (${state.currency})` : 'Tổng Subscribers Công Khai',
-            data: teams.map(t => {
-              const teamChans = DATA_STORE.channels.filter(c => c.teamId === t.id);
-              if (isDemo) {
-                let sumR = 0;
-                teamChans.forEach(c => {
-                  const r = getEffectiveChannelReport(c.id, state.startDate, state.endDate, state.currency);
-                  if (r && r.has_monetary && r.totals.estimatedRevenue != null) {
-                    sumR += (state.currency === 'VND' && r.totals.estimatedRevenueVND != null) ? r.totals.estimatedRevenueVND : r.totals.estimatedRevenue;
-                  }
-                });
-                return Number(sumR.toFixed(2));
-              }
-              return teamChans.reduce((sum, c) => sum + (c.subscriberCount || 0), 0);
-            }),
+            label: isDemo ? `Doanh Thu Ước Tính Kỳ (${state.currency})` : 'Tổng Subscribers Công Khai',
+            data: teamStats.map(s => isDemo ? Number(s.tRev.toFixed(2)) : s.tSubs),
             backgroundColor: ['rgba(56, 189, 248, 0.75)', 'rgba(245, 63, 63, 0.75)', 'rgba(16, 185, 129, 0.75)'],
             borderRadius: 6
           }]
@@ -4757,13 +5094,13 @@ function switchView(viewId) {
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: (ctx) => ` ${ctx.dataset.label}: ${formatNumber(ctx.raw)} subs`
+                label: (ctx) => ` ${ctx.dataset.label}: ${isDemo ? formatCurrency(ctx.raw) : formatNumber(ctx.raw)}`
               }
             }
           },
           scales: {
             x: { ticks: { color: isDark ? '#94A3B8' : '#64748B' } },
-            y: { ticks: { color: isDark ? '#94A3B8' : '#64748B', callback: (v) => formatCompactNumber(v) } }
+            y: { ticks: { color: isDark ? '#94A3B8' : '#64748B', callback: (v) => isDemo ? formatCurrency(v) : formatCompactNumber(v) } }
           }
         }
       });

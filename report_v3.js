@@ -121,6 +121,7 @@
     compareTeamFilter: 'ALL',    // 'ALL' | 'TEAM-01' | 'TEAM-02' | 'TEAM-03'
     compareSortField: 'views',   // 'views' | 'netSubs' | 'videosPublished' | 'engagementRate' | 'revenue'
     compareSortAsc: false,
+    compareChartScale: 'actual', // 'actual' | 'index100' | 'log'
     // Page 4 (Staff)
     staffTab: 'ranking',            // 'ranking' ("Báo cáo NV theo số liệu") | 'compare' ("Báo cáo NV theo biểu đồ")
     staffSortField: 'views',        // 'views' | 'growth' | 'netSubs' | 'videos' | 'engagement' | 'revenue'
@@ -2041,10 +2042,13 @@
     ];
     const countryShares = allocateExactTenthsPct(countryRows.map(r => r.views));
 
+    // Item 1: Tách đủ 5 nguồn truy cập thực tế từ YouTube Analytics để dòng "Khác" (NO_LINK_OTHER) dưới ~20% và vẫn cộng đúng tổng views kênh (465.653)
     const TRAFFIC_VN_ITEMS = [
-      { key: 'PLAYLIST', label: 'Danh sách phát' },
+      { key: 'RELATED_VIDEO', label: 'Video đề xuất' },
       { key: 'SUBSCRIBER', label: 'Người đăng ký' },
-      { key: 'YT_SEARCH', label: 'Tìm kiếm YouTube' }
+      { key: 'YT_SEARCH', label: 'Tìm kiếm YouTube' },
+      { key: 'PLAYLIST', label: 'Danh sách phát' },
+      { key: 'EXT_URL', label: 'Nguồn bên ngoài' }
     ];
     const rawTraffic = (breakdowns && breakdowns.insightTrafficSourceType) ? breakdowns.insightTrafficSourceType : [];
     const rawTViewsSum = rawTraffic.reduce((s, r) => s + (r.views || 0), 0);
@@ -2060,7 +2064,7 @@
         views: rawTViewsSum > 0 ? Math.round((rawV / rawTViewsSum) * totalChViews) : 0,
         hours: (rawTHoursSum > 0 && totalChHours !== null) ? Number(((rawH / rawTHoursSum) * totalChHours).toFixed(2)) : 0
       };
-    });
+    }).sort((a, b) => (b.views || 0) - (a.views || 0));
     const sumNamedTViews = namedTraffic.reduce((s, x) => s + x.views, 0);
     const sumNamedTHours = namedTraffic.reduce((s, x) => s + (x.hours || 0), 0);
     const trafficRows = [
@@ -2935,31 +2939,59 @@
     const activeMetricTitle = metricTitleMap[v3State.channelChartMetric] || 'Views';
     const baseDiffMetric = v3State.compareSortField || v3State.channelChartMetric;
     const baseDiffMetricNames = {
-      views: 'Views',
-      netSubs: 'Sub ròng',
-      videosPublished: 'Video',
-      engagementRate: 'Tương tác',
-      revenue: 'Doanh thu'
+      views: 'views',
+      netSubs: 'sub ròng',
+      videosPublished: 'video',
+      engagementRate: 'tương tác',
+      revenue: 'doanh thu'
     };
+
+    const cmpScaleMode = ['actual', 'index100', 'log'].includes(v3State.compareChartScale)
+      ? v3State.compareChartScale
+      : 'actual';
+    v3State.compareChartScale = cmpScaleMode;
 
     // Determine status chip in Chart Header Row 1
     let statusChipVisible = false;
     let statusChipText = 'Đối chứng cùng độ dài';
     let statusChipIsError = false;
-    if (v3State.channelRefError) {
-      statusChipVisible = true;
-      statusChipText = v3State.channelRefError;
-      statusChipIsError = true;
-    } else if (baseRefWin.isUnequalLength) {
-      statusChipVisible = true;
-      statusChipText = `Đối chứng ${N} ngày, kỳ này ${M} ngày`;
-    } else if (win.isPartialQuarter) {
+    if (win.isPartialQuarter) {
       statusChipVisible = true;
       statusChipText = `Chưa trọn quý (${win.dayCount}/${win.quarterCalendarDays} ngày) · So với ${win.dayCount} ngày đầu`;
     }
 
-    // Group summary line for below the chart
+    // Group totals for table tfoot & summary line below the chart (reconciles 100% with Page 2 in USD & VND)
     const groupViewsSum = selectedPairs.reduce((s, cp) => s + (cp.curr.views || 0), 0);
+    const groupPrevViewsSum = selectedPairs.reduce((s, cp) => {
+      const rw = refWinById.get(cp.id) || baseRefWin;
+      return s + ((rw.refMetrics && rw.refMetrics.views) || 0);
+    }, 0);
+    const anySubMissing = selectedPairs.some(cp => !cp.curr.hasAnalytics && cp.curr.netSubs === null);
+    const groupSubsSum = anySubMissing ? null : selectedPairs.reduce((s, cp) => s + (cp.curr.netSubs || 0), 0);
+    const groupPrevSubsSum = anySubMissing ? null : selectedPairs.reduce((s, cp) => {
+      const rw = refWinById.get(cp.id) || baseRefWin;
+      return s + ((rw.refMetrics && rw.refMetrics.netSubs) || 0);
+    }, 0);
+    const groupVidsSum = selectedPairs.reduce((s, cp) => s + (cp.curr.videosPublished || 0), 0);
+    const groupPrevVidsSum = selectedPairs.reduce((s, cp) => {
+      const rw = refWinById.get(cp.id) || baseRefWin;
+      return s + ((rw.refMetrics && rw.refMetrics.videosPublished) || 0);
+    }, 0);
+    const groupEngNum = selectedPairs.reduce((s, cp) => s + (cp.curr.likes || 0) + (cp.curr.comments || 0) + (cp.curr.shares || 0), 0);
+    const groupEngRate = groupViewsSum > 0 ? Number(((groupEngNum / groupViewsSum) * 100).toFixed(2)) : null;
+    const groupPrevEngNum = selectedPairs.reduce((s, cp) => {
+      const rw = refWinById.get(cp.id) || baseRefWin;
+      const rm = rw.refMetrics || {};
+      return s + (rm.likes || 0) + (rm.comments || 0) + (rm.shares || 0);
+    }, 0);
+    const groupPrevEngRate = groupPrevViewsSum > 0 ? Number(((groupPrevEngNum / groupPrevViewsSum) * 100).toFixed(2)) : null;
+    const anyRevMissing = selectedPairs.some(cp => !cp.curr.hasAnalytics || !cp.curr.hasMonetary || cp.curr.estimatedRevenue === null);
+    const groupRevSum = anyRevMissing ? null : Number(selectedPairs.reduce((s, cp) => s + (cp.curr.estimatedRevenue || 0), 0).toFixed(2));
+    const groupPrevRevSum = anyRevMissing ? null : Number(selectedPairs.reduce((s, cp) => {
+      const rw = refWinById.get(cp.id) || baseRefWin;
+      return s + ((rw.refMetrics && rw.refMetrics.estimatedRevenue) || 0);
+    }, 0).toFixed(2));
+
     const groupAvgViews = selectedPairs.length > 0 ? Math.round(groupViewsSum / selectedPairs.length) : 0;
     const topGroupCh = [...selectedPairs].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0))[0];
 
@@ -2984,7 +3016,7 @@
       const arrow = diff > 0.0001 ? '▲' : (diff < -0.0001 ? '▼' : '•');
       if (isPercentPoint) {
         const sign = diff > 0.0001 ? '+' : (diff < -0.0001 ? '−' : '');
-        return `<span class="v3-delta ${cls} v3-cmp-delta">${arrow} ${sign}${Math.abs(diff).toFixed(2).replace('.', ',')} đ%</span>`;
+        return `<span class="v3-delta ${cls} v3-cmp-delta">${arrow} ${sign}${Math.abs(diff).toFixed(2).replace('.', ',')} điểm %</span>`;
       }
       return `<span class="v3-delta ${cls} v3-cmp-delta">${arrow} ${pct !== null ? fmtPct(pct) : '0,0%'}</span>`;
     };
@@ -3016,7 +3048,7 @@
                 <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:15px;"></i>
               </button>
 
-              <div class="v3-ch-picker-menu ${v3State.comparePickerOpen ? 'open' : ''}" id="v3-compare-picker-menu" style="width:430px;" role="listbox">
+              <div class="v3-ch-picker-menu ${v3State.comparePickerOpen ? 'open' : ''}" id="v3-compare-picker-menu" style="width:450px;" role="listbox">
                 <div class="v3-ch-picker-search-wrap">
                   <i class="ri-search-line"></i>
                   <input type="text" id="v3-compare-picker-search" placeholder="Tìm tên kênh, @handle, PIC..." value="${esc(v3State.comparePickerQuery)}" autocomplete="off" aria-label="Tìm kiếm kênh so sánh">
@@ -3032,6 +3064,7 @@
                     const searchBlob = `${item.meta.title} ${item.meta.handle} ${item.meta.employeeName} ${item.meta.teamName}`.toLowerCase();
                     const isChecked = v3State.compareChannelIds.includes(item.id);
                     const isBase = item.id === baseCp.id;
+                    const shortPickerTeam = item.meta.teamName.replace(/^Team\s+/i, '');
                     return `
                       <div class="v3-ch-picker-item ${isChecked ? 'active' : ''}"
                            data-cmp-toggle-id="${item.id}"
@@ -3045,7 +3078,7 @@
                           <strong>${esc(item.meta.title)} ${isBase ? '<span class="v3-badge highest" style="font-size:9.5px;padding:1px 5px;">Kênh gốc</span>' : ''}</strong>
                           <span class="v3-ch-picker-item-sub">${esc(item.meta.handle)} · PIC: ${esc(item.meta.employeeName)}</span>
                         </span>
-                        <span class="v3-badge" style="background:${item.meta.teamColor}18;color:${item.meta.teamColor};border:1px solid ${item.meta.teamColor}44;font-size:10px;">${esc(item.meta.teamName)}</span>
+                        <span class="v3-badge" style="background:${item.meta.teamColor}18;color:${item.meta.teamColor};border:1px solid ${item.meta.teamColor}44;font-size:9.8px;flex-shrink:0;white-space:nowrap;">${esc(shortPickerTeam)}</span>
                       </div>
                     `;
                   }).join('')}
@@ -3094,41 +3127,49 @@
         </div>
       </section>
 
-      <!-- 2. BẢNG SO SÁNH KÊNH (Thay thế 5 thẻ KPI ở chế độ So sánh · Khóa chiều cao 256px chống nhảy UI · Mục 8, 9, 10) -->
-      <section class="v3-panel v3-ch-kpi-locked" id="v3-channel-kpi-panel">
+      <!-- 2. BẢNG SO SÁNH KÊNH (Co chiều cao tự nhiên theo số kênh · Ghi rõ phạm vi tác động của công tắc đối chứng cho delta bảng) -->
+      <section class="v3-panel v3-ch-compare-panel" id="v3-channel-kpi-panel">
         <div class="v3-chart-a-header-row1" style="margin-bottom:8px;">
-          <div class="v3-panel-title" style="font-size:14.5px;white-space:nowrap;">
+          <div class="v3-panel-title" style="font-size:14.2px;white-space:nowrap;">
             <i class="ri-table-line" style="color:#38BDF8;"></i>
             <span>Bảng so sánh chỉ số các kênh</span>
             <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
           </div>
-          <div style="font-size:11.2px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            Dòng 1 là <strong>Kênh gốc</strong> · Nhấn tiêu đề cột để chọn chỉ số vẽ biểu đồ và sắp xếp
+          <div style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0;">
+            <span style="font-size:11px;color:var(--text-muted);" id="v3-cmp-ref-scope-note">
+              Delta trong bảng so với <strong>${esc(baseRefWin.refModeName)} (${esc(baseRefWin.refRangeShort)})</strong>:
+            </span>
+            <div class="v3-preset-group" id="v3-channel-ref-mode-group" role="group" aria-label="Chọn kỳ đối chứng cho delta trong bảng so sánh">
+              <button type="button" class="v3-preset-btn ${baseRefWin.mode === 'prev' ? 'active' : ''}" data-ch-ref-mode="prev" title="Chỉ tác động tới cột delta trong bảng so sánh">Kỳ trước</button>
+              <button type="button" class="v3-preset-btn ${baseRefWin.mode === 'prev_quarter' ? 'active' : ''}" data-ch-ref-mode="prev_quarter" title="Chỉ tác động tới cột delta trong bảng so sánh">Quý trước</button>
+              <button type="button" class="v3-preset-btn ${baseRefWin.mode === 'yoy' ? 'active' : ''}" data-ch-ref-mode="yoy" ${!allHaveYoY ? 'disabled' : ''} title="Chỉ tác động tới cột delta trong bảng so sánh">Cùng kỳ năm ngoái</button>
+            </div>
+            <span style="font-size:10.5px;color:var(--text-dim);">· Nhấn tiêu đề cột để sắp xếp</span>
           </div>
         </div>
 
-        <div class="v3-ch-compare-table-wrap" id="v3-channel-compare-table-wrap">
+        <div class="v3-ch-compare-table-wrap is-dynamic-height" id="v3-channel-compare-table-wrap">
           <table class="v3-table v3-ch-compare-table" id="v3-channel-compare-table">
             <thead>
               <tr>
-                <th style="width:22%;">Kênh YouTube</th>
-                <th style="width:14.5%;" class="num is-sortable-col ${v3State.channelChartMetric === 'views' ? 'is-active-metric-col' : ''}" data-cmp-col="views" title="Nhấn để vẽ biểu đồ Views và sắp xếp">
+                <th style="width:28.5%;">Kênh YouTube &amp; Team</th>
+                <th style="width:12.5%;" class="num is-sortable-col ${v3State.channelChartMetric === 'views' ? 'is-active-metric-col' : ''}" data-cmp-col="views" title="Nhấn để vẽ biểu đồ Views và sắp xếp">
                   Views ${sortArrow('views')}
                 </th>
-                <th style="width:12%;" class="num is-sortable-col ${v3State.channelChartMetric === 'netSubs' ? 'is-active-metric-col' : ''}" data-cmp-col="netSubs" title="Nhấn để vẽ biểu đồ Sub ròng và sắp xếp">
+                <th style="width:11.0%;" class="num is-sortable-col ${v3State.channelChartMetric === 'netSubs' ? 'is-active-metric-col' : ''}" data-cmp-col="netSubs" title="Nhấn để vẽ biểu đồ Sub ròng và sắp xếp">
                   Sub ròng ${sortArrow('netSubs')}
                 </th>
-                <th style="width:9.5%;" class="num is-sortable-col ${v3State.channelChartMetric === 'videosPublished' ? 'is-active-metric-col' : ''}" data-cmp-col="videosPublished" title="Nhấn để vẽ biểu đồ Video đăng và sắp xếp">
+                <th style="width:8.5%;" class="num is-sortable-col ${v3State.channelChartMetric === 'videosPublished' ? 'is-active-metric-col' : ''}" data-cmp-col="videosPublished" title="Nhấn để vẽ biểu đồ Video đăng và sắp xếp">
                   Video ${sortArrow('videosPublished')}
                 </th>
-                <th style="width:11.5%;" class="num is-sortable-col" data-cmp-col="engagementRate" title="Không có biểu đồ theo ngày (Nhấn để sắp xếp theo Tỷ lệ tương tác)">
+                <th style="width:12.0%;" class="num is-sortable-col" data-cmp-col="engagementRate" title="Không có biểu đồ theo ngày (Nhấn để sắp xếp theo Tỷ lệ tương tác)">
                   Tương tác ${sortArrow('engagementRate')}
                 </th>
-                <th style="width:14%;" class="num is-sortable-col ${v3State.channelChartMetric === 'revenue' ? 'is-active-metric-col' : ''}" data-cmp-col="revenue" title="Nhấn để vẽ biểu đồ Doanh thu và sắp xếp">
+                <th style="width:12.5%;" class="num is-sortable-col ${v3State.channelChartMetric === 'revenue' ? 'is-active-metric-col' : ''}" data-cmp-col="revenue" title="Nhấn để vẽ biểu đồ Doanh thu và sắp xếp">
                   Doanh thu ${sortArrow('revenue')}
                 </th>
-                <th class="num" style="width:16.5%;" title="Chênh lệch chỉ số đang chọn (${esc(baseDiffMetricNames[baseDiffMetric] || 'Views')}) so với Kênh gốc ở dòng 1">
-                  Chênh vs kênh gốc
+                <th class="num" id="v3-cmp-diff-col-header" style="width:15.0%;" title="Chênh lệch ${esc(baseDiffMetricNames[baseDiffMetric] || 'views')} so với Kênh gốc ở dòng 1">
+                  Chênh ${esc(baseDiffMetricNames[baseDiffMetric] || 'views')} vs kênh gốc
                 </th>
               </tr>
             </thead>
@@ -3149,6 +3190,7 @@
                 const isBaseRow = rowIdx === 0;
                 const revMissing = !curr.hasAnalytics || !curr.hasMonetary || curr.estimatedRevenue === null;
                 const subMissing = !curr.hasAnalytics && curr.netSubs === null;
+                const shortTeamName = cp.meta.teamName.replace(/^Team\s+/i, '');
 
                 // Diff vs baseCp on baseDiffMetric
                 let diffVsBaseHtml = '';
@@ -3178,11 +3220,14 @@
                       data-row-eng="${curr.engagementRate !== null ? curr.engagementRate : ''}"
                       data-row-rev="${curr.estimatedRevenue !== null ? curr.estimatedRevenue : ''}">
                     <td>
-                      <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                        <span class="v3-team-dot" style="background:${cp.meta.channelColor};" data-channel-color="${cp.meta.channelColor}"></span>
-                        <strong style="color:var(--text-main);">${esc(cp.meta.title)}</strong>
+                      <div class="v3-cmp-ch-cell">
+                        <span class="v3-team-dot" style="background:${cp.meta.channelColor};flex-shrink:0;" data-channel-color="${cp.meta.channelColor}"></span>
+                        <strong class="v3-cmp-ch-name">${esc(cp.meta.title)}</strong>
                         ${isBaseRow ? `<span class="v3-cmp-base-tag">Kênh gốc</span>` : ''}
-                        <span style="color:var(--text-dim);font-size:10.5px;">· ${esc(cp.meta.teamName)}</span>
+                        <span class="v3-badge v3-cmp-team-badge" style="background:${cp.meta.teamColor}1D;color:${cp.meta.teamColor};border:1px solid ${cp.meta.teamColor}50;">
+                          <span class="v3-team-dot" style="background:${cp.meta.teamColor};"></span>
+                          <span>${esc(shortTeamName)}</span>
+                        </span>
                       </div>
                     </td>
                     <td class="num">
@@ -3226,11 +3271,61 @@
                 `;
               }).join('')}
             </tbody>
+            <tfoot>
+              <tr id="v3-channel-compare-total-row"
+                  data-group-views="${groupViewsSum}"
+                  data-group-prev-views="${groupPrevViewsSum}"
+                  data-group-subs="${groupSubsSum ?? ''}"
+                  data-group-vids="${groupVidsSum}"
+                  data-group-eng="${groupEngRate ?? ''}"
+                  data-group-rev="${groupRevSum ?? ''}">
+                <td>
+                  <strong>Tổng nhóm (${orderedPairs.length} kênh đang chọn)</strong>
+                </td>
+                <td class="num">
+                  <div class="v3-cmp-cell-inner">
+                    <strong>${fmtInt(groupViewsSum)}</strong>
+                    ${fmtCompactCellDelta(groupViewsSum, groupPrevViewsSum)}
+                  </div>
+                </td>
+                <td class="num">
+                  ${groupSubsSum === null ? `<span class="v3-no-oauth-cell">Chưa cấp quyền</span>` : `
+                    <div class="v3-cmp-cell-inner">
+                      <strong>${groupSubsSum > 0 ? '+' + fmtInt(groupSubsSum) : fmtInt(groupSubsSum)}</strong>
+                      ${fmtCompactCellDelta(groupSubsSum, groupPrevSubsSum)}
+                    </div>
+                  `}
+                </td>
+                <td class="num">
+                  <div class="v3-cmp-cell-inner">
+                    <strong>${fmtInt(groupVidsSum)}</strong>
+                    ${fmtCompactCellDelta(groupVidsSum, groupPrevVidsSum)}
+                  </div>
+                </td>
+                <td class="num">
+                  <div class="v3-cmp-cell-inner">
+                    <strong>${groupEngRate !== null ? fmtDec(groupEngRate, 2) + '%' : '—'}</strong>
+                    ${fmtCompactCellDelta(groupEngRate, groupPrevEngRate, false, true)}
+                  </div>
+                </td>
+                <td class="num">
+                  ${groupRevSum === null ? `<span class="v3-no-oauth-cell">Chưa cấp quyền</span>` : `
+                    <div class="v3-cmp-cell-inner">
+                      <strong>${fmtMoney(groupRevSum)}</strong>
+                      ${fmtCompactCellDelta(groupRevSum, groupPrevRevSum, true)}
+                    </div>
+                  `}
+                </td>
+                <td class="num">
+                  <span style="font-size:10.5px;color:var(--text-muted);">TB: ${fmtInt(groupAvgViews)} views/kênh</span>
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </section>
 
-      <!-- 3. BIỂU ĐỒ ĐƯỜNG ĐA KÊNH THEO NGÀY (Không vẽ đường kỳ đối chứng · Cùng chiều cao & vị trí 348px · Mục 8 & 10) -->
+      <!-- 3. BIỂU ĐỒ ĐƯỜNG ĐA KÊNH THEO NGÀY (Công tắc "Thực tế | Chuẩn hóa (ngày đầu = 100) | Thang log", không có "So với", trục X "Ngày") -->
       <section class="v3-panel v3-ch-trend-locked" id="v3-channel-trend-panel">
         <div class="v3-chart-a-header" id="v3-channel-chart-header">
           <div class="v3-chart-a-header-row1" id="v3-channel-chart-header-row1">
@@ -3239,38 +3334,23 @@
               <span id="v3-channel-chart-title">Xu hướng ${esc(activeMetricTitle)} theo ngày — ${selectedPairs.length} kênh</span>
               <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
             </div>
-            <span class="v3-chart-status-chip ${statusChipVisible ? 'is-visible' : 'is-hidden'} ${statusChipIsError ? 'is-error' : ''}" id="v3-channel-chart-status-chip">
-              <span class="v3-chart-status-chip-text">${esc(statusChipText)}</span>
-            </span>
+            <div style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0;">
+              <span class="v3-chart-status-chip ${statusChipVisible ? 'is-visible' : 'is-hidden'} ${statusChipIsError ? 'is-error' : ''}" id="v3-channel-chart-status-chip">
+                <span class="v3-chart-status-chip-text">${esc(statusChipText)}</span>
+              </span>
+              <div class="v3-preset-group" id="v3-compare-scale-switch" role="group" aria-label="Chế độ thang đo biểu đồ so sánh kênh">
+                <button type="button" class="v3-preset-btn ${cmpScaleMode === 'actual' ? 'active' : ''}" data-cmp-scale="actual" title="Hiển thị giá trị thực tế theo ngày">Thực tế</button>
+                <button type="button" class="v3-preset-btn ${cmpScaleMode === 'index100' ? 'active' : ''}" data-cmp-scale="index100" title="Quy chuẩn ngày đầu tiên của kỳ = 100 để so sánh tốc độ tăng trưởng">Chuẩn hóa (ngày đầu = 100)</button>
+                <button type="button" class="v3-preset-btn ${cmpScaleMode === 'log' ? 'active' : ''}" data-cmp-scale="log" title="Thang đo logarit cơ số 10 giúp quan sát đồng thời kênh lớn và kênh nhỏ">Thang log</button>
+              </div>
+            </div>
           </div>
 
           <div class="v3-chart-a-header-row2" id="v3-channel-chart-header-row2">
-            <span style="font-size:11.5px;color:var(--text-muted);font-weight:700;flex-shrink:0;">So với:</span>
-            <div class="v3-preset-group" id="v3-channel-ref-mode-group" role="group" aria-label="Chọn kỳ đối chứng cho bảng so sánh">
-              <button type="button" class="v3-preset-btn ${baseRefWin.mode === 'prev' ? 'active' : ''}" data-ch-ref-mode="prev">Kỳ trước</button>
-              <button type="button" class="v3-preset-btn ${baseRefWin.mode === 'prev_quarter' ? 'active' : ''}" data-ch-ref-mode="prev_quarter">Quý trước</button>
-              <button type="button" class="v3-preset-btn ${baseRefWin.mode === 'yoy' ? 'active' : ''}" data-ch-ref-mode="yoy" ${!allHaveYoY ? 'disabled' : ''}>Cùng kỳ năm ngoái</button>
-              <button type="button" class="v3-preset-btn ${baseRefWin.mode === 'custom' ? 'active' : ''}" data-ch-ref-mode="custom">Tùy chỉnh</button>
-            </div>
-
-            <div class="v3-chart-period-slot" id="v3-channel-ref-date-slot">
-              ${baseRefWin.mode === 'custom' ? `
-                <div class="v3-chart-custom-dates" id="v3-ch-ref-custom-dates">
-                  <input type="date" id="v3-ch-ref-start" class="v3-select v3-select-sm v3-chart-date-input" value="${baseRefWin.refStart}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày đối chứng">
-                  <span class="v3-chart-date-sep">→</span>
-                  <input type="date" id="v3-ch-ref-end" class="v3-select v3-select-sm v3-chart-date-input" value="${baseRefWin.refEnd}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày đối chứng">
-                </div>
-              ` : `
-                <select id="v3-ch-ref-fixed-select" class="v3-select v3-select-sm v3-chart-slot-control" disabled aria-label="Khoảng ngày kỳ đối chứng">
-                  <option>${baseRefWin.refRangeFullVN} (${baseRefWin.refDayCount} ngày)</option>
-                </select>
-              `}
-            </div>
-
-            <div class="v3-preset-group" id="v3-ch-unequal-mode-group" style="display:${baseRefWin.isUnequalLength ? 'inline-flex' : 'none'};" role="group" aria-label="Chế độ tính delta khi kỳ đối chứng khác số ngày">
-              <button type="button" class="v3-preset-btn ${v3State.channelUnequalMode === 'avg' ? 'active' : ''}" data-ch-unequal-mode="avg">Trung bình/ngày</button>
-              <button type="button" class="v3-preset-btn ${v3State.channelUnequalMode === 'total' ? 'active' : ''}" data-ch-unequal-mode="total">Tổng</button>
-            </div>
+            <span style="font-size:11.2px;color:var(--text-muted);white-space:nowrap;">
+              <i class="ri-information-line" style="color:#38BDF8;"></i>
+              Biểu đồ vẽ trực tiếp <strong>${selectedPairs.length} kênh</strong> trong kỳ đang chọn (${currRangeShort}) · Không vẽ đường kỳ đối chứng
+            </span>
 
             <!-- Chú giải màu cố định của các kênh đang so sánh nằm ngay trên hàng 2 -->
             <div class="v3-ch-inline-legend" id="v3-channel-inline-legend">
@@ -3298,8 +3378,18 @@
       </section>
     `;
 
-    // Render Multi-Channel Daily Line Chart (1 line per channel, NO reference period line)
+    // Render Multi-Channel Daily Line Chart (1 line per channel, supports Actual | Index100 | Log scale)
     renderCompareChannelChart(selectedPairs, snap);
+
+    // Bind Scale Switch ("Thực tế | Chuẩn hóa (ngày đầu = 100) | Thang log")
+    body.querySelectorAll('[data-cmp-scale]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const nextScale = btn.getAttribute('data-cmp-scale') || 'actual';
+        if (v3State.compareChartScale === nextScale) return;
+        v3State.compareChartScale = nextScale;
+        renderChannelPage(snap);
+      });
+    });
 
     // Bind Mode Switch ("Một kênh | So sánh kênh")
     body.querySelectorAll('[data-ch-mode]').forEach(btn => {
@@ -3502,6 +3592,9 @@
     if (!canvas || typeof Chart === 'undefined') return;
 
     const metric = v3State.channelChartMetric || 'views';
+    const scaleMode = ['actual', 'index100', 'log'].includes(v3State.compareChartScale)
+      ? v3State.compareChartScale
+      : 'actual';
     const currDays = snap.win.days || [];
     const labels = currDays.map(d => formatIsoToShortVN(d));
 
@@ -3516,27 +3609,77 @@
       return fmtInt(val);
     };
 
-    // Item 8: Mỗi kênh một đường theo ngày, màu cố định, KHÔNG vẽ đường kỳ đối chứng
+    // Item 8 & Item 3: Mỗi kênh một đường theo ngày, màu cố định, hỗ trợ Thực tế | Chuẩn hóa (ngày đầu = 100) | Thang log
     const datasets = selectedPairs.map((cp, idx) => {
       const color = cp.meta.channelColor || cp.meta.teamColor;
-      const data = currDays.map(d => {
+      const rawData = currDays.map(d => {
         const pt = cp.curr.dailyMap.get(d);
         if (!pt || pt[metric] === undefined || pt[metric] === null) return null;
         if (metric === 'revenue' && (!cp.curr.hasAnalytics || !cp.curr.hasMonetary)) return null;
         if (metric === 'netSubs' && !cp.curr.hasAnalytics && cp.curr.netSubs === null) return null;
-        return pt[metric];
+        return Number(pt[metric]);
       });
+
+      const firstNonZero = rawData.find(v => v !== null && v !== undefined && Number(v) !== 0) || 1;
+      const data = rawData.map(v => {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return null;
+        if (scaleMode === 'index100') {
+          return Number(((v / Math.abs(firstNonZero)) * 100).toFixed(1));
+        }
+        if (scaleMode === 'log') {
+          return Math.max(1, Number(v));
+        }
+        return v;
+      });
+
       return {
         label: cp.meta.title,
         data,
+        _rawData: rawData,
         borderColor: color,
-        backgroundColor: idx === 0 ? color + '14' : 'transparent',
+        backgroundColor: idx === 0 && scaleMode === 'actual' ? color + '14' : 'transparent',
         borderWidth: idx === 0 ? 2.6 : 2.1,
         pointRadius: 2.0,
         tension: 0.3,
-        fill: idx === 0
+        fill: idx === 0 && scaleMode === 'actual'
       };
     });
+
+    const yScaleConfig = scaleMode === 'log'
+      ? {
+          type: 'logarithmic',
+          ticks: {
+            color: '#94A3B8',
+            callback: function (val) {
+              const num = Number(val);
+              if (!num || num <= 0) return '';
+              const log10 = Math.log10(num);
+              const frac = log10 - Math.floor(log10);
+              const isCleanStep = Math.abs(frac) < 0.02 || Math.abs(frac - Math.log10(2)) < 0.02 || Math.abs(frac - Math.log10(5)) < 0.02;
+              if (!isCleanStep) return '';
+              if (metric === 'revenue') return fmtMoney(num);
+              return new Intl.NumberFormat('vi-VN').format(Math.round(num));
+            }
+          },
+          grid: { color: 'rgba(255,255,255,0.06)' }
+        }
+      : {
+          type: 'linear',
+          beginAtZero: scaleMode === 'actual' && metric !== 'netSubs',
+          min: (scaleMode === 'actual' && metric !== 'netSubs') ? 0 : undefined,
+          ticks: {
+            color: '#94A3B8',
+            precision: 0,
+            callback: function (val) {
+              if (scaleMode === 'index100') {
+                return new Intl.NumberFormat('vi-VN').format(Math.round(val));
+              }
+              if (metric === 'revenue') return fmtMoney(val);
+              return new Intl.NumberFormat('vi-VN').format(Math.round(val));
+            }
+          },
+          grid: { color: 'rgba(255,255,255,0.06)' }
+        };
 
     chartInstances['channelSingle'] = new Chart(canvas.getContext('2d'), {
       type: 'line',
@@ -3562,7 +3705,12 @@
                 return `Ngày ${dCurr ? formatIsoToVN(dCurr) : '—'} (Ngày thứ ${idx + 1} của kỳ)`;
               },
               label: function (ctx) {
-                return ` ${ctx.dataset.label}: ${fmtChartMetricVal(ctx.parsed.y)}`;
+                const rawArr = ctx.dataset._rawData || [];
+                const rawVal = rawArr[ctx.dataIndex];
+                if (scaleMode === 'index100') {
+                  return ` ${ctx.dataset.label}: Chỉ số ${fmtDec(ctx.parsed.y, 1)} (Thực tế: ${fmtChartMetricVal(rawVal)})`;
+                }
+                return ` ${ctx.dataset.label}: ${fmtChartMetricVal(rawVal !== undefined ? rawVal : ctx.parsed.y)}`;
               }
             }
           }
@@ -3571,7 +3719,7 @@
           x: {
             title: {
               display: true,
-              text: 'Ngày trong kỳ',
+              text: 'Ngày',
               color: '#94A3B8',
               font: { size: 11, weight: '600' },
               padding: { top: 2, bottom: 0 }
@@ -3596,19 +3744,7 @@
             },
             grid: { color: 'rgba(255,255,255,0.04)' }
           },
-          y: {
-            beginAtZero: metric !== 'netSubs',
-            min: metric !== 'netSubs' ? 0 : undefined,
-            ticks: {
-              color: '#94A3B8',
-              precision: 0,
-              callback: function (val) {
-                if (metric === 'revenue') return fmtMoney(val);
-                return new Intl.NumberFormat('vi-VN').format(Math.round(val));
-              }
-            },
-            grid: { color: 'rgba(255,255,255,0.06)' }
-          }
+          y: yScaleConfig
         }
       }
     });

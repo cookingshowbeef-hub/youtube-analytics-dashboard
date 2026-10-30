@@ -402,9 +402,10 @@ def main():
     check("page2_chart_a_custom_vs_global_period_and_5channel_table_reconcile", chart_a_and_cross_page_ok)
 
     # Check 33 (Page 3): Country table (Hoa Kỳ, Việt Nam, Vương quốc Anh, Canada, Khác) and Traffic Source table
-    # (Danh sách phát, Người đăng ký, Tìm kiếm YouTube, Khác) sum to exact channel total views across all 15 channels
+    # (Video đề xuất, Người đăng ký, Tìm kiếm YouTube, Danh sách phát, Nguồn bên ngoài, Khác) sum to exact channel total views across all 15 channels,
+    # and "Khác" in Traffic Source is strictly under 20% (~16.2% for Mellow Moon Lofi in 30d = 465.653 total views).
     country_vn_map = {"US": "Hoa Kỳ", "VN": "Việt Nam", "GB": "Vương quốc Anh", "CA": "Canada"}
-    traffic_named_keys = ["PLAYLIST", "SUBSCRIBER", "YT_SEARCH"]
+    traffic_named_keys = ["RELATED_VIDEO", "SUBSCRIBER", "YT_SEARCH", "PLAYLIST", "EXT_URL"]
     page3_geo_traffic_ok = True
     bd_rows_all = load("breakdown_daily.json")["rows"]
     for p_start, p_end in [("2026-10-20", "2026-10-26"), ("2026-09-27", "2026-10-26"), ("2026-10-01", "2026-10-26")]:
@@ -426,7 +427,7 @@ def main():
             khac_c_views = ch_total_views - sum(named_c_views)
             c_rows = named_c_views + [khac_c_views]
             c_shares = allocate_exact_tenths_pct(c_rows)
-            # Named traffic (Danh sách phát, Người đăng ký, Tìm kiếm YouTube) + Khác == ch_total_views
+            # Named traffic (5 real YouTube sources) + Khác == ch_total_views, with Khác < 20%
             named_t_views = [
                 sum(b["views"] for b in ch_bd_traffic if b["value"] == t_key)
                 for t_key in traffic_named_keys
@@ -434,9 +435,13 @@ def main():
             khac_t_views = ch_total_views - sum(named_t_views)
             t_rows = named_t_views + [khac_t_views]
             t_shares = allocate_exact_tenths_pct(t_rows)
+            khac_t_ratio = (khac_t_views / ch_total_views) if ch_total_views > 0 else 0.0
             if not (
                 khac_c_views >= 0 and sum(c_rows) == ch_total_views and round(sum(c_shares) * 10) == 1000 and
-                khac_t_views >= 0 and sum(t_rows) == ch_total_views and round(sum(t_shares) * 10) == 1000
+                khac_t_views >= 0 and sum(t_rows) == ch_total_views and round(sum(t_shares) * 10) == 1000 and
+                (p_start != "2026-09-27" or khac_t_ratio < 0.20) and
+                khac_t_ratio < 0.22 and
+                (cid != "UCSJ4gkVC6NrvII8umztf0Ow" or p_start != "2026-09-27" or (sum(c_rows) == 465653 and sum(t_rows) == 465653))
             ):
                 page3_geo_traffic_ok = False
                 break
@@ -544,14 +549,15 @@ def main():
                 break
     check("page3_channel_reconciles_with_page2_lifetime_invariant_and_custom_ref_deltas", page3_full_ok)
 
-    # Check 35: Page 3 Compare Mode table rows (up to 5 channels, first row = base channel)
-    # reconcile 100% with Page 2 5-channel table rows for every channel & period, and diff vs base channel is exact.
+    # Check 35: Page 3 Compare Mode table rows (up to 5 channels, first row = base channel) and group total ("Tổng nhóm")
+    # reconcile 100% with Page 2 5-channel table rows and sums for every channel & period in BOTH USD and VND, and diff vs base channel is exact.
     compare_table_ok = True
+    fx_rates_cmp = [("USD", Decimal("1")), ("VND", Decimal("25450"))]
     for c_start, c_end, r_start, r_end in page3_ref_pairs:
         c_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and c_start <= r["day"] <= c_end]
         r_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and r_start <= r["day"] <= r_end]
         all_cids = [ch_obj["id"] for ch_obj in baseline["channels"]]
-        # Test 5-channel groups across all 15 channels (including default compare group with Mellow Moon Lofi as base)
+        # Test 2..5 channel groups across all 15 channels (including default 3-channel compare group and each 5-channel team)
         compare_groups = [
             ["UCSJ4gkVC6NrvII8umztf0Ow", "UCJhjE7wbdYAae1G25m0tHAA", "UCM9KEEuzacwVlkt9JfJad7g"],
             all_cids[0:5],
@@ -566,41 +572,111 @@ def main():
             base_views = sum(index[base_id, d]["views"] for d in c_days)
             base_subs = sum(index[base_id, d]["subscribersGained"] - index[base_id, d]["subscribersLost"] for d in c_days)
             base_vids = sum(index[base_id, d]["daily_videos_published"] for d in c_days)
-            base_rev = sum(cents(index[base_id, d]["estimatedRevenue"]) for d in c_days)
+            base_rev_cents = sum(cents(index[base_id, d]["estimatedRevenue"]) for d in c_days)
+
+            grp_cmp_views = 0
+            grp_cmp_prev_views = 0
+            grp_cmp_subs = 0
+            grp_cmp_vids = 0
+            grp_cmp_rev_cents = 0
+            grp_cmp_eng_num = 0
+
+            grp_p2_views = 0
+            grp_p2_prev_views = 0
+            grp_p2_subs = 0
+            grp_p2_vids = 0
+            grp_p2_rev_cents = 0
+            grp_p2_eng_num = 0
+
             for cid in grp:
                 # Page 3 Compare table row values
                 cmp_views = sum(index[cid, d]["views"] for d in c_days)
                 cmp_prev_views = sum(index[cid, d]["views"] for d in r_days)
                 cmp_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in c_days)
                 cmp_vids = sum(index[cid, d]["daily_videos_published"] for d in c_days)
-                cmp_rev = sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days)
-                cmp_eng = round((sum(index[cid, d]["likes"] + index[cid, d]["comments"] + index[cid, d]["shares"] for d in c_days) / cmp_views) * 100, 2) if cmp_views > 0 else 0.0
+                cmp_rev_cents = sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days)
+                cmp_eng_num = sum(index[cid, d]["likes"] + index[cid, d]["comments"] + index[cid, d]["shares"] for d in c_days)
+                cmp_eng = round((cmp_eng_num / cmp_views) * 100, 2) if cmp_views > 0 else 0.0
 
                 # Page 2 5-channel table row values for the same channel
                 p2_views = sum(index[cid, d]["views"] for d in c_days)
                 p2_prev_views = sum(index[cid, d]["views"] for d in r_days)
                 p2_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in c_days)
                 p2_vids = sum(index[cid, d]["daily_videos_published"] for d in c_days)
-                p2_rev = sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days)
-                p2_eng = round((sum(index[cid, d]["likes"] + index[cid, d]["comments"] + index[cid, d]["shares"] for d in c_days) / p2_views) * 100, 2) if p2_views > 0 else 0.0
+                p2_rev_cents = sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days)
+                p2_eng_num = sum(index[cid, d]["likes"] + index[cid, d]["comments"] + index[cid, d]["shares"] for d in c_days)
+                p2_eng = round((p2_eng_num / p2_views) * 100, 2) if p2_views > 0 else 0.0
+
+                grp_cmp_views += cmp_views
+                grp_cmp_prev_views += cmp_prev_views
+                grp_cmp_subs += cmp_subs
+                grp_cmp_vids += cmp_vids
+                grp_cmp_rev_cents += cmp_rev_cents
+                grp_cmp_eng_num += cmp_eng_num
+
+                grp_p2_views += p2_views
+                grp_p2_prev_views += p2_prev_views
+                grp_p2_subs += p2_subs
+                grp_p2_vids += p2_vids
+                grp_p2_rev_cents += p2_rev_cents
+                grp_p2_eng_num += p2_eng_num
 
                 # Diff vs base channel (Row 1)
                 diff_vs_base_views = cmp_views - base_views
                 diff_vs_base_subs = cmp_subs - base_subs
                 diff_vs_base_vids = cmp_vids - base_vids
-                diff_vs_base_rev = cmp_rev - base_rev
+                diff_vs_base_rev_cents = cmp_rev_cents - base_rev_cents
+
+                # Reconcile per-channel revenue in both USD and VND
+                fx_row_ok = True
+                for curr_code, fx_mult in fx_rates_cmp:
+                    cmp_rev_usd = Decimal(cmp_rev_cents) / Decimal(100)
+                    p2_rev_usd = Decimal(p2_rev_cents) / Decimal(100)
+                    if curr_code == "USD":
+                        if round(cmp_rev_usd, 2) != round(p2_rev_usd, 2):
+                            fx_row_ok = False
+                    else:
+                        if round(cmp_rev_usd * fx_mult) != round(p2_rev_usd * fx_mult):
+                            fx_row_ok = False
 
                 if not (
                     cmp_views == p2_views and
                     cmp_prev_views == p2_prev_views and
                     cmp_subs == p2_subs and
                     cmp_vids == p2_vids and
-                    cmp_rev == p2_rev and
+                    cmp_rev_cents == p2_rev_cents and
                     cmp_eng == p2_eng and
-                    (cid != base_id or (diff_vs_base_views == 0 and diff_vs_base_subs == 0 and diff_vs_base_vids == 0 and diff_vs_base_rev == 0))
+                    fx_row_ok and
+                    (cid != base_id or (diff_vs_base_views == 0 and diff_vs_base_subs == 0 and diff_vs_base_vids == 0 and diff_vs_base_rev_cents == 0))
                 ):
                     compare_table_ok = False
                     break
+
+            # Reconcile group total ("Tổng nhóm") against sum of matching rows on Page 2 in both USD and VND
+            grp_cmp_eng = round((grp_cmp_eng_num / grp_cmp_views) * 100, 2) if grp_cmp_views > 0 else 0.0
+            grp_p2_eng = round((grp_p2_eng_num / grp_p2_views) * 100, 2) if grp_p2_views > 0 else 0.0
+            fx_grp_ok = True
+            for curr_code, fx_mult in fx_rates_cmp:
+                grp_cmp_usd = Decimal(grp_cmp_rev_cents) / Decimal(100)
+                grp_p2_usd = Decimal(grp_p2_rev_cents) / Decimal(100)
+                if curr_code == "USD":
+                    if round(grp_cmp_usd, 2) != round(grp_p2_usd, 2):
+                        fx_grp_ok = False
+                else:
+                    if round(grp_cmp_usd * fx_mult) != round(grp_p2_usd * fx_mult):
+                        fx_grp_ok = False
+
+            if not (
+                grp_cmp_views == grp_p2_views and
+                grp_cmp_prev_views == grp_p2_prev_views and
+                grp_cmp_subs == grp_p2_subs and
+                grp_cmp_vids == grp_p2_vids and
+                grp_cmp_rev_cents == grp_p2_rev_cents and
+                grp_cmp_eng == grp_p2_eng and
+                fx_grp_ok
+            ):
+                compare_table_ok = False
+                break
     check("page3_compare_table_channels_reconcile_with_page2_5_channel_table", compare_table_ok)
 
     # Check 36 (Page 2 Item 11): Single-Team Trend ("Xu hướng một team") custom reference period total

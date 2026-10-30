@@ -13,7 +13,7 @@
     "seed": "antigravity-analytics-demo-v1-20261029"
   },
   "passed": true,
-  "check_count": 37,
+  "check_count": 38,
   "checks": [
     {
       "name": "manifest_hashes_match_all_listed_files",
@@ -162,6 +162,10 @@
     {
       "name": "page4_staff_reconciles_with_page1_page2_page3_and_daily_chart_usd_vnd",
       "passed": true
+    },
+    {
+      "name": "page4_indie_and_retro_staff_reconcile_with_page2_team_channels_usd_vnd",
+      "passed": true
     }
   ],
   "counts": {
@@ -175,5 +179,5 @@
     "retention_videos": 145,
     "summary_entities_per_period": 34
   },
-  "verified_at": "2026-10-30T10:37:22+00:00"
+  "verified_at": "2026-10-30T13:29:08+00:00"
 }

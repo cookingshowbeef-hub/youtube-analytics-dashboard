@@ -780,6 +780,110 @@ def main():
                 break
     check("page4_staff_reconciles_with_page1_page2_page3_and_daily_chart_usd_vnd", p4_staff_ok)
 
+    # Check 38: Explicit per-employee reconciliation for Team Indie & Chill (TEAM-03) and Team Retro & Electronic (TEAM-02)
+    # against the sum of assigned channels in Page 2's 5-channel table when selecting each team, in both USD and VND
+    indie_retro_ok = True
+    target_teams = ["TEAM-03", "TEAM-02"]  # Indie & Chill, Retro & Electronic
+    for team_id in target_teams:
+        team_emps = [e for e in baseline["employees"] if e.get("team_id") == team_id]
+        team_channels = [c for c in baseline["channels"] if ch_to_team.get(c["id"]) == team_id]
+        if len(team_emps) != 5 or len(team_channels) != 5:
+            indie_retro_ok = False
+            break
+        for c_start, c_end, r_start, r_end in p4_period_pairs:
+            c_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and c_start <= r["day"] <= c_end]
+            r_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and r_start <= r["day"] <= r_end]
+            for curr_code, fx_mult in fx_rates_to_test:
+                # Page 2 5-channel table rows when selecting `team_id`
+                p2_table_rows_by_cid = {}
+                for ch in team_channels:
+                    cid = ch["id"]
+                    ch_views = sum(index[cid, d]["views"] for d in c_days)
+                    ch_prev_views = sum(index[cid, d]["views"] for d in r_days)
+                    ch_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in c_days)
+                    ch_vids = sum(index[cid, d]["daily_videos_published"] for d in c_days)
+                    ch_rev_cents = sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days)
+                    ch_rev_curr = (Decimal(ch_rev_cents) / Decimal(100)) * fx_mult
+                    p2_table_rows_by_cid[cid] = dict(
+                        emp_id=channel_to_employee[cid],
+                        views=ch_views,
+                        prev_views=ch_prev_views,
+                        subs=ch_subs,
+                        vids=ch_vids,
+                        rev_cents=ch_rev_cents,
+                        rev_curr=ch_rev_curr,
+                    )
+
+                # Reconcile each individual employee of this team (Page 4) vs sum of their assigned channels in Page 2's 5-channel table
+                team_emp_views_sum = 0
+                team_emp_prev_views_sum = 0
+                team_emp_subs_sum = 0
+                team_emp_vids_sum = 0
+                team_emp_rev_cents_sum = 0
+                team_emp_rev_curr_sum = Decimal(0)
+
+                for emp in team_emps:
+                    eid = emp["id"]
+                    e_cids = emp_to_channels[eid]
+                    # Page 4 employee metrics
+                    p4_views = sum(index[cid, d]["views"] for cid in e_cids for d in c_days)
+                    p4_prev_views = sum(index[cid, d]["views"] for cid in e_cids for d in r_days)
+                    p4_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in e_cids for d in c_days)
+                    p4_vids = sum(index[cid, d]["daily_videos_published"] for cid in e_cids for d in c_days)
+                    p4_rev_cents = sum(cents(index[cid, d]["estimatedRevenue"]) for cid in e_cids for d in c_days)
+                    p4_rev_curr = (Decimal(p4_rev_cents) / Decimal(100)) * fx_mult
+                    p4_growth_pct = round(((p4_views - p4_prev_views) / p4_prev_views) * 100, 1) if p4_prev_views > 0 else 0.0
+
+                    # Sum of assigned channels from Page 2's 5-channel table when selecting this team
+                    assigned_p2_rows = [row for cid, row in p2_table_rows_by_cid.items() if row["emp_id"] == eid]
+                    p2_sum_views = sum(r["views"] for r in assigned_p2_rows)
+                    p2_sum_prev_views = sum(r["prev_views"] for r in assigned_p2_rows)
+                    p2_sum_subs = sum(r["subs"] for r in assigned_p2_rows)
+                    p2_sum_vids = sum(r["vids"] for r in assigned_p2_rows)
+                    p2_sum_rev_cents = sum(r["rev_cents"] for r in assigned_p2_rows)
+                    p2_sum_rev_curr = sum(r["rev_curr"] for r in assigned_p2_rows)
+                    p2_growth_pct = round(((p2_sum_views - p2_sum_prev_views) / p2_sum_prev_views) * 100, 1) if p2_sum_prev_views > 0 else 0.0
+
+                    if not (
+                        len(assigned_p2_rows) == len(e_cids) >= 1 and
+                        p4_views == p2_sum_views and
+                        p4_prev_views == p2_sum_prev_views and
+                        p4_growth_pct == p2_growth_pct and
+                        p4_subs == p2_sum_subs and
+                        p4_vids == p2_sum_vids and
+                        p4_rev_cents == p2_sum_rev_cents and
+                        p4_rev_curr == p2_sum_rev_curr
+                    ):
+                        indie_retro_ok = False
+                        break
+
+                    team_emp_views_sum += p4_views
+                    team_emp_prev_views_sum += p4_prev_views
+                    team_emp_subs_sum += p4_subs
+                    team_emp_vids_sum += p4_vids
+                    team_emp_rev_cents_sum += p4_rev_cents
+                    team_emp_rev_curr_sum += p4_rev_curr
+
+                # Also verify the 5 employees of this team sum to the Page 2 5-channel table total row in USD & VND
+                p2_team_total_views = sum(r["views"] for r in p2_table_rows_by_cid.values())
+                p2_team_total_prev_views = sum(r["prev_views"] for r in p2_table_rows_by_cid.values())
+                p2_team_total_subs = sum(r["subs"] for r in p2_table_rows_by_cid.values())
+                p2_team_total_vids = sum(r["vids"] for r in p2_table_rows_by_cid.values())
+                p2_team_total_rev_cents = sum(r["rev_cents"] for r in p2_table_rows_by_cid.values())
+                p2_team_total_rev_curr = sum(r["rev_curr"] for r in p2_table_rows_by_cid.values())
+
+                if not (
+                    team_emp_views_sum == p2_team_total_views and
+                    team_emp_prev_views_sum == p2_team_total_prev_views and
+                    team_emp_subs_sum == p2_team_total_subs and
+                    team_emp_vids_sum == p2_team_total_vids and
+                    team_emp_rev_cents_sum == p2_team_total_rev_cents and
+                    team_emp_rev_curr_sum == p2_team_total_rev_curr
+                ):
+                    indie_retro_ok = False
+                    break
+    check("page4_indie_and_retro_staff_reconcile_with_page2_team_channels_usd_vnd", indie_retro_ok)
+
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())
     (HERE / "independent_validation.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

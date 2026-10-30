@@ -19,27 +19,45 @@
   const COMPARE_LINE_COLORS = ['#38BDF8', '#F59E0B', '#EC4899', '#A855F7', '#14B8A6'];
 
   const FIXED_CHANNEL_PALETTE = [
-    '#06B6D4', // 0: Nguyễn Văn An (Lunavia Vintage Melodies)
-    '#38BDF8', // 1: Lê Minh Anh (Mellow Moon Lofi)
-    '#A855F7', // 2: Phạm Hà Linh (Harbor Breeze Beats)
-    '#6366F1', // 3: Đỗ Gia Huy (Velvet Espresso Jazz)
-    '#F59E0B', // 4: Trần Ngọc Mai (Saigon Corner BGM)
-    '#F97316', // 5: Trần Minh Bình (Cassette Horizon 84)
-    '#14B8A6', // 6: Nguyễn Hoàng Nam (Aether Grid Synth)
-    '#EAB308', // 7: Võ Thanh Tùng (Neon Mirage Wave)
-    '#22C55E', // 8: Phan Bảo Ngọc (Arcade Midnight Club)
-    '#8B5CF6', // 9: Đặng Quốc Bảo (Prism Pulse Audio)
-    '#10B981', // 10: Hoàng Thảo Vy (Starlight Drift Music)
-    '#EC4899', // 11: Trịnh Minh Khang (Cloudburst Coast Chill)
-    '#F43F5E', // 12: Bùi Quỳnh Chi (Amber Campus Sessions)
-    '#0EA5E9', // 13: Đinh Tuấn Kiệt (Pinewood Indie Folk)
-    '#D946EF'  // 14: Dương Khánh An (Tidal Bloom Acoustic)
+    '#06B6D4', // 0: EMP-001 Nguyễn Văn An (Lunavia Vintage Melodies)
+    '#38BDF8', // 1: EMP-002 Lê Minh Anh (Mellow Moon Lofi)
+    '#A855F7', // 2: EMP-003 Phạm Hà Linh (Harbor Breeze Beats)
+    '#6366F1', // 3: EMP-004 Đỗ Gia Huy (Velvet Espresso Jazz)
+    '#F59E0B', // 4: EMP-005 Trần Ngọc Mai (Saigon Corner BGM)
+    '#F97316', // 5: EMP-006 Trần Minh Bình (Cassette Horizon 84)
+    '#14B8A6', // 6: EMP-007 Nguyễn Hoàng Nam (Aether Grid Synth)
+    '#EAB308', // 7: EMP-008 Võ Thanh Tùng (Neon Mirage Wave)
+    '#22C55E', // 8: EMP-009 Phan Bảo Ngọc (Arcade Midnight Club)
+    '#8B5CF6', // 9: EMP-010 Đặng Quốc Bảo (Prism Pulse Audio)
+    '#10B981', // 10: EMP-011 Hoàng Thảo Vy (Starlight Drift Music)
+    '#EC4899', // 11: EMP-012 Trịnh Minh Khang (Cloudburst Coast Chill)
+    '#F43F5E', // 12: EMP-013 Bùi Quỳnh Chi (Amber Campus Sessions)
+    '#0EA5E9', // 13: EMP-014 Đinh Tuấn Kiệt (Pinewood Indie Folk)
+    '#D946EF'  // 14: EMP-015 Dương Khánh An (Tidal Bloom Acoustic)
   ];
 
+  const FIXED_EMPLOYEE_COLORS = {
+    'EMP-001': '#06B6D4',
+    'EMP-002': '#38BDF8',
+    'EMP-003': '#A855F7',
+    'EMP-004': '#6366F1',
+    'EMP-005': '#F59E0B',
+    'EMP-006': '#F97316',
+    'EMP-007': '#14B8A6',
+    'EMP-008': '#EAB308',
+    'EMP-009': '#22C55E',
+    'EMP-010': '#8B5CF6',
+    'EMP-011': '#10B981',
+    'EMP-012': '#EC4899',
+    'EMP-013': '#F43F5E',
+    'EMP-014': '#0EA5E9',
+    'EMP-015': '#D946EF'
+  };
+
   const FIXED_CHANNEL_COLORS = {
-    'UCSJ4gkVC6NrvII8umztf0Ow': '#38BDF8', // Mellow Moon Lofi
-    'UCJhjE7wbdYAae1G25m0tHAA': '#F59E0B', // Lunavia Vintage Melodies
-    'UCM9KEEuzacwVlkt9JfJad7g': '#EC4899'  // Midnight Chillhop Station
+    'UCJhjE7wbdYAae1G25m0tHAA': '#06B6D4', // EMP-001 Nguyễn Văn An (Lunavia Vintage Melodies)
+    'UCSJ4gkVC6NrvII8umztf0Ow': '#38BDF8', // EMP-002 Lê Minh Anh (Mellow Moon Lofi)
+    'UCM9KEEuzacwVlkt9JfJad7g': '#6366F1'  // EMP-004 Đỗ Gia Huy (Velvet Espresso Jazz)
   };
 
   const PAGE_QUESTIONS = {
@@ -495,7 +513,8 @@
         teamId: team ? team.id : 'TEAM-01',
         teamName: team ? team.name : 'Chưa phân loại',
         teamColor: TEAM_COLORS[team ? team.id : 'TEAM-01'] || '#38BDF8',
-        channelColor: FIXED_CHANNEL_COLORS[ch.id] || FIXED_CHANNEL_PALETTE[idx % FIXED_CHANNEL_PALETTE.length],
+        channelColor: (emp && FIXED_EMPLOYEE_COLORS[emp.id]) || FIXED_CHANNEL_COLORS[ch.id] || FIXED_CHANNEL_PALETTE[idx % FIXED_CHANNEL_PALETTE.length],
+        employeeColor: (emp && FIXED_EMPLOYEE_COLORS[emp.id]) || FIXED_CHANNEL_COLORS[ch.id] || FIXED_CHANNEL_PALETTE[idx % FIXED_CHANNEL_PALETTE.length],
         employeeId: emp ? emp.id : `EMP-${String(idx + 1).padStart(3, '0')}`,
         employeeName: emp ? emp.full_name : 'Chưa phân công',
         employeeEmail: emp ? emp.email : '',
@@ -3873,11 +3892,11 @@
             <thead>
               <tr>
                 <th style="width:7.0%;">Hạng</th>
-                <th style="width:16.9%;">Nhân viên (PIC)</th>
-                <th style="width:9.5%;">Team</th>
-                <th style="width:11.5%;">Kênh phụ trách</th>
-                ${sortHeader('views', 'Views kỳ này (Data-bar)', false, 'width:14.5%;')}
-                <th class="num" style="width:13.0%;vertical-align:middle;">
+                <th style="width:16.0%;">Nhân viên (PIC)</th>
+                <th style="width:10.0%;">Team</th>
+                <th style="width:13.8%;">Kênh phụ trách</th>
+                ${sortHeader('views', 'Views kỳ này', false, 'width:13.5%;')}
+                <th class="num" style="width:11.6%;vertical-align:middle;">
                   <div style="display:inline-flex;flex-direction:column;align-items:flex-end;gap:1px;max-width:100%;">
                     <div data-staff-sort="growth" style="cursor:pointer;user-select:none;line-height:1.1;${growthSortActive ? 'color:#38BDF8;' : ''}">
                       <div>So với ${esc(snap.win.compareModeName)}${growthSortArrow}</div>
@@ -3889,10 +3908,10 @@
                     </div>
                   </div>
                 </th>
-                ${sortHeader('netSubs', 'Sub ròng', true, 'width:5.0%;')}
-                ${sortHeader('videos', 'Video', true, 'width:3.8%;')}
-                ${sortHeader('engagement', 'Tương tác', true, 'width:10.4%;')}
-                ${sortHeader('revenue', 'Doanh thu', true, 'width:8.4%;')}
+                ${sortHeader('netSubs', 'Sub ròng', true, 'width:5.2%;')}
+                ${sortHeader('videos', 'Video', true, 'width:3.6%;')}
+                ${sortHeader('engagement', 'Tương tác', true, 'width:11.4%;')}
+                ${sortHeader('revenue', 'Doanh thu', true, 'width:7.9%;')}
               </tr>
             </thead>
             <tbody>
@@ -3914,6 +3933,7 @@
                   <tr class="clickable-row v3-staff-row"
                       data-staff-row-emp="${st.empId}"
                       data-staff-open-channel="${st.primaryChannelId}"
+                      data-emp-color="${st.color}"
                       data-emp-views="${st.curr.views ?? ''}"
                       data-emp-prev-views="${st.prev.views ?? ''}"
                       data-emp-subs="${st.curr.netSubs ?? ''}"
@@ -3928,7 +3948,7 @@
                     </td>
                     <td>
                       <div class="v3-staff-name-cell">
-                        <span class="v3-team-dot" style="background:${st.color};flex-shrink:0;"></span>
+                        <span class="v3-team-dot" style="background:${st.color};flex-shrink:0;" data-emp-color="${st.color}"></span>
                         <strong class="v3-staff-emp-name">${esc(st.empName)}</strong>
                         ${growthBadgeHtml}
                       </div>
@@ -3959,7 +3979,7 @@
                     <td class="num">${fmtInt(st.curr.videosPublished)}</td>
                     <td class="num">
                       <div class="v3-staff-eng-cell">
-                        <strong>${st.curr.engagementRate !== null ? fmtDec(st.curr.engagementRate, 2) + '%' : '—'}</strong>
+                        <strong class="v3-staff-eng-val">${st.curr.engagementRate !== null ? fmtDec(st.curr.engagementRate, 2) + '%' : '—'}</strong>
                         ${fmtEngDeltaCompact(st.curr.engagementRate, st.prev.engagementRate)}
                       </div>
                     </td>
@@ -3990,7 +4010,7 @@
                 <td class="num"><strong>${fmtInt(groupCurr.videosPublished)}</strong></td>
                 <td class="num">
                   <div class="v3-staff-eng-cell">
-                    <strong>${groupCurr.engagementRate !== null ? fmtDec(groupCurr.engagementRate, 2) + '%' : '—'}</strong>
+                    <strong class="v3-staff-eng-val">${groupCurr.engagementRate !== null ? fmtDec(groupCurr.engagementRate, 2) + '%' : '—'}</strong>
                     ${fmtEngDeltaCompact(groupCurr.engagementRate, groupPrev.engagementRate)}
                   </div>
                 </td>
@@ -4170,7 +4190,7 @@
     const prevLineActive = isSingleStaff && !hiddenSet.has('PREV');
 
     body.innerHTML = `
-      <section class="v3-panel v3-staff-panel-locked" id="v3-staff-main-panel"
+      <section class="v3-panel v3-staff-panel-locked is-compare-tab" id="v3-staff-main-panel"
                data-staff-active-tab="compare"
                data-chart-period-mode="${isCustomChartPeriod ? 'custom' : 'global'}"
                data-staff-daily-sums='${esc(JSON.stringify(dailySumByEmp))}'
@@ -4327,6 +4347,7 @@
               <span class="v3-staff-legend-line-bold"></span>
               <strong>Tổng (${selectedStaff.length} NV)</strong>
               <span class="v3-staff-legend-val">${fmtLegendMetricVal(groupDailySum)}</span>
+              <i class="v3-staff-total-toggle-icon ${hiddenSet.has('TOTAL') ? 'ri-eye-off-line' : 'ri-eye-line'}" id="v3-staff-total-toggle-icon"></i>
             </button>
 
             ${isSingleStaff ? `
@@ -4341,7 +4362,18 @@
               </button>
             ` : ''}
           </div>
-          <span class="v3-staff-legend-hint">Nhấn vào chú giải để bật/tắt đường</span>
+          <span class="v3-staff-scale-note" id="v3-staff-scale-note">
+            ${scaleMode === 'actual' ? `
+              <i class="ri-information-line" style="color:#F59E0B;"></i>
+              <span id="v3-staff-scale-note-text">${hiddenSet.has('TOTAL')
+                ? 'Đã ẩn Tổng · Bấm Tổng để bật lại hoặc chọn'
+                : 'Đường Tổng làm đường nhỏ bị chìm · Bấm Tổng để ẩn hoặc chọn'}</span>
+              <button type="button" class="v3-staff-scale-quick-btn" id="v3-staff-hint-switch-norm" data-staff-scale="index100">Chuẩn hóa</button>
+            ` : `
+              <i class="ri-scales-3-line" style="color:#38BDF8;"></i>
+              <span>Chế độ Chuẩn hóa (ngày đầu = 100) giúp đường nhỏ không bị chìm · Bấm chú giải để bật/tắt</span>
+            `}
+          </span>
         </div>
 
         <div class="v3-staff-chart-canvas-wrap" id="v3-staff-chart-canvas-wrap">
@@ -4493,6 +4525,18 @@
           inst.update('none');
         }
         pill.classList.toggle('is-muted', hs.has(key));
+        if (key === 'TOTAL') {
+          const tIcon = document.getElementById('v3-staff-total-toggle-icon');
+          if (tIcon) {
+            tIcon.className = `v3-staff-total-toggle-icon ${hs.has('TOTAL') ? 'ri-eye-off-line' : 'ri-eye-line'}`;
+          }
+          const noteTextEl = document.getElementById('v3-staff-scale-note-text');
+          if (noteTextEl) {
+            noteTextEl.textContent = hs.has('TOTAL')
+              ? 'Đã ẩn Tổng · Bấm Tổng để bật lại hoặc chọn'
+              : 'Đường Tổng làm đường nhỏ bị chìm · Bấm Tổng để ẩn hoặc chọn';
+          }
+        }
         if (key === 'PREV') {
           const prevBtn = document.getElementById('v3-staff-prev-toggle-btn');
           if (prevBtn) prevBtn.classList.toggle('active', !hs.has('PREV'));
@@ -5410,7 +5454,12 @@
                           ${tagHtml}
                         </div>
                       </td>
-                      <td style="white-space:nowrap;">${esc(cp.meta.employeeName)}</td>
+                      <td style="white-space:nowrap;">
+                        <span style="display:inline-flex;align-items:center;gap:6px;">
+                          <span class="v3-team-dot" style="background:${cp.meta.employeeColor};flex-shrink:0;" data-emp-color="${cp.meta.employeeColor}"></span>
+                          <span>${esc(cp.meta.employeeName)}</span>
+                        </span>
+                      </td>
                       <td class="num" style="white-space:nowrap;"><strong>${cp.curr.views !== null ? fmtInt(cp.curr.views) : '—'}</strong></td>
                       <td class="v3-bar-cell" style="min-width:78px;" data-channel-team-share="${chShare.toFixed(1)}">
                         <div style="display:flex;justify-content:flex-end;font-family:var(--font-mono);font-size:11.5px;font-weight:700;">
@@ -6569,6 +6618,8 @@
     onViewSwitch,
     refreshActiveView,
     computeFullDatasetSnapshot,
+    FIXED_EMPLOYEE_COLORS,
+    FIXED_CHANNEL_COLORS,
     getState: () => v3State,
     setScenario,
     setChannelMode,

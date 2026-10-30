@@ -18,6 +18,18 @@
 
   const COMPARE_LINE_COLORS = ['#38BDF8', '#F59E0B', '#EC4899', '#A855F7', '#14B8A6'];
 
+  const FIXED_CHANNEL_PALETTE = [
+    '#38BDF8', '#F59E0B', '#EC4899', '#10B981', '#A855F7',
+    '#06B6D4', '#F97316', '#6366F1', '#14B8A6', '#EAB308',
+    '#F43F5E', '#8B5CF6', '#22C55E', '#0EA5E9', '#D946EF'
+  ];
+
+  const FIXED_CHANNEL_COLORS = {
+    'UCSJ4gkVC6NrvII8umztf0Ow': '#38BDF8', // Mellow Moon Lofi
+    'UCJhjE7wbdYAae1G25m0tHAA': '#F59E0B', // Lunavia Vintage Melodies
+    'UCM9KEEuzacwVlkt9JfJad7g': '#EC4899'  // Midnight Chillhop Station
+  };
+
   const PAGE_QUESTIONS = {
     'view-report-overview': { tag: 'Trang 1 · Tổng quan', question: 'Toàn công ty tháng này ổn không?' },
     'view-report-team': { tag: 'Trang 2 · Theo Team', question: 'Team nào đang tốt nhất, và vì sao?' },
@@ -68,8 +80,13 @@
     channelPickerOpen: false,
     channelPickerQuery: '',
     deepAnalyticsOpen: false,
-    compareChannelIds: ['UCJhjE7wbdYAae1G25m0tHAA', 'UCM9KEEuzacwVlkt9JfJad7g', 'UCSJ4gkVC6NrvII8umztf0Ow'],
+    compareChannelIds: ['UCSJ4gkVC6NrvII8umztf0Ow', 'UCJhjE7wbdYAae1G25m0tHAA', 'UCM9KEEuzacwVlkt9JfJad7g'],
     compareChannelMetric: 'views',
+    comparePickerOpen: false,
+    comparePickerQuery: '',
+    compareTeamFilter: 'ALL',    // 'ALL' | 'TEAM-01' | 'TEAM-02' | 'TEAM-03'
+    compareSortField: 'views',   // 'views' | 'netSubs' | 'videosPublished' | 'engagementRate' | 'revenue'
+    compareSortAsc: false,
     // Page 4 (Staff)
     staffTab: 'ranking',    // 'ranking' | 'compare' | 'matrix'
     staffSortField: 'views',
@@ -452,6 +469,7 @@
         teamId: team ? team.id : 'TEAM-01',
         teamName: team ? team.name : 'Chưa phân loại',
         teamColor: TEAM_COLORS[team ? team.id : 'TEAM-01'] || '#38BDF8',
+        channelColor: FIXED_CHANNEL_COLORS[ch.id] || FIXED_CHANNEL_PALETTE[idx % FIXED_CHANNEL_PALETTE.length],
         employeeId: emp ? emp.id : `EMP-${String(idx + 1).padStart(3, '0')}`,
         employeeName: emp ? emp.full_name : 'Chưa phân công',
         employeeEmail: emp ? emp.email : '',
@@ -921,9 +939,10 @@
     if (pickerWrap) {
       pickerWrap.style.display = (activeViewId && activeViewId.startsWith('view-report-')) ? 'none' : 'block';
     }
+    // Item 3: Keep "Dữ Liệu Thật / Xem Minh Họa" mode switcher visible in the top-right header
     const modeSwitcher = document.getElementById('mode-switcher-container');
     if (modeSwitcher) {
-      modeSwitcher.style.display = (activeViewId && activeViewId.startsWith('view-report-')) ? 'none' : 'flex';
+      modeSwitcher.style.display = 'flex';
     }
 
     // Sync topbar active channel title/avatar to selectedChannelId so no DOM node holds stale channel names
@@ -1016,27 +1035,29 @@
                   <button type="button" class="v3-preset-btn ${v3State.preset === 'quarter' ? 'active' : ''}" data-v3-preset="quarter">Quý</button>
                   <button type="button" class="v3-preset-btn ${v3State.preset === 'custom' ? 'active' : ''}" data-v3-preset="custom">Tùy chỉnh</button>
                 </div>
-                ${v3State.preset === 'month' ? `
-                  <select id="v3-month-select" class="v3-select v3-select-sm">
-                    <option value="2026-10" ${v3State.monthKey === '2026-10' ? 'selected' : ''}>Tháng 10/2026 (26/31 ngày)</option>
-                    <option value="2026-09" ${v3State.monthKey === '2026-09' ? 'selected' : ''}>Tháng 09/2026 (30 ngày)</option>
-                    <option value="2026-08" ${v3State.monthKey === '2026-08' ? 'selected' : ''}>Tháng 08/2026 (31 ngày)</option>
-                  </select>
-                ` : v3State.preset === 'quarter' ? `
-                  <select id="v3-quarter-select" class="v3-select v3-select-sm">
-                    <option value="2026-Q4" ${v3State.quarterKey === '2026-Q4' ? 'selected' : ''}>Quý 4/2026 (26/92 ngày)</option>
-                    <option value="2026-Q3" ${v3State.quarterKey === '2026-Q3' ? 'selected' : ''}>Quý 3/2026 (92 ngày)</option>
-                    <option value="2026-Q2" ${v3State.quarterKey === '2026-Q2' ? 'selected' : ''}>Quý 2/2026 (91 ngày)</option>
-                  </select>
-                ` : v3State.preset === 'custom' ? `
-                  <div class="v3-date-inputs-wrap">
-                    <input type="date" id="v3-custom-start" class="v3-select v3-select-sm" value="${snap.win.start}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày">
-                    <span style="color:var(--text-dim);font-size:11px;">→</span>
-                    <input type="date" id="v3-custom-end" class="v3-select v3-select-sm" value="${snap.win.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
-                  </div>
-                ` : `
-                  <span class="v3-select v3-select-sm" style="display:inline-flex;align-items:center;font-family:var(--font-mono);color:var(--text-muted);cursor:default;" title="Khoảng ngày của kỳ đang chọn">${formatIsoToShortVN(snap.win.start)}–${formatIsoToVN(snap.win.end)}</span>
-                `}
+                <div class="v3-global-period-slot" id="v3-global-period-slot">
+                  ${v3State.preset === 'month' ? `
+                    <select id="v3-month-select" class="v3-select v3-select-sm v3-global-slot-control">
+                      <option value="2026-10" ${v3State.monthKey === '2026-10' ? 'selected' : ''}>Tháng 10/2026 (26/31 ngày)</option>
+                      <option value="2026-09" ${v3State.monthKey === '2026-09' ? 'selected' : ''}>Tháng 09/2026 (30 ngày)</option>
+                      <option value="2026-08" ${v3State.monthKey === '2026-08' ? 'selected' : ''}>Tháng 08/2026 (31 ngày)</option>
+                    </select>
+                  ` : v3State.preset === 'quarter' ? `
+                    <select id="v3-quarter-select" class="v3-select v3-select-sm v3-global-slot-control">
+                      <option value="2026-Q4" ${v3State.quarterKey === '2026-Q4' ? 'selected' : ''}>Quý 4/2026 (26/92 ngày)</option>
+                      <option value="2026-Q3" ${v3State.quarterKey === '2026-Q3' ? 'selected' : ''}>Quý 3/2026 (92 ngày)</option>
+                      <option value="2026-Q2" ${v3State.quarterKey === '2026-Q2' ? 'selected' : ''}>Quý 2/2026 (91 ngày)</option>
+                    </select>
+                  ` : v3State.preset === 'custom' ? `
+                    <div class="v3-date-inputs-wrap v3-global-custom-dates">
+                      <input type="date" id="v3-custom-start" class="v3-select v3-select-sm" value="${snap.win.start}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày">
+                      <span style="color:var(--text-dim);font-size:10.5px;">→</span>
+                      <input type="date" id="v3-custom-end" class="v3-select v3-select-sm" value="${snap.win.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
+                    </div>
+                  ` : `
+                    <span class="v3-select v3-select-sm v3-global-slot-control" style="display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);color:var(--text-muted);cursor:default;" title="Khoảng ngày của kỳ đang chọn">${formatIsoToShortVN(snap.win.start)}–${formatIsoToVN(snap.win.end)}</span>
+                  `}
+                </div>
                 <button type="button" class="v3-btn primary v3-btn-sm" id="v3-btn-apply-custom">Áp dụng</button>
               </div>
             ` : ''}
@@ -1763,7 +1784,7 @@
     };
   }
 
-  function buildChannelHealthConclusion(cp, win, refWin) {
+  function buildChannelHealthConclusion(cp, win, refWin, snap) {
     const curr = cp.curr;
     const ref = refWin.refMetrics;
     const M = refWin.currDayCount;
@@ -1782,19 +1803,20 @@
       ? ((cSubs - rSubs) / Math.abs(rSubs)) * 100
       : null;
 
-    // 10-day recent trajectory (compare last 5 days vs preceding 5 days within the window, or last half vs first half if < 10 days)
-    const days = win.days || [];
-    const recentSlice = days.slice(-10);
-    const half = Math.max(1, Math.floor(recentSlice.length / 2));
-    const firstHalfDays = recentSlice.slice(0, half);
-    const secondHalfDays = recentSlice.slice(-half);
-    const sumViewsForDays = (dList) => dList.reduce((s, d) => {
-      const pt = curr.dailyMap.get(d);
-      return s + (pt && pt.views ? pt.views : 0);
-    }, 0);
-    const vFirstHalf = sumViewsForDays(firstHalfDays);
-    const vSecondHalf = sumViewsForDays(secondHalfDays);
-    const recentPct = vFirstHalf > 0 ? ((vSecondHalf - vFirstHalf) / vFirstHalf) * 100 : 0;
+    // Item 1: 10 ngày gần nhất (r10Start..r10End) so với 10 ngày liền trước (p10Start..p10End), không viết cứng
+    const r10End = win.end;
+    const r10Start = shiftIsoDays(r10End, -9);
+    const p10End = shiftIsoDays(r10Start, -1);
+    const p10Start = shiftIsoDays(p10End, -9);
+    const scenarioId = (snap && snap.scenarioId) || getActiveScenarioId();
+    const mRecent10 = computeChannelWindowMetrics(cp.meta, r10Start, r10End, scenarioId);
+    const mPrev10 = computeChannelWindowMetrics(cp.meta, p10Start, p10End, scenarioId);
+    const vRecent10 = mRecent10.views || 0;
+    const vPrev10 = mPrev10.views || 0;
+    const recent10Pct = vPrev10 > 0 ? ((vRecent10 - vPrev10) / vPrev10) * 100 : 0;
+
+    const r10Tag = `${formatIsoToShortVN(r10Start)}–${formatIsoToShortVN(r10End)}`;
+    const p10Tag = `${formatIsoToShortVN(p10Start)}–${formatIsoToShortVN(p10End)}`;
 
     const refLabelLower = refWin.refModeName.toLowerCase();
     let part1 = '';
@@ -1814,16 +1836,43 @@
     }
 
     let part2 = '';
-    const windowTag = recentSlice.length >= 10 ? '10 ngày gần nhất' : `${recentSlice.length} ngày trong kỳ`;
-    if (Math.abs(recentPct) < 2.0) {
-      part2 = `${windowTag} giữ nhịp ổn định (${fmtPct(recentPct)})`;
-    } else if (recentPct > 0) {
-      part2 = `${windowTag} đang ${viewsPct !== null && viewsPct < 0 ? 'hồi phục' : 'đi lên'} (${fmtPct(recentPct)})`;
+    if (Math.abs(recent10Pct) < 2.0) {
+      part2 = `10 ngày gần nhất (${r10Tag}) giữ nhịp ổn định (${fmtPct(recent10Pct)}) so với 10 ngày liền trước (${p10Tag})`;
+    } else if (recent10Pct > 0) {
+      const verb = (viewsPct !== null && viewsPct < 0) ? 'đang hồi phục' : 'tăng';
+      part2 = `10 ngày gần nhất (${r10Tag}) ${verb} ${fmtPct(recent10Pct)} so với 10 ngày liền trước (${p10Tag})`;
     } else {
-      part2 = `${windowTag} đang chững lại (${fmtPct(recentPct)})`;
+      part2 = `10 ngày gần nhất (${r10Tag}) giảm ${fmtPct(recent10Pct)} so với 10 ngày liền trước (${p10Tag})`;
     }
 
     return `${part1}; ${part2}.`;
+  }
+
+  function buildCompareHealthConclusion(selectedPairs, win, refWinById) {
+    if (!selectedPairs || !selectedPairs.length) return 'Chọn từ 2 đến 5 kênh để so sánh.';
+    const M = Math.max(1, win.dayCount);
+    const items = selectedPairs.map(cp => {
+      const rw = refWinById.get(cp.id);
+      const N = rw ? rw.refDayCount : M;
+      const useAvg = rw && rw.isUnequalLength && v3State.channelUnequalMode === 'avg';
+      const cV = cp.curr.views !== null ? (useAvg ? cp.curr.views / M : cp.curr.views) : null;
+      const rV = (rw && rw.refMetrics && rw.refMetrics.views !== null) ? (useAvg ? rw.refMetrics.views / N : rw.refMetrics.views) : null;
+      const pct = (cV !== null && rV !== null && rV > 0) ? ((cV - rV) / rV) * 100 : null;
+      return { cp, views: cp.curr.views || 0, pct };
+    });
+
+    const withPct = items.filter(x => x.pct !== null).sort((a, b) => b.pct - a.pct);
+    const byViews = [...items].sort((a, b) => b.views - a.views);
+    const topViewsItem = byViews[0];
+
+    if (withPct.length >= 2) {
+      const best = withPct[0];
+      const worst = withPct[withPct.length - 1];
+      const bestLabel = best.pct > 0 ? 'tăng nhanh nhất trong nhóm' : 'giảm ít nhất trong nhóm';
+      const worstLabel = worst.pct < 0 ? 'giảm mạnh nhất trong nhóm' : 'tăng chậm nhất trong nhóm';
+      return `${best.cp.meta.title} ${bestLabel} (${fmtPct(best.pct)}); ${worst.cp.meta.title} ${worstLabel} (${fmtPct(worst.pct)}) · Dẫn đầu views: ${topViewsItem.cp.meta.title} (${fmtInt(topViewsItem.views)}).`;
+    }
+    return `Dẫn đầu lượt xem trong nhóm: ${topViewsItem.cp.meta.title} (${fmtInt(topViewsItem.views)} views).`;
   }
 
   function renderChannelPage(snap) {
@@ -1832,14 +1881,19 @@
 
     const c = core();
     const demo = c.DEMO_STORE;
-    // Item 18: Always use single channel mode on Page 3; hide "Chế độ 2: So sánh 2–5 kênh đối đầu"
-    v3State.channelMode = 'single';
+    if (v3State.channelMode !== 'single' && v3State.channelMode !== 'compare') {
+      v3State.channelMode = 'single';
+    }
     const cp = snap.channelPairs.find(x => x.id === v3State.selectedChannelId) || snap.channelPairs[0];
     if (cp) v3State.selectedChannelId = cp.id;
 
     root.innerHTML = `<div id="v3-channel-mode-body"></div>`;
     const body = document.getElementById('v3-channel-mode-body');
-    renderChannelSingleMode(body, snap, cp, demo);
+    if (v3State.channelMode === 'compare') {
+      renderChannelCompareMode(body, snap);
+    } else {
+      renderChannelSingleMode(body, snap, cp, demo);
+    }
     bindHelpLinks(root);
   }
 
@@ -1999,10 +2053,11 @@
     const viewsTooltip = `Nguồn: ${curr.hasAnalytics ? 'YouTube Analytics' : 'Snapshot công khai'} • Trung bình: ${curr.views !== null ? fmtInt(Math.round(curr.views / M)) : '—'} views/ngày`;
     const subsTooltip = `Sub mới: +${fmtInt(curr.subsGained)} • Sub hủy: −${fmtInt(curr.subsLost)} • Bước làm tròn công khai: ${fmtInt(meta.subRoundingStep)}`;
     const vidsTooltip = `Đăng gần nhất: ${formatIsoToVN(cp.lastPublishedCutoff)} (${cp.daysSinceLastUpload} ngày trước) • Nhịp đăng kỳ vọng: ${meta.expectedUploadCycleDays} ngày/video`;
-    const engTooltip = `Likes: ${fmtInt(curr.likes)} • Comments: ${fmtInt(curr.comments)}${curr.engagementIncludesShares ? ` • Shares: ${fmtInt(curr.shares)}` : ''} (Thẻ này không đổi biểu đồ theo ngày)`;
+    // Item 4: Thẻ Tỷ lệ tương tác: tooltip ghi "Không có biểu đồ theo ngày"
+    const engTooltip = `Không có biểu đồ theo ngày • Likes: ${fmtInt(curr.likes)} • Comments: ${fmtInt(curr.comments)}${curr.engagementIncludesShares ? ` • Shares: ${fmtInt(curr.shares)}` : ''}`;
     const revTooltip = `Giờ xem: ${curr.watchHours !== null ? fmtInt(curr.watchHours) + 'h' : '—'} • AVD: ${avdStr} • RPM: ${curr.proxyRpm !== null ? fmtMoney(curr.proxyRpm) : '—'}`;
 
-    const healthConclusion = buildChannelHealthConclusion(cp, win, refWin);
+    const healthConclusion = buildChannelHealthConclusion(cp, win, refWin, snap);
 
     const metricTitleMap = {
       views: 'Views',
@@ -2029,74 +2084,86 @@
     }
 
     body.innerHTML = `
-      <!-- 1. KHỐI NHẬN DIỆN KÊNH + HÀNG TOÀN THỜI GIAN + KẾT LUẬN XU HƯỚNG -->
-      <section class="v3-panel" id="v3-channel-identity-panel" style="padding:14px 18px;">
-        <div class="v3-ch-identity-top">
-          <div style="display:flex;align-items:center;gap:14px;min-width:0;">
-            <img src="${esc(meta.avatar)}" alt="${esc(meta.title)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid ${meta.teamColor};flex-shrink:0;" onerror="this.style.display='none'">
-            <div style="min-width:0;">
-              <div style="display:flex;align-items:center;gap:7px;flex-wrap:nowrap;white-space:nowrap;height:24px;">
-                <h2 style="font-size:17.5px;font-weight:800;color:var(--text-main);margin:0;white-space:nowrap;">${esc(meta.title)}</h2>
-                <span style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);white-space:nowrap;">${esc(meta.handle)}</span>
-                <span class="v3-badge" style="background:${meta.teamColor}22;color:${meta.teamColor};border:1px solid ${meta.teamColor}55;">
-                  <span class="v3-team-dot" style="background:${meta.teamColor};"></span> ${esc(meta.teamName)}
+      <!-- 1. KHỐI NHẬN DIỆN KÊNH + BỘ CHỌN KÊNH CỐ ĐỊNH + HÀNG TOÀN THỜI GIAN + KẾT LUẬN XU HƯỚNG -->
+      <section class="v3-panel v3-ch-identity-locked" id="v3-channel-identity-panel">
+        <!-- Hàng 1 cố định riêng cho Công tắc chế độ ("Một kênh | So sánh kênh") & Ô chọn kênh (Mục 2 & Mục 7) -->
+        <div class="v3-ch-control-row" id="v3-channel-control-row">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+            <div class="v3-preset-group" id="v3-channel-mode-switch" role="group" aria-label="Chế độ xem kênh">
+              <button type="button" class="v3-preset-btn active" data-ch-mode="single">Một kênh</button>
+              <button type="button" class="v3-preset-btn" data-ch-mode="compare">So sánh kênh</button>
+            </div>
+
+            <!-- Ô chọn kênh duy nhất đặt cố định ở vị trí riêng, không đè lên chip "Dữ liệu Analytics có độ trễ" -->
+            <div class="v3-ch-search-picker" id="v3-channel-search-picker">
+              <button type="button" class="v3-ch-picker-btn" id="v3-channel-picker-btn" aria-haspopup="listbox" aria-expanded="${v3State.channelPickerOpen ? 'true' : 'false'}" title="Chọn hoặc tìm kiếm kênh YouTube">
+                <span class="v3-team-dot" style="background:${meta.channelColor};"></span>
+                <span class="v3-ch-picker-btn-text">
+                  <strong>${esc(meta.title)}</strong>
+                  <span style="color:var(--text-muted);font-weight:500;">· ${esc(meta.employeeName)} · ${esc(meta.teamName)}</span>
                 </span>
-                <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}" id="v3-channel-oauth-status-badge">
-                  ${curr.hasAnalytics ? '[Đã kết nối Analytics]' : 'Chưa cấp quyền Analytics'}
-                </span>
+                <i class="ri-search-eye-line" style="color:#38BDF8;font-size:14px;margin-left:4px;"></i>
+                <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:15px;"></i>
+              </button>
+              <div class="v3-ch-picker-menu ${v3State.channelPickerOpen ? 'open' : ''}" id="v3-channel-picker-menu" role="listbox">
+                <div class="v3-ch-picker-search-wrap">
+                  <i class="ri-search-line"></i>
+                  <input type="text" id="v3-channel-picker-search" placeholder="Tìm tên kênh, @handle, PIC, team..." value="${esc(v3State.channelPickerQuery)}" autocomplete="off" aria-label="Tìm kiếm kênh">
+                </div>
+                <div class="v3-ch-picker-list" id="v3-channel-picker-list">
+                  ${snap.channelPairs.map(item => {
+                    const searchBlob = `${item.meta.title} ${item.meta.handle} ${item.meta.employeeName} ${item.meta.teamName}`.toLowerCase();
+                    const isSelected = item.id === cp.id;
+                    return `
+                      <button type="button" class="v3-ch-picker-item ${isSelected ? 'active' : ''}" data-pick-channel-id="${item.id}" data-search-text="${esc(searchBlob)}" role="option" aria-selected="${isSelected ? 'true' : 'false'}">
+                        <span class="v3-team-dot" style="background:${item.meta.channelColor};"></span>
+                        <span class="v3-ch-picker-item-main">
+                          <strong>${esc(item.meta.title)}</strong>
+                          <span class="v3-ch-picker-item-sub">${esc(item.meta.handle)} · PIC: ${esc(item.meta.employeeName)}</span>
+                        </span>
+                        <span class="v3-badge" style="background:${item.meta.teamColor}18;color:${item.meta.teamColor};border:1px solid ${item.meta.teamColor}44;font-size:10px;">${esc(item.meta.teamName)}</span>
+                      </button>
+                    `;
+                  }).join('')}
+                  <div id="v3-channel-picker-empty" style="display:none;padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">
+                    Không tìm thấy kênh phù hợp
+                  </div>
+                </div>
               </div>
-              <div style="font-size:12.2px;color:var(--text-muted);margin-top:5px;height:22px;min-height:22px;max-height:22px;display:flex;align-items:center;white-space:nowrap;">
-                <span>Người phụ trách (PIC): <strong style="color:var(--text-main);" id="v3-channel-pic-name">${esc(meta.employeeName)}</strong></span>
-                <span style="margin:0 6px;color:var(--text-dim);">·</span>
-                <span>Kỳ đang xem: <strong style="color:var(--text-main);font-family:var(--font-mono);">${currRangeFullVN}</strong></span>
-                <span style="margin:0 6px;color:var(--text-dim);">·</span>
-                <span class="v3-badge muted" id="v3-channel-analytics-delay-note">Dữ liệu Analytics có độ trễ 2–3 ngày</span>
-                <span class="v3-badge partial" style="margin-left:6px;visibility:${win.isPartialQuarter ? 'visible' : 'hidden'};">Chưa trọn quý (${win.dayCount}/${win.quarterCalendarDays} ngày)</span>
-              </div>
+              <select id="v3-single-channel-select" style="display:none;" aria-hidden="true">
+                ${snap.channelPairs.map(item => `
+                  <option value="${item.id}" ${item.id === cp.id ? 'selected' : ''}>${esc(item.meta.title)}</option>
+                `).join('')}
+              </select>
             </div>
           </div>
 
-          <!-- BỘ CHỌN KÊNH DUY NHẤT CÓ TÌM KIẾM (Không có nhãn "Đổi kênh") -->
-          <div class="v3-ch-search-picker" id="v3-channel-search-picker">
-            <button type="button" class="v3-ch-picker-btn" id="v3-channel-picker-btn" aria-haspopup="listbox" aria-expanded="${v3State.channelPickerOpen ? 'true' : 'false'}" title="Chọn hoặc tìm kiếm kênh YouTube">
-              <span class="v3-team-dot" style="background:${meta.teamColor};"></span>
-              <span class="v3-ch-picker-btn-text">
-                <strong>${esc(meta.title)}</strong>
-                <span style="color:var(--text-muted);font-weight:500;">· ${esc(meta.employeeName)} · ${esc(meta.teamName)}</span>
-              </span>
-              <i class="ri-search-eye-line" style="color:#38BDF8;font-size:14px;margin-left:4px;"></i>
-              <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:15px;"></i>
-            </button>
-            <div class="v3-ch-picker-menu ${v3State.channelPickerOpen ? 'open' : ''}" id="v3-channel-picker-menu" role="listbox">
-              <div class="v3-ch-picker-search-wrap">
-                <i class="ri-search-line"></i>
-                <input type="text" id="v3-channel-picker-search" placeholder="Tìm tên kênh, @handle, PIC, team..." value="${esc(v3State.channelPickerQuery)}" autocomplete="off" aria-label="Tìm kiếm kênh">
-              </div>
-              <div class="v3-ch-picker-list" id="v3-channel-picker-list">
-                ${snap.channelPairs.map(item => {
-                  const searchBlob = `${item.meta.title} ${item.meta.handle} ${item.meta.employeeName} ${item.meta.teamName}`.toLowerCase();
-                  const isSelected = item.id === cp.id;
-                  return `
-                    <button type="button" class="v3-ch-picker-item ${isSelected ? 'active' : ''}" data-pick-channel-id="${item.id}" data-search-text="${esc(searchBlob)}" role="option" aria-selected="${isSelected ? 'true' : 'false'}">
-                      <span class="v3-team-dot" style="background:${item.meta.teamColor};"></span>
-                      <span class="v3-ch-picker-item-main">
-                        <strong>${esc(item.meta.title)}</strong>
-                        <span class="v3-ch-picker-item-sub">${esc(item.meta.handle)} · PIC: ${esc(item.meta.employeeName)}</span>
-                      </span>
-                      <span class="v3-badge" style="background:${item.meta.teamColor}18;color:${item.meta.teamColor};border:1px solid ${item.meta.teamColor}44;font-size:10px;">${esc(item.meta.teamName)}</span>
-                    </button>
-                  `;
-                }).join('')}
-                <div id="v3-channel-picker-empty" style="display:none;padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">
-                  Không tìm thấy kênh phù hợp
-                </div>
+          <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
+            <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}" id="v3-channel-oauth-status-badge">
+              ${curr.hasAnalytics ? '[Đã kết nối Analytics]' : 'Chưa cấp quyền Analytics'}
+            </span>
+            <span class="v3-badge muted" id="v3-channel-analytics-delay-note">Dữ liệu Analytics có độ trễ 2–3 ngày</span>
+          </div>
+        </div>
+
+        <!-- Hàng 2: Khối định danh kênh độc lập -->
+        <div class="v3-ch-identity-top" style="height:44px;min-height:44px;max-height:44px;">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0;width:100%;">
+            <img src="${esc(meta.avatar)}" alt="${esc(meta.title)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid ${meta.channelColor};flex-shrink:0;" onerror="this.style.display='none'">
+            <div style="min-width:0;flex:1;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;white-space:nowrap;height:22px;">
+                <h2 style="font-size:16.5px;font-weight:800;color:var(--text-main);margin:0;white-space:nowrap;">${esc(meta.title)}</h2>
+                <span style="font-size:11.8px;color:var(--text-muted);font-family:var(--font-mono);white-space:nowrap;">${esc(meta.handle)}</span>
+                <span class="v3-badge" style="background:${meta.teamColor}22;color:${meta.teamColor};border:1px solid ${meta.teamColor}55;">
+                  <span class="v3-team-dot" style="background:${meta.teamColor};"></span> ${esc(meta.teamName)}
+                </span>
+                <span style="margin:0 4px;color:var(--text-dim);">·</span>
+                <span style="font-size:12px;color:var(--text-muted);">Người phụ trách (PIC): <strong style="color:var(--text-main);" id="v3-channel-pic-name">${esc(meta.employeeName)}</strong></span>
+                <span style="margin:0 4px;color:var(--text-dim);">·</span>
+                <span style="font-size:12px;color:var(--text-muted);">Kỳ đang xem: <strong style="color:var(--text-main);font-family:var(--font-mono);">${currRangeFullVN}</strong></span>
+                <span class="v3-badge partial" style="margin-left:4px;visibility:${win.isPartialQuarter ? 'visible' : 'hidden'};">Chưa trọn quý (${win.dayCount}/${win.quarterCalendarDays} ngày)</span>
               </div>
             </div>
-            <select id="v3-single-channel-select" style="display:none;" aria-hidden="true">
-              ${snap.channelPairs.map(item => `
-                <option value="${item.id}" ${item.id === cp.id ? 'selected' : ''}>${esc(item.meta.title)}</option>
-              `).join('')}
-            </select>
           </div>
         </div>
 
@@ -2129,18 +2196,18 @@
           </div>
         </div>
 
-        <!-- DÒNG KẾT LUẬN TỰ ĐỘNG: "Kênh này đang đi lên hay đi xuống?" (Mục 9) -->
+        <!-- DÒNG KẾT LUẬN TỰ ĐỘNG: "Kênh này đang đi lên hay đi xuống?" (Mục 1 & Mục 9) -->
         <div class="v3-ch-health-bar" id="v3-channel-health-bar">
           <span class="v3-ch-health-q">Kênh này đang đi lên hay đi xuống?</span>
           <span class="v3-ch-health-text" id="v3-channel-health-conclusion">${esc(healthConclusion)}</span>
         </div>
       </section>
 
-      <!-- 2. KHỐI 5 THẺ KPI TRONG KỲ (Kiêm bộ chọn chỉ số cho biểu đồ xu hướng · Mục 10 & 11) -->
-      <section class="v3-panel" id="v3-channel-kpi-panel" style="padding:12px 18px 14px 18px;">
-        <div class="v3-chart-a-header-row1" style="margin-bottom:10px;">
+      <!-- 2. KHỐI 5 THẺ KPI TRONG KỲ (Kiêm bộ chọn chỉ số cho biểu đồ xu hướng · Khóa chiều cao chống nhảy UI) -->
+      <section class="v3-panel v3-ch-kpi-locked" id="v3-channel-kpi-panel">
+        <div class="v3-chart-a-header-row1" style="margin-bottom:8px;">
           <div class="v3-panel-title" style="font-size:14.5px;white-space:nowrap;">
-            <i class="ri-dashboard-3-line" style="color:${meta.teamColor};"></i>
+            <i class="ri-dashboard-3-line" style="color:${meta.channelColor};"></i>
             <span>Chỉ số kênh trong kỳ</span>
             <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
           </div>
@@ -2149,7 +2216,7 @@
           </div>
         </div>
 
-        <div class="v3-kpi-grid" id="v3-channel-kpi-grid" style="margin-bottom:0;">
+        <div class="v3-kpi-grid v3-ch-kpi-grid-locked" id="v3-channel-kpi-grid">
           <!-- Card 1: Views (Selectable) -->
           <div class="v3-kpi-card v3-ch-kpi-card is-chart-selectable ${v3State.channelChartMetric === 'views' ? 'is-chart-active' : ''}"
                data-ch-kpi-metric="views"
@@ -2203,14 +2270,14 @@
             <div class="v3-kpi-sub" data-kpi-sub="videosPublished">${esc(vidsSubText)}</div>
           </div>
 
-          <!-- Card 4: Tỷ lệ tương tác (NOT clickable for chart) -->
+          <!-- Card 4: Tỷ lệ tương tác (NOT clickable for chart · Mục 4: Tooltip "Không có biểu đồ theo ngày") -->
           <div class="v3-kpi-card v3-ch-kpi-card is-chart-disabled"
                data-ch-kpi-disabled="true"
                data-kpi-tooltip="${esc(engTooltip)}"
                title="${esc(engTooltip)}">
             <div class="v3-kpi-top">
               <span class="v3-kpi-label">Tỷ lệ tương tác</span>
-              <i class="ri-information-line v3-kpi-info-icon"></i>
+              <i class="ri-information-line v3-kpi-info-icon" title="Không có biểu đồ theo ngày"></i>
             </div>
             <div class="v3-kpi-value" data-kpi-val="engagementRate">${curr.engagementRate !== null ? fmtDec(curr.engagementRate, 2) + '%' : '—'}</div>
             <div class="v3-kpi-delta-row" data-kpi-delta="engagementRate">${fmtDeltaBadge(curr.engagementRate, ref.engagementRate, false, true)}</div>
@@ -2236,12 +2303,12 @@
         </div>
       </section>
 
-      <!-- 3. KHỐI BIỂU ĐỒ XU HƯỚNG KÊNH + DÒNG TÓM TẮT VIDEO (Mục 12 & 13) -->
-      <section class="v3-panel" id="v3-channel-trend-panel" style="padding-bottom:12px;">
+      <!-- 3. KHỐI BIỂU ĐỒ XU HƯỚNG KÊNH + DÒNG TÓM TẮT VIDEO (Gộp chú giải lên hàng "So với" · Mục 6) -->
+      <section class="v3-panel v3-ch-trend-locked" id="v3-channel-trend-panel">
         <div class="v3-chart-a-header" id="v3-channel-chart-header">
           <div class="v3-chart-a-header-row1" id="v3-channel-chart-header-row1">
             <div class="v3-panel-title" style="white-space:nowrap;">
-              <i class="ri-line-chart-line" style="color:${meta.teamColor};"></i>
+              <i class="ri-line-chart-line" style="color:${meta.channelColor};"></i>
               <span id="v3-channel-chart-title">Xu hướng ${esc(activeMetricTitle)} theo ngày</span>
               <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
             </div>
@@ -2273,14 +2340,26 @@
               `}
             </div>
 
-            <div class="v3-preset-group" id="v3-ch-unequal-mode-group" style="visibility:${refWin.isUnequalLength ? 'visible' : 'hidden'};pointer-events:${refWin.isUnequalLength ? 'auto' : 'none'};" role="group" aria-label="Chế độ tính delta khi kỳ đối chứng khác số ngày">
+            <div class="v3-preset-group" id="v3-ch-unequal-mode-group" style="display:${refWin.isUnequalLength ? 'inline-flex' : 'none'};" role="group" aria-label="Chế độ tính delta khi kỳ đối chứng khác số ngày">
               <button type="button" class="v3-preset-btn ${v3State.channelUnequalMode === 'avg' ? 'active' : ''}" data-ch-unequal-mode="avg">Trung bình/ngày</button>
               <button type="button" class="v3-preset-btn ${v3State.channelUnequalMode === 'total' ? 'active' : ''}" data-ch-unequal-mode="total">Tổng</button>
+            </div>
+
+            <!-- Mục 6: Gộp chú giải "Kỳ này / Kỳ trước" lên hàng "So với" để tiết kiệm chiều cao -->
+            <div class="v3-ch-inline-legend" id="v3-channel-inline-legend">
+              <span class="v3-ch-legend-item">
+                <span class="v3-ch-legend-line solid" style="background:${meta.channelColor};"></span>
+                <span>Kỳ này (${currRangeShort})</span>
+              </span>
+              <span class="v3-ch-legend-item">
+                <span class="v3-ch-legend-line dashed"></span>
+                <span>${esc(refWin.refModeName)} (${refWin.refRangeShort})</span>
+              </span>
             </div>
           </div>
         </div>
 
-        <div class="v3-chart-a-canvas-wrap" id="v3-channel-chart-canvas-wrap" style="height:225px;min-height:225px;max-height:225px;">
+        <div class="v3-chart-a-canvas-wrap" id="v3-channel-chart-canvas-wrap" style="height:220px;min-height:220px;max-height:220px;">
           <canvas id="v3-channel-single-canvas"></canvas>
         </div>
 
@@ -2407,6 +2486,32 @@
     // Render Single Channel Trend Chart (Current vs Active Reference Period)
     renderSingleChannelChart(cp, snap, refWin);
 
+    // Bind Mode Switch ("Một kênh | So sánh kênh")
+    body.querySelectorAll('[data-ch-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const nextMode = btn.getAttribute('data-ch-mode');
+        if (!nextMode || v3State.channelMode === nextMode) return;
+        v3State.channelMode = nextMode;
+        v3State.channelPickerOpen = false;
+        v3State.comparePickerOpen = false;
+        if (nextMode === 'compare') {
+          if (!v3State.compareChannelIds.includes(v3State.selectedChannelId)) {
+            v3State.compareChannelIds = [
+              v3State.selectedChannelId,
+              ...v3State.compareChannelIds.filter(id => id !== v3State.selectedChannelId)
+            ].slice(0, 5);
+          } else {
+            // Keep selectedChannelId as first row (Kênh gốc)
+            v3State.compareChannelIds = [
+              v3State.selectedChannelId,
+              ...v3State.compareChannelIds.filter(id => id !== v3State.selectedChannelId)
+            ];
+          }
+        }
+        renderChannelPage(snap);
+      });
+    });
+
     // Bind Single Searchable Channel Picker Events
     const pickerBtn = document.getElementById('v3-channel-picker-btn');
     const pickerMenu = document.getElementById('v3-channel-picker-menu');
@@ -2495,7 +2600,6 @@
         v3State.channelCompareMode = nextMode;
         v3State.channelRefError = '';
         if (nextMode === 'custom') {
-          // Initialize custom reference dates to non-overlapping previous window if needed
           if (!v3State.channelRefStartDate || !v3State.channelRefEndDate ||
               (v3State.channelRefStartDate <= win.end && v3State.channelRefEndDate >= win.start)) {
             v3State.channelRefStartDate = win.prevStart;
@@ -2605,6 +2709,7 @@
     const currRangeShort = `${formatIsoToShortVN(snap.win.start)}–${formatIsoToShortVN(snap.win.end)}`;
     const refModeName = refWin ? refWin.refModeName : 'Kỳ trước';
     const refRangeShort = refWin ? refWin.refRangeShort : snap.win.compareRangeShort;
+    const lineColor = cp.meta.channelColor || cp.meta.teamColor;
 
     chartInstances['channelSingle'] = new Chart(canvas.getContext('2d'), {
       type: 'line',
@@ -2614,8 +2719,8 @@
           {
             label: `Kỳ này (${currRangeShort})`,
             data: currData,
-            borderColor: cp.meta.teamColor,
-            backgroundColor: cp.meta.teamColor + '1F',
+            borderColor: lineColor,
+            backgroundColor: lineColor + '1F',
             borderWidth: 2.6,
             pointRadius: 2.3,
             tension: 0.3,
@@ -2638,19 +2743,12 @@
         animation: false,
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { top: 4, bottom: 0 } },
+        layout: { padding: { top: 6, bottom: 0 } },
         interaction: { mode: 'index', intersect: false },
         plugins: {
+          // Item 6: Legend merged into the "So với" header row to save vertical height
           legend: {
-            display: true,
-            position: 'top',
-            align: 'end',
-            labels: {
-              color: '#CBD5E1',
-              boxWidth: 24,
-              boxHeight: 2,
-              font: { size: 11.5, weight: '600' }
-            }
+            display: false
           },
           tooltip: {
             callbacks: {
@@ -2718,214 +2816,544 @@
   }
 
   function renderChannelCompareMode(body, snap) {
-    // Ensure 2..5 valid channels
-    const validIds = v3State.compareChannelIds.filter(id => snap.channelPairs.some(c => c.id === id));
+    const win = snap.win;
+    const currRangeFullVN = `${formatIsoToVN(win.start)} – ${formatIsoToVN(win.end)}`;
+    const currRangeShort = `${formatIsoToShortVN(win.start)}–${formatIsoToShortVN(win.end)}`;
+
+    // Ensure 2..5 valid channels; first channel is always Kênh gốc
+    const validIds = [];
+    v3State.compareChannelIds.forEach(id => {
+      if (snap.channelPairs.some(c => c.id === id) && !validIds.includes(id) && validIds.length < 5) {
+        validIds.push(id);
+      }
+    });
     if (validIds.length < 2) {
-      v3State.compareChannelIds = snap.channelPairs.slice(0, 3).map(c => c.id);
+      snap.channelPairs.forEach(c => {
+        if (!validIds.includes(c.id) && validIds.length < 3) validIds.push(c.id);
+      });
     }
+    v3State.compareChannelIds = validIds;
+
     const selectedPairs = v3State.compareChannelIds
       .map(id => snap.channelPairs.find(c => c.id === id))
       .filter(Boolean);
 
-    // Helper to find highest and lowest channel ID for a numeric metric
-    function hiLo(getter) {
-      const vals = selectedPairs
-        .map(cp => ({ id: cp.id, val: getter(cp) }))
-        .filter(x => x.val !== null && x.val !== undefined && !Number.isNaN(Number(x.val)));
-      if (vals.length < 2) return { hi: null, lo: null };
-      vals.sort((a, b) => b.val - a.val);
-      return { hi: vals[0].id, lo: vals[vals.length - 1].id };
+    const validChartMetrics = ['views', 'netSubs', 'videosPublished', 'revenue'];
+    if (!validChartMetrics.includes(v3State.channelChartMetric)) {
+      v3State.channelChartMetric = 'views';
+    }
+    const validSortFields = ['views', 'netSubs', 'videosPublished', 'engagementRate', 'revenue'];
+    if (!validSortFields.includes(v3State.compareSortField)) {
+      v3State.compareSortField = v3State.channelChartMetric;
     }
 
-    const hlViews = hiLo(cp => cp.curr.views);
-    const hlGrowth = hiLo(cp => cp.viewsGrowthPct);
-    const hlSubs = hiLo(cp => cp.curr.netSubs);
-    const hlVids = hiLo(cp => cp.curr.videosPublished);
-    const hlEng = hiLo(cp => cp.curr.engagementRate);
-    const hlHours = hiLo(cp => cp.curr.watchHours);
-    const hlRev = hiLo(cp => cp.curr.estimatedRevenue);
-    const hlRpm = hiLo(cp => cp.curr.proxyRpm);
+    // Build reference window for each selected channel
+    const refWinById = new Map();
+    selectedPairs.forEach(cp => {
+      refWinById.set(cp.id, buildChannelRefWindow(win, cp, snap));
+    });
+    const baseCp = selectedPairs[0];
+    const baseRefWin = refWinById.get(baseCp.id);
+    const M = baseRefWin.currDayCount;
+    const N = baseRefWin.refDayCount;
+    const useAvg = baseRefWin.isUnequalLength && v3State.channelUnequalMode === 'avg';
 
-    function markBadge(id, hl) {
-      if (hl.hi === id && hl.hi !== hl.lo) return ` <span class="v3-badge highest">[Cao nhất]</span>`;
-      if (hl.lo === id && hl.hi !== hl.lo) return ` <span class="v3-badge lowest">[Thấp nhất]</span>`;
-      return '';
+    // Sort rows 2..K while keeping Row 1 pinned as Kênh gốc (Item 8)
+    const getSortMetricVal = (cp, field) => {
+      const val = cp.curr[field];
+      if (val === null || val === undefined || Number.isNaN(Number(val))) return -Infinity;
+      return Number(val);
+    };
+    const otherPairs = selectedPairs.slice(1).sort((a, b) => {
+      const va = getSortMetricVal(a, v3State.compareSortField);
+      const vb = getSortMetricVal(b, v3State.compareSortField);
+      return v3State.compareSortAsc ? (va - vb) : (vb - va);
+    });
+    const orderedPairs = [baseCp, ...otherPairs];
+
+    const compareConclusion = buildCompareHealthConclusion(selectedPairs, win, refWinById);
+
+    const metricTitleMap = {
+      views: 'Views',
+      netSubs: 'Sub ròng',
+      videosPublished: 'Video đăng',
+      revenue: 'Doanh thu'
+    };
+    const activeMetricTitle = metricTitleMap[v3State.channelChartMetric] || 'Views';
+    const baseDiffMetric = v3State.compareSortField || v3State.channelChartMetric;
+    const baseDiffMetricNames = {
+      views: 'Views',
+      netSubs: 'Sub ròng',
+      videosPublished: 'Video',
+      engagementRate: 'Tương tác',
+      revenue: 'Doanh thu'
+    };
+
+    // Determine status chip in Chart Header Row 1
+    let statusChipVisible = false;
+    let statusChipText = 'Đối chứng cùng độ dài';
+    let statusChipIsError = false;
+    if (v3State.channelRefError) {
+      statusChipVisible = true;
+      statusChipText = v3State.channelRefError;
+      statusChipIsError = true;
+    } else if (baseRefWin.isUnequalLength) {
+      statusChipVisible = true;
+      statusChipText = `Đối chứng ${N} ngày, kỳ này ${M} ngày`;
+    } else if (win.isPartialQuarter) {
+      statusChipVisible = true;
+      statusChipText = `Chưa trọn quý (${win.dayCount}/${win.quarterCalendarDays} ngày) · So với ${win.dayCount} ngày đầu`;
     }
+
+    // Group summary line for below the chart
+    const groupViewsSum = selectedPairs.reduce((s, cp) => s + (cp.curr.views || 0), 0);
+    const groupAvgViews = selectedPairs.length > 0 ? Math.round(groupViewsSum / selectedPairs.length) : 0;
+    const topGroupCh = [...selectedPairs].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0))[0];
+
+    const allHaveYoY = selectedPairs.every(cp => cp.curr.hasYoYHistory);
+    const anyMissingOAuth = selectedPairs.some(cp => !cp.curr.hasAnalytics);
+
+    const fmtCompactCellDelta = (currVal, prevVal, isCurrency = false, isPercentPoint = false) => {
+      if (currVal === null || currVal === undefined || prevVal === null || prevVal === undefined) {
+        return `<span class="v3-delta flat v3-cmp-delta">—</span>`;
+      }
+      const diff = Number(currVal) - Number(prevVal);
+      let pct = null;
+      if (Number(prevVal) !== 0) {
+        pct = (diff / Math.abs(Number(prevVal))) * 100;
+      } else if (Number(currVal) === 0) {
+        pct = 0;
+      }
+      const isSmallChange = isPercentPoint
+        ? Math.abs(diff) < 0.20
+        : (pct !== null ? Math.abs(pct) < 2.0 : Math.abs(diff) < 0.0001);
+      const cls = isSmallChange ? 'flat' : (diff > 0.0001 ? 'up' : (diff < -0.0001 ? 'down' : 'flat'));
+      const arrow = diff > 0.0001 ? '▲' : (diff < -0.0001 ? '▼' : '•');
+      if (isPercentPoint) {
+        const sign = diff > 0.0001 ? '+' : (diff < -0.0001 ? '−' : '');
+        return `<span class="v3-delta ${cls} v3-cmp-delta">${arrow} ${sign}${Math.abs(diff).toFixed(2).replace('.', ',')} đ%</span>`;
+      }
+      return `<span class="v3-delta ${cls} v3-cmp-delta">${arrow} ${pct !== null ? fmtPct(pct) : '0,0%'}</span>`;
+    };
+
+    const sortArrow = (field) => {
+      if (v3State.compareSortField !== field) return `<span style="opacity:0.35;margin-left:2px;">↕</span>`;
+      return `<span style="color:#38BDF8;margin-left:2px;">${v3State.compareSortAsc ? '↑' : '↓'}</span>`;
+    };
 
     body.innerHTML = `
-      <!-- Channel Selector Pills (2-5 channels) -->
-      <section class="v3-panel">
-        <div class="v3-panel-header">
-          <div>
-            <div class="v3-panel-title">
-              <i class="ri-scales-3-line" style="color:#38BDF8;"></i>
-              So sánh đối đầu 2–5 kênh (Đánh dấu tự động [Cao nhất] và [Thấp nhất])
+      <!-- 1. KHỐI ĐIỀU KHIỂN SO SÁNH KÊNH + DẢI KÊNH ĐANG CHỌN + DÒNG KẾT LUẬN NHÓM (Ẩn hàng "Toàn thời gian", khóa cùng chiều cao 184px) -->
+      <section class="v3-panel v3-ch-identity-locked" id="v3-channel-identity-panel">
+        <div class="v3-ch-control-row" id="v3-channel-control-row">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+            <div class="v3-preset-group" id="v3-channel-mode-switch" role="group" aria-label="Chế độ xem kênh">
+              <button type="button" class="v3-preset-btn" data-ch-mode="single">Một kênh</button>
+              <button type="button" class="v3-preset-btn active" data-ch-mode="compare">So sánh kênh</button>
             </div>
-            <div class="v3-panel-subtitle">
-              Chọn từ 2 đến 5 kênh để đối chiếu xu hướng theo ngày và bảng chỉ số ngang hàng
+
+            <!-- Ô chọn nhiều kênh có tìm kiếm và lọc theo team, tối đa 5 kênh (Mục 8) -->
+            <div class="v3-ch-search-picker" id="v3-compare-channel-picker">
+              <button type="button" class="v3-ch-picker-btn" id="v3-compare-picker-btn" aria-haspopup="listbox" aria-expanded="${v3State.comparePickerOpen ? 'true' : 'false'}" title="Chọn từ 2 đến 5 kênh để so sánh">
+                <i class="ri-scales-3-line" style="color:#38BDF8;font-size:14px;"></i>
+                <span class="v3-ch-picker-btn-text">
+                  <strong>Chọn kênh so sánh (${selectedPairs.length}/5 kênh)</strong>
+                  <span style="color:var(--text-muted);font-weight:500;">· Gốc: ${esc(baseCp.meta.title)}</span>
+                </span>
+                <i class="ri-search-eye-line" style="color:#38BDF8;font-size:14px;margin-left:4px;"></i>
+                <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:15px;"></i>
+              </button>
+
+              <div class="v3-ch-picker-menu ${v3State.comparePickerOpen ? 'open' : ''}" id="v3-compare-picker-menu" style="width:430px;" role="listbox">
+                <div class="v3-ch-picker-search-wrap">
+                  <i class="ri-search-line"></i>
+                  <input type="text" id="v3-compare-picker-search" placeholder="Tìm tên kênh, @handle, PIC..." value="${esc(v3State.comparePickerQuery)}" autocomplete="off" aria-label="Tìm kiếm kênh so sánh">
+                </div>
+                <div class="v3-cmp-team-filter-bar" id="v3-compare-team-filter">
+                  <button type="button" class="v3-cmp-team-chip ${v3State.compareTeamFilter === 'ALL' ? 'active' : ''}" data-cmp-team-filter="ALL">Tất cả (15)</button>
+                  <button type="button" class="v3-cmp-team-chip ${v3State.compareTeamFilter === 'TEAM-01' ? 'active' : ''}" data-cmp-team-filter="TEAM-01">Jazz & Lo-fi (5)</button>
+                  <button type="button" class="v3-cmp-team-chip ${v3State.compareTeamFilter === 'TEAM-02' ? 'active' : ''}" data-cmp-team-filter="TEAM-02">Retro & Electronic (5)</button>
+                  <button type="button" class="v3-cmp-team-chip ${v3State.compareTeamFilter === 'TEAM-03' ? 'active' : ''}" data-cmp-team-filter="TEAM-03">Indie & Chill (5)</button>
+                </div>
+                <div class="v3-ch-picker-list" id="v3-compare-picker-list">
+                  ${snap.channelPairs.map(item => {
+                    const searchBlob = `${item.meta.title} ${item.meta.handle} ${item.meta.employeeName} ${item.meta.teamName}`.toLowerCase();
+                    const isChecked = v3State.compareChannelIds.includes(item.id);
+                    const isBase = item.id === baseCp.id;
+                    return `
+                      <div class="v3-ch-picker-item ${isChecked ? 'active' : ''}"
+                           data-cmp-toggle-id="${item.id}"
+                           data-cmp-team-id="${item.meta.teamId}"
+                           data-search-text="${esc(searchBlob)}"
+                           role="option"
+                           aria-selected="${isChecked ? 'true' : 'false'}">
+                        <span class="v3-cmp-check ${isChecked ? 'checked' : ''}">${isChecked ? '✓' : ''}</span>
+                        <span class="v3-team-dot" style="background:${item.meta.channelColor};"></span>
+                        <span class="v3-ch-picker-item-main">
+                          <strong>${esc(item.meta.title)} ${isBase ? '<span class="v3-badge highest" style="font-size:9.5px;padding:1px 5px;">Kênh gốc</span>' : ''}</strong>
+                          <span class="v3-ch-picker-item-sub">${esc(item.meta.handle)} · PIC: ${esc(item.meta.employeeName)}</span>
+                        </span>
+                        <span class="v3-badge" style="background:${item.meta.teamColor}18;color:${item.meta.teamColor};border:1px solid ${item.meta.teamColor}44;font-size:10px;">${esc(item.meta.teamName)}</span>
+                      </div>
+                    `;
+                  }).join('')}
+                  <div id="v3-compare-picker-empty" style="display:none;padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">
+                    Không tìm thấy kênh phù hợp
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <select id="v3-compare-add-select" class="v3-select">
-              <option value="">+ Thêm kênh vào so sánh (${selectedPairs.length}/5)...</option>
-              ${snap.channelPairs.filter(cp => !v3State.compareChannelIds.includes(cp.id)).map(cp => `
-                <option value="${cp.id}">${esc(cp.meta.title)} (${esc(cp.meta.teamName)})</option>
-              `).join('')}
-            </select>
+
+          <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
+            <span class="v3-badge ${anyMissingOAuth ? 'warn' : 'analytics'}" id="v3-channel-oauth-status-badge">
+              ${anyMissingOAuth ? 'Có kênh chưa cấp quyền' : `[Đã kết nối ${selectedPairs.length}/${selectedPairs.length} kênh]`}
+            </span>
+            <span class="v3-badge muted" id="v3-channel-analytics-delay-note">Dữ liệu Analytics có độ trễ 2–3 ngày</span>
           </div>
         </div>
 
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-          ${selectedPairs.map((cp, idx) => {
-      const color = COMPARE_LINE_COLORS[idx % COMPARE_LINE_COLORS.length];
-      return `
-              <span class="v3-scope-pill" style="border-color:${color};background:${color}18;padding:5px 11px;font-weight:700;">
-                <span class="v3-team-dot" style="background:${color};"></span>
-                <span>${esc(cp.meta.title)}</span>
-                <span style="color:var(--text-muted);font-weight:500;">(${esc(cp.meta.teamName)})</span>
-                <button type="button" data-remove-cmp-ch="${cp.id}" style="background:none;border:none;color:var(--text-main);cursor:pointer;font-size:14px;margin-left:4px;" title="Gỡ kênh này">×</button>
+        <!-- Dải chip các kênh đang so sánh (thay thế vị trí định danh + hàng Toàn thời gian đã ẩn để giữ nguyên chiều cao 184px) -->
+        <div class="v3-cmp-selected-strip" id="v3-compare-selected-strip">
+          <div style="font-size:11.8px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between;white-space:nowrap;">
+            <span>
+              Đang đối chiếu <strong>${selectedPairs.length}/5 kênh</strong> · Kênh gốc (Dòng 1): <strong style="color:var(--text-main);">${esc(baseCp.meta.title)}</strong> · Kỳ: <strong style="color:var(--text-main);font-family:var(--font-mono);">${currRangeFullVN}</strong>
+            </span>
+            <span style="font-size:11px;color:var(--text-dim);">Nhấn tên chip để đặt làm kênh gốc · Nhấn × để gỡ kênh</span>
+          </div>
+          <div class="v3-cmp-pills-row" id="v3-compare-pills-row">
+            ${selectedPairs.map((cp, idx) => `
+              <span class="v3-cmp-channel-pill ${idx === 0 ? 'is-base' : ''}" data-cmp-pill-id="${cp.id}" style="border-color:${cp.meta.channelColor}88;background:${cp.meta.channelColor}14;">
+                <span class="v3-team-dot" style="background:${cp.meta.channelColor};"></span>
+                <button type="button" class="v3-cmp-set-base-btn" data-set-base-ch="${cp.id}" title="${idx === 0 ? 'Đang là kênh gốc (Dòng 1)' : 'Nhấn để đặt kênh này làm Kênh gốc (Dòng 1)'}">
+                  <strong>${esc(cp.meta.title)}</strong>
+                  ${idx === 0 ? `<span class="v3-cmp-base-tag">Gốc</span>` : ''}
+                </button>
+                <button type="button" class="v3-cmp-rm-btn" data-remove-cmp-ch="${cp.id}" title="Gỡ kênh khỏi so sánh" ${selectedPairs.length <= 2 ? 'disabled' : ''}>×</button>
               </span>
-            `;
-    }).join('')}
-        </div>
-
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-          <strong style="font-size:13px;">Biểu đồ đường đa kênh (Gắn nhãn trực tiếp ở cuối đường)</strong>
-          <div class="v3-preset-group">
-            <button type="button" class="v3-preset-btn ${v3State.compareChannelMetric === 'views' ? 'active' : ''}" data-cmp-metric="views">Lượt xem</button>
-            <button type="button" class="v3-preset-btn ${v3State.compareChannelMetric === 'watchHours' ? 'active' : ''}" data-cmp-metric="watchHours">Giờ xem [Analytics]</button>
-            <button type="button" class="v3-preset-btn ${v3State.compareChannelMetric === 'revenue' ? 'active' : ''}" data-cmp-metric="revenue">Doanh thu [Analytics]</button>
+            `).join('')}
           </div>
         </div>
-        <div style="height: 290px; position: relative;">
-          <canvas id="v3-channel-compare-canvas"></canvas>
+
+        <!-- DÒNG KẾT LUẬN TỰ ĐỘNG SINH TỪ DỮ LIỆU NHÓM KÊNH (Mục 8) -->
+        <div class="v3-ch-health-bar" id="v3-channel-health-bar">
+          <span class="v3-ch-health-q">So sánh nhóm kênh:</span>
+          <span class="v3-ch-health-text" id="v3-channel-health-conclusion">${esc(compareConclusion)}</span>
         </div>
       </section>
 
-      <!-- Side-by-Side Comparison Table -->
-      <section class="v3-panel">
-        <div class="v3-panel-header">
-          <div class="v3-panel-title">Bảng đối chiếu chỉ số cùng kỳ (${selectedPairs.length} kênh đang chọn)</div>
+      <!-- 2. BẢNG SO SÁNH KÊNH (Thay thế 5 thẻ KPI ở chế độ So sánh · Khóa chiều cao 256px chống nhảy UI · Mục 8, 9, 10) -->
+      <section class="v3-panel v3-ch-kpi-locked" id="v3-channel-kpi-panel">
+        <div class="v3-chart-a-header-row1" style="margin-bottom:8px;">
+          <div class="v3-panel-title" style="font-size:14.5px;white-space:nowrap;">
+            <i class="ri-table-line" style="color:#38BDF8;"></i>
+            <span>Bảng so sánh chỉ số các kênh</span>
+            <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
+          </div>
+          <div style="font-size:11.2px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            Dòng 1 là <strong>Kênh gốc</strong> · Nhấn tiêu đề cột để chọn chỉ số vẽ biểu đồ và sắp xếp
+          </div>
         </div>
-        <div class="v3-table-wrap">
-          <table class="v3-table">
+
+        <div class="v3-ch-compare-table-wrap" id="v3-channel-compare-table-wrap">
+          <table class="v3-table v3-ch-compare-table" id="v3-channel-compare-table">
             <thead>
               <tr>
-                <th>Chỉ số đối chiếu</th>
-                ${selectedPairs.map((cp, idx) => {
-      const color = COMPARE_LINE_COLORS[idx % COMPARE_LINE_COLORS.length];
-      return `
-                    <th class="num">
-                      <span class="v3-team-dot" style="background:${color};"></span>
-                      ${esc(cp.meta.title)}
-                      <div style="font-size:10.5px;color:var(--text-muted);font-weight:500;">${esc(cp.meta.employeeName)} · ${esc(cp.meta.teamName)}</div>
-                    </th>
-                  `;
-    }).join('')}
+                <th style="width:22%;">Kênh YouTube</th>
+                <th style="width:14.5%;" class="num is-sortable-col ${v3State.channelChartMetric === 'views' ? 'is-active-metric-col' : ''}" data-cmp-col="views" title="Nhấn để vẽ biểu đồ Views và sắp xếp">
+                  Views ${sortArrow('views')}
+                </th>
+                <th style="width:12%;" class="num is-sortable-col ${v3State.channelChartMetric === 'netSubs' ? 'is-active-metric-col' : ''}" data-cmp-col="netSubs" title="Nhấn để vẽ biểu đồ Sub ròng và sắp xếp">
+                  Sub ròng ${sortArrow('netSubs')}
+                </th>
+                <th style="width:9.5%;" class="num is-sortable-col ${v3State.channelChartMetric === 'videosPublished' ? 'is-active-metric-col' : ''}" data-cmp-col="videosPublished" title="Nhấn để vẽ biểu đồ Video đăng và sắp xếp">
+                  Video ${sortArrow('videosPublished')}
+                </th>
+                <th style="width:11.5%;" class="num is-sortable-col" data-cmp-col="engagementRate" title="Không có biểu đồ theo ngày (Nhấn để sắp xếp theo Tỷ lệ tương tác)">
+                  Tương tác ${sortArrow('engagementRate')}
+                </th>
+                <th style="width:14%;" class="num is-sortable-col ${v3State.channelChartMetric === 'revenue' ? 'is-active-metric-col' : ''}" data-cmp-col="revenue" title="Nhấn để vẽ biểu đồ Doanh thu và sắp xếp">
+                  Doanh thu ${sortArrow('revenue')}
+                </th>
+                <th class="num" style="width:16.5%;" title="Chênh lệch chỉ số đang chọn (${esc(baseDiffMetricNames[baseDiffMetric] || 'Views')}) so với Kênh gốc ở dòng 1">
+                  Chênh vs kênh gốc
+                </th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td><strong>Lượt xem trong kỳ (Views)</strong></td>
-                ${selectedPairs.map(cp => `<td class="num"><strong>${cp.curr.views !== null ? fmtInt(cp.curr.views) : '—'}</strong>${markBadge(cp.id, hlViews)}</td>`).join('')}
-              </tr>
-              <tr>
-                <td><strong>% Tăng trưởng vs kỳ trước</strong></td>
-                ${selectedPairs.map(cp => `<td class="num">${fmtDeltaBadge(cp.curr.views, cp.prev.views)}${markBadge(cp.id, hlGrowth)}</td>`).join('')}
-              </tr>
-              <tr>
-                <td><strong>Sub ròng (Net Subscribers)</strong></td>
-                ${selectedPairs.map(cp => `<td class="num">${cp.curr.netSubs !== null ? (cp.curr.netSubs > 0 ? '+' + fmtInt(cp.curr.netSubs) : fmtInt(cp.curr.netSubs)) : '—'}${markBadge(cp.id, hlSubs)}</td>`).join('')}
-              </tr>
-              <tr>
-                <td><strong>Số video đăng trong kỳ</strong></td>
-                ${selectedPairs.map(cp => `<td class="num">${fmtInt(cp.curr.videosPublished)}${markBadge(cp.id, hlVids)}</td>`).join('')}
-              </tr>
-              <tr>
-                <td><strong>Tỷ lệ tương tác (%)</strong></td>
-                ${selectedPairs.map(cp => `<td class="num">${cp.curr.engagementRate !== null ? cp.curr.engagementRate.toFixed(2) + '%' : '—'}${markBadge(cp.id, hlEng)}</td>`).join('')}
-              </tr>
-              <tr>
-                <td><strong>Giờ xem [Analytics]</strong></td>
-                ${selectedPairs.map(cp => `<td class="num">${cp.curr.watchHours !== null ? fmtInt(cp.curr.watchHours) + 'h' : '—'}${markBadge(cp.id, hlHours)}</td>`).join('')}
-              </tr>
-              <tr>
-                <td><strong>Doanh thu ước tính [Analytics]</strong></td>
-                ${selectedPairs.map(cp => `<td class="num">${cp.curr.estimatedRevenue !== null ? fmtMoney(cp.curr.estimatedRevenue) : '—'}${markBadge(cp.id, hlRev)}</td>`).join('')}
-              </tr>
-              <tr>
-                <td><strong>RPM (Doanh thu / 1K views) [Analytics]</strong></td>
-                ${selectedPairs.map(cp => `<td class="num">${cp.curr.proxyRpm !== null ? '$' + cp.curr.proxyRpm.toFixed(2) : '—'}${markBadge(cp.id, hlRpm)}</td>`).join('')}
-              </tr>
-              <tr>
-                <td><strong>Lần đăng gần nhất</strong></td>
-                ${selectedPairs.map(cp => `<td class="num">${formatIsoToVN(cp.meta.lastPublishedPt)} (${cp.daysSinceLastUpload} ngày trước)</td>`).join('')}
-              </tr>
+              ${orderedPairs.map((cp, rowIdx) => {
+                const curr = cp.curr;
+                const rw = refWinById.get(cp.id) || baseRefWin;
+                const ref = rw.refMetrics;
+                const cViews = curr.views !== null ? (useAvg ? curr.views / M : curr.views) : null;
+                const rViews = ref.views !== null ? (useAvg ? ref.views / N : ref.views) : null;
+                const cSubs = curr.netSubs !== null ? (useAvg ? curr.netSubs / M : curr.netSubs) : null;
+                const rSubs = ref.netSubs !== null ? (useAvg ? ref.netSubs / N : ref.netSubs) : null;
+                const cVids = curr.videosPublished !== null ? (useAvg ? curr.videosPublished / M : curr.videosPublished) : null;
+                const rVids = ref.videosPublished !== null ? (useAvg ? ref.videosPublished / N : ref.videosPublished) : null;
+                const cRev = curr.estimatedRevenue !== null ? (useAvg ? curr.estimatedRevenue / M : curr.estimatedRevenue) : null;
+                const rRev = ref.estimatedRevenue !== null ? (useAvg ? ref.estimatedRevenue / N : ref.estimatedRevenue) : null;
+
+                const isBaseRow = rowIdx === 0;
+                const revMissing = !curr.hasAnalytics || !curr.hasMonetary || curr.estimatedRevenue === null;
+                const subMissing = !curr.hasAnalytics && curr.netSubs === null;
+
+                // Diff vs baseCp on baseDiffMetric
+                let diffVsBaseHtml = '';
+                if (isBaseRow) {
+                  diffVsBaseHtml = `<span class="v3-badge muted" style="font-size:10px;">Kênh gốc (Mốc 0)</span>`;
+                } else {
+                  const bVal = baseCp.curr[baseDiffMetric];
+                  const rVal = curr[baseDiffMetric];
+                  if (bVal === null || bVal === undefined || rVal === null || rVal === undefined) {
+                    diffVsBaseHtml = `<span class="v3-no-oauth-cell">Chưa cấp quyền</span>`;
+                  } else {
+                    diffVsBaseHtml = fmtDeltaBadge(
+                      rVal,
+                      bVal,
+                      baseDiffMetric === 'revenue',
+                      baseDiffMetric === 'engagementRate'
+                    );
+                  }
+                }
+
+                return `
+                  <tr class="${isBaseRow ? 'v3-cmp-base-row' : ''}"
+                      data-compare-row-id="${cp.id}"
+                      data-row-views="${curr.views !== null ? curr.views : ''}"
+                      data-row-subs="${curr.netSubs !== null ? curr.netSubs : ''}"
+                      data-row-vids="${curr.videosPublished}"
+                      data-row-eng="${curr.engagementRate !== null ? curr.engagementRate : ''}"
+                      data-row-rev="${curr.estimatedRevenue !== null ? curr.estimatedRevenue : ''}">
+                    <td>
+                      <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        <span class="v3-team-dot" style="background:${cp.meta.channelColor};" data-channel-color="${cp.meta.channelColor}"></span>
+                        <strong style="color:var(--text-main);">${esc(cp.meta.title)}</strong>
+                        ${isBaseRow ? `<span class="v3-cmp-base-tag">Kênh gốc</span>` : ''}
+                        <span style="color:var(--text-dim);font-size:10.5px;">· ${esc(cp.meta.teamName)}</span>
+                      </div>
+                    </td>
+                    <td class="num">
+                      <div class="v3-cmp-cell-inner">
+                        <strong>${curr.views !== null ? fmtInt(curr.views) : '—'}</strong>
+                        ${fmtCompactCellDelta(cViews, rViews)}
+                      </div>
+                    </td>
+                    <td class="num">
+                      ${subMissing ? `<span class="v3-no-oauth-cell">Chưa cấp quyền</span>` : `
+                        <div class="v3-cmp-cell-inner">
+                          <strong>${curr.netSubs !== null ? (curr.netSubs > 0 ? '+' + fmtInt(curr.netSubs) : fmtInt(curr.netSubs)) : '—'}</strong>
+                          ${fmtCompactCellDelta(cSubs, rSubs)}
+                        </div>
+                      `}
+                    </td>
+                    <td class="num">
+                      <div class="v3-cmp-cell-inner">
+                        <strong>${fmtInt(curr.videosPublished)}</strong>
+                        ${fmtCompactCellDelta(cVids, rVids)}
+                      </div>
+                    </td>
+                    <td class="num">
+                      <div class="v3-cmp-cell-inner">
+                        <strong>${curr.engagementRate !== null ? fmtDec(curr.engagementRate, 2) + '%' : '—'}</strong>
+                        ${fmtCompactCellDelta(curr.engagementRate, ref.engagementRate, false, true)}
+                      </div>
+                    </td>
+                    <td class="num ${revMissing ? 'is-oauth-dimmed' : ''}" data-cmp-rev-cell="${cp.id}">
+                      ${revMissing ? `<span class="v3-no-oauth-cell">Chưa cấp quyền</span>` : `
+                        <div class="v3-cmp-cell-inner">
+                          <strong>${fmtMoney(curr.estimatedRevenue)}</strong>
+                          ${fmtCompactCellDelta(cRev, rRev, true)}
+                        </div>
+                      `}
+                    </td>
+                    <td class="num" data-cmp-diff-base="${cp.id}">
+                      ${diffVsBaseHtml}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
             </tbody>
           </table>
         </div>
       </section>
+
+      <!-- 3. BIỂU ĐỒ ĐƯỜNG ĐA KÊNH THEO NGÀY (Không vẽ đường kỳ đối chứng · Cùng chiều cao & vị trí 348px · Mục 8 & 10) -->
+      <section class="v3-panel v3-ch-trend-locked" id="v3-channel-trend-panel">
+        <div class="v3-chart-a-header" id="v3-channel-chart-header">
+          <div class="v3-chart-a-header-row1" id="v3-channel-chart-header-row1">
+            <div class="v3-panel-title" style="white-space:nowrap;">
+              <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
+              <span id="v3-channel-chart-title">Xu hướng ${esc(activeMetricTitle)} theo ngày — ${selectedPairs.length} kênh</span>
+              <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
+            </div>
+            <span class="v3-chart-status-chip ${statusChipVisible ? 'is-visible' : 'is-hidden'} ${statusChipIsError ? 'is-error' : ''}" id="v3-channel-chart-status-chip">
+              <span class="v3-chart-status-chip-text">${esc(statusChipText)}</span>
+            </span>
+          </div>
+
+          <div class="v3-chart-a-header-row2" id="v3-channel-chart-header-row2">
+            <span style="font-size:11.5px;color:var(--text-muted);font-weight:700;flex-shrink:0;">So với:</span>
+            <div class="v3-preset-group" id="v3-channel-ref-mode-group" role="group" aria-label="Chọn kỳ đối chứng cho bảng so sánh">
+              <button type="button" class="v3-preset-btn ${baseRefWin.mode === 'prev' ? 'active' : ''}" data-ch-ref-mode="prev">Kỳ trước</button>
+              <button type="button" class="v3-preset-btn ${baseRefWin.mode === 'prev_quarter' ? 'active' : ''}" data-ch-ref-mode="prev_quarter">Quý trước</button>
+              <button type="button" class="v3-preset-btn ${baseRefWin.mode === 'yoy' ? 'active' : ''}" data-ch-ref-mode="yoy" ${!allHaveYoY ? 'disabled' : ''}>Cùng kỳ năm ngoái</button>
+              <button type="button" class="v3-preset-btn ${baseRefWin.mode === 'custom' ? 'active' : ''}" data-ch-ref-mode="custom">Tùy chỉnh</button>
+            </div>
+
+            <div class="v3-chart-period-slot" id="v3-channel-ref-date-slot">
+              ${baseRefWin.mode === 'custom' ? `
+                <div class="v3-chart-custom-dates" id="v3-ch-ref-custom-dates">
+                  <input type="date" id="v3-ch-ref-start" class="v3-select v3-select-sm v3-chart-date-input" value="${baseRefWin.refStart}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày đối chứng">
+                  <span class="v3-chart-date-sep">→</span>
+                  <input type="date" id="v3-ch-ref-end" class="v3-select v3-select-sm v3-chart-date-input" value="${baseRefWin.refEnd}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày đối chứng">
+                </div>
+              ` : `
+                <select id="v3-ch-ref-fixed-select" class="v3-select v3-select-sm v3-chart-slot-control" disabled aria-label="Khoảng ngày kỳ đối chứng">
+                  <option>${baseRefWin.refRangeFullVN} (${baseRefWin.refDayCount} ngày)</option>
+                </select>
+              `}
+            </div>
+
+            <div class="v3-preset-group" id="v3-ch-unequal-mode-group" style="display:${baseRefWin.isUnequalLength ? 'inline-flex' : 'none'};" role="group" aria-label="Chế độ tính delta khi kỳ đối chứng khác số ngày">
+              <button type="button" class="v3-preset-btn ${v3State.channelUnequalMode === 'avg' ? 'active' : ''}" data-ch-unequal-mode="avg">Trung bình/ngày</button>
+              <button type="button" class="v3-preset-btn ${v3State.channelUnequalMode === 'total' ? 'active' : ''}" data-ch-unequal-mode="total">Tổng</button>
+            </div>
+
+            <!-- Chú giải màu cố định của các kênh đang so sánh nằm ngay trên hàng 2 -->
+            <div class="v3-ch-inline-legend" id="v3-channel-inline-legend">
+              ${selectedPairs.map(cp => `
+                <span class="v3-ch-legend-item">
+                  <span class="v3-ch-legend-line solid" style="background:${cp.meta.channelColor};"></span>
+                  <span>${esc(cp.meta.title)}</span>
+                </span>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="v3-chart-a-canvas-wrap" id="v3-channel-chart-canvas-wrap" style="height:220px;min-height:220px;max-height:220px;">
+          <canvas id="v3-channel-single-canvas"></canvas>
+        </div>
+
+        <div class="v3-ch-video-summary-line" id="v3-channel-video-summary-line">
+          <span>Tổng nhóm <strong>${selectedPairs.length} kênh</strong> trong kỳ: <strong>${fmtInt(groupViewsSum)}</strong> views</span>
+          <span class="v3-scope-sep">·</span>
+          <span>Trung bình: <strong>${fmtInt(groupAvgViews)}</strong> views/kênh</span>
+          <span class="v3-scope-sep">·</span>
+          <span>Kênh dẫn đầu nhóm: <strong>${esc(topGroupCh.meta.title)}</strong> (<strong>${fmtInt(topGroupCh.curr.views || 0)}</strong> views).</span>
+        </div>
+      </section>
     `;
 
-    // Render Multi-Channel Line Chart with end-of-line direct labels
-    destroyChart('channelCompare');
-    const canvas = document.getElementById('v3-channel-compare-canvas');
-    if (canvas && typeof Chart !== 'undefined') {
-      const metric = v3State.compareChannelMetric;
-      const days = snap.win.days;
-      const labels = days.map(d => d.slice(8, 10) + '/' + d.slice(5, 7));
-      const datasets = selectedPairs.map((cp, idx) => {
-        const color = COMPARE_LINE_COLORS[idx % COMPARE_LINE_COLORS.length];
-        const series = days.map(d => {
-          const pt = cp.curr.dailyMap.get(d);
-          return pt ? pt[metric] : null;
-        });
-        const lastVal = series.slice().reverse().find(v => v !== null && v !== undefined);
-        const endTag = lastVal !== undefined ? ` (${fmtCompact(lastVal)})` : '';
-        return {
-          label: `${cp.meta.title}${endTag}`,
-          data: series,
-          borderColor: color,
-          backgroundColor: 'transparent',
-          borderWidth: 2.3,
-          pointRadius: 2,
-          tension: 0.3
-        };
-      });
+    // Render Multi-Channel Daily Line Chart (1 line per channel, NO reference period line)
+    renderCompareChannelChart(selectedPairs, snap);
 
-      chartInstances['channelCompare'] = new Chart(canvas.getContext('2d'), {
-        type: 'line',
-        data: { labels, datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          plugins: { legend: { labels: { color: '#CBD5E1', font: { weight: '700' } } } },
-          scales: {
-            x: { ticks: { color: '#94A3B8', maxTicksLimit: 14 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-            y: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(255,255,255,0.06)' } }
-          }
-        }
-      });
-    }
-
-    // Bind Compare Mode Events
-    const addSel = document.getElementById('v3-compare-add-select');
-    if (addSel) {
-      addSel.addEventListener('change', () => {
-        const addId = addSel.value;
-        if (!addId) return;
-        if (v3State.compareChannelIds.length >= 5) {
-          if (core().showToast) core().showToast('Chỉ so sánh tối đa 5 kênh cùng lúc để biểu đồ dễ đọc');
-          return;
-        }
-        v3State.compareChannelIds.push(addId);
+    // Bind Mode Switch ("Một kênh | So sánh kênh")
+    body.querySelectorAll('[data-ch-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const nextMode = btn.getAttribute('data-ch-mode');
+        if (!nextMode || v3State.channelMode === nextMode) return;
+        v3State.channelMode = nextMode;
+        v3State.comparePickerOpen = false;
         renderChannelPage(snap);
       });
+    });
+
+    // Bind Multi-Channel Picker Dropdown + Search + Team Filter
+    const cmpBtn = document.getElementById('v3-compare-picker-btn');
+    const cmpMenu = document.getElementById('v3-compare-picker-menu');
+    const cmpSearch = document.getElementById('v3-compare-picker-search');
+    const cmpEmpty = document.getElementById('v3-compare-picker-empty');
+
+    const filterCompareList = () => {
+      const norm = String(v3State.comparePickerQuery || '').trim().toLowerCase();
+      const tf = v3State.compareTeamFilter || 'ALL';
+      let visibleCount = 0;
+      body.querySelectorAll('[data-cmp-toggle-id]').forEach(item => {
+        const blob = item.getAttribute('data-search-text') || '';
+        const teamId = item.getAttribute('data-cmp-team-id') || '';
+        const matchQuery = !norm || blob.includes(norm);
+        const matchTeam = tf === 'ALL' || teamId === tf;
+        const show = matchQuery && matchTeam;
+        item.style.display = show ? 'flex' : 'none';
+        if (show) visibleCount++;
+      });
+      if (cmpEmpty) {
+        cmpEmpty.style.display = visibleCount === 0 ? 'block' : 'none';
+      }
+    };
+
+    if (cmpSearch) {
+      filterCompareList();
+      cmpSearch.addEventListener('input', (e) => {
+        v3State.comparePickerQuery = e.target.value;
+        filterCompareList();
+      });
+      cmpSearch.addEventListener('click', (e) => e.stopPropagation());
     }
 
+    body.querySelectorAll('[data-cmp-team-filter]').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        v3State.compareTeamFilter = chip.getAttribute('data-cmp-team-filter') || 'ALL';
+        body.querySelectorAll('[data-cmp-team-filter]').forEach(c => {
+          c.classList.toggle('active', c.getAttribute('data-cmp-team-filter') === v3State.compareTeamFilter);
+        });
+        filterCompareList();
+      });
+    });
+
+    if (cmpBtn && cmpMenu) {
+      cmpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        v3State.comparePickerOpen = !v3State.comparePickerOpen;
+        cmpMenu.classList.toggle('open', v3State.comparePickerOpen);
+        cmpBtn.setAttribute('aria-expanded', v3State.comparePickerOpen ? 'true' : 'false');
+        if (v3State.comparePickerOpen && cmpSearch) {
+          setTimeout(() => cmpSearch.focus(), 10);
+        }
+      });
+    }
+
+    body.querySelectorAll('[data-cmp-toggle-id]').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const chId = item.getAttribute('data-cmp-toggle-id');
+        if (!chId) return;
+        if (v3State.compareChannelIds.includes(chId)) {
+          if (v3State.compareChannelIds.length <= 2) {
+            if (core().showToast) core().showToast('Cần giữ tối thiểu 2 kênh để so sánh');
+            return;
+          }
+          v3State.compareChannelIds = v3State.compareChannelIds.filter(x => x !== chId);
+        } else {
+          if (v3State.compareChannelIds.length >= 5) {
+            if (core().showToast) core().showToast('Chỉ so sánh tối đa 5 kênh cùng lúc');
+            return;
+          }
+          v3State.compareChannelIds.push(chId);
+        }
+        renderChannelPage(snap);
+      });
+    });
+
+    body.querySelectorAll('[data-set-base-ch]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const baseId = btn.getAttribute('data-set-base-ch');
+        if (!baseId || v3State.compareChannelIds[0] === baseId) return;
+        v3State.compareChannelIds = [
+          baseId,
+          ...v3State.compareChannelIds.filter(id => id !== baseId)
+        ];
+        v3State.selectedChannelId = baseId;
+        renderChannelPage(snap);
+      });
+    });
+
     body.querySelectorAll('[data-remove-cmp-ch]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const rmId = btn.getAttribute('data-remove-cmp-ch');
         if (v3State.compareChannelIds.length <= 2) {
           if (core().showToast) core().showToast('Cần giữ tối thiểu 2 kênh để so sánh');
@@ -2936,11 +3364,200 @@
       });
     });
 
-    body.querySelectorAll('[data-cmp-metric]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        v3State.compareChannelMetric = btn.getAttribute('data-cmp-metric');
+    // Bind Table Column Header Click (select metric for chart & sort rows)
+    body.querySelectorAll('[data-cmp-col]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.getAttribute('data-cmp-col');
+        if (!col) return;
+        if (v3State.compareSortField === col) {
+          v3State.compareSortAsc = !v3State.compareSortAsc;
+        } else {
+          v3State.compareSortField = col;
+          v3State.compareSortAsc = false;
+        }
+        if (['views', 'netSubs', 'videosPublished', 'revenue'].includes(col)) {
+          v3State.channelChartMetric = col;
+        }
         renderChannelPage(snap);
       });
+    });
+
+    // Bind Reference Period Mode ("So với")
+    body.querySelectorAll('[data-ch-ref-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        const nextMode = btn.getAttribute('data-ch-ref-mode');
+        v3State.channelCompareMode = nextMode;
+        v3State.channelRefError = '';
+        if (nextMode === 'custom') {
+          if (!v3State.channelRefStartDate || !v3State.channelRefEndDate ||
+              (v3State.channelRefStartDate <= win.end && v3State.channelRefEndDate >= win.start)) {
+            v3State.channelRefStartDate = win.prevStart;
+            v3State.channelRefEndDate = win.prevEnd;
+          }
+        }
+        renderChannelPage(snap);
+      });
+    });
+
+    const applyCustomRefDates = () => {
+      const sInput = document.getElementById('v3-ch-ref-start');
+      const eInput = document.getElementById('v3-ch-ref-end');
+      if (!sInput || !eInput) return;
+      let s = sInput.value;
+      let e = eInput.value;
+      if (!s || !e) return;
+      if (s > '2026-10-26' || e > '2026-10-26') {
+        v3State.channelRefError = 'Không được vượt quá ngày 26/10/2026';
+        if (s > '2026-10-26') s = '2026-10-26';
+        if (e > '2026-10-26') e = '2026-10-26';
+        sInput.value = s;
+        eInput.value = e;
+        renderChannelPage(snap);
+        return;
+      }
+      if (s > e) {
+        v3State.channelRefError = 'Ngày bắt đầu đối chứng phải ≤ ngày kết thúc';
+        renderChannelPage(snap);
+        return;
+      }
+      if (s <= win.end && e >= win.start) {
+        v3State.channelRefError = `Không được trùng kỳ đang xem (${formatIsoToShortVN(win.start)}–${formatIsoToShortVN(win.end)})`;
+        renderChannelPage(snap);
+        return;
+      }
+      v3State.channelRefError = '';
+      v3State.channelCompareMode = 'custom';
+      v3State.channelRefStartDate = s;
+      v3State.channelRefEndDate = e;
+      renderChannelPage(snap);
+    };
+    document.getElementById('v3-ch-ref-start')?.addEventListener('change', applyCustomRefDates);
+    document.getElementById('v3-ch-ref-end')?.addEventListener('change', applyCustomRefDates);
+
+    body.querySelectorAll('[data-ch-unequal-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        v3State.channelUnequalMode = btn.getAttribute('data-ch-unequal-mode') || 'avg';
+        renderChannelPage(snap);
+      });
+    });
+  }
+
+  function renderCompareChannelChart(selectedPairs, snap) {
+    destroyChart('channelSingle');
+    const canvas = document.getElementById('v3-channel-single-canvas');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const metric = v3State.channelChartMetric || 'views';
+    const currDays = snap.win.days || [];
+    const labels = currDays.map(d => formatIsoToShortVN(d));
+
+    const fmtChartMetricVal = (val) => {
+      if (val === null || val === undefined || Number.isNaN(Number(val))) return 'Chưa cấp quyền';
+      if (metric === 'revenue') return fmtMoney(val);
+      if (metric === 'netSubs') {
+        const n = Math.round(Number(val));
+        return n > 0 ? `+${fmtInt(n)}` : fmtInt(n);
+      }
+      if (metric === 'videosPublished') return `${fmtInt(val)} video`;
+      return fmtInt(val);
+    };
+
+    // Item 8: Mỗi kênh một đường theo ngày, màu cố định, KHÔNG vẽ đường kỳ đối chứng
+    const datasets = selectedPairs.map((cp, idx) => {
+      const color = cp.meta.channelColor || cp.meta.teamColor;
+      const data = currDays.map(d => {
+        const pt = cp.curr.dailyMap.get(d);
+        if (!pt || pt[metric] === undefined || pt[metric] === null) return null;
+        if (metric === 'revenue' && (!cp.curr.hasAnalytics || !cp.curr.hasMonetary)) return null;
+        if (metric === 'netSubs' && !cp.curr.hasAnalytics && cp.curr.netSubs === null) return null;
+        return pt[metric];
+      });
+      return {
+        label: cp.meta.title,
+        data,
+        borderColor: color,
+        backgroundColor: idx === 0 ? color + '14' : 'transparent',
+        borderWidth: idx === 0 ? 2.6 : 2.1,
+        pointRadius: 2.0,
+        tension: 0.3,
+        fill: idx === 0
+      };
+    });
+
+    chartInstances['channelSingle'] = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets
+      },
+      options: {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { top: 6, bottom: 0 } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              title: function (items) {
+                const idx = items && items[0] ? items[0].dataIndex : 0;
+                const dCurr = currDays[idx];
+                return `Ngày ${dCurr ? formatIsoToVN(dCurr) : '—'} (Ngày thứ ${idx + 1} của kỳ)`;
+              },
+              label: function (ctx) {
+                return ` ${ctx.dataset.label}: ${fmtChartMetricVal(ctx.parsed.y)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Ngày trong kỳ',
+              color: '#94A3B8',
+              font: { size: 11, weight: '600' },
+              padding: { top: 2, bottom: 0 }
+            },
+            afterBuildTicks: function (axis) {
+              const total = labels.length;
+              if (total <= 7) return;
+              const stepCount = 5;
+              const chosen = [];
+              for (let k = 0; k <= stepCount; k++) {
+                const idx = Math.round((k * (total - 1)) / stepCount);
+                if (!chosen.includes(idx)) chosen.push(idx);
+              }
+              axis.ticks = chosen.map(v => ({ value: v }));
+            },
+            ticks: {
+              color: '#94A3B8',
+              maxRotation: 0,
+              minRotation: 0,
+              autoSkip: false,
+              font: { size: 11 }
+            },
+            grid: { color: 'rgba(255,255,255,0.04)' }
+          },
+          y: {
+            beginAtZero: metric !== 'netSubs',
+            min: metric !== 'netSubs' ? 0 : undefined,
+            ticks: {
+              color: '#94A3B8',
+              precision: 0,
+              callback: function (val) {
+                if (metric === 'revenue') return fmtMoney(val);
+                return new Intl.NumberFormat('vi-VN').format(Math.round(val));
+              }
+            },
+            grid: { color: 'rgba(255,255,255,0.06)' }
+          }
+        }
+      }
     });
   }
 
@@ -5106,6 +5723,13 @@
         const btn = document.getElementById('v3-channel-picker-btn');
         if (menu) menu.classList.remove('open');
         if (btn) btn.setAttribute('aria-expanded', 'false');
+      }
+      if (v3State.comparePickerOpen && !e.target.closest('#v3-compare-channel-picker')) {
+        v3State.comparePickerOpen = false;
+        const cMenu = document.getElementById('v3-compare-picker-menu');
+        const cBtn = document.getElementById('v3-compare-picker-btn');
+        if (cMenu) cMenu.classList.remove('open');
+        if (cBtn) cBtn.setAttribute('aria-expanded', 'false');
       }
     });
     // Pre-render Guide page so #guide-... anchors exist in DOM at all times

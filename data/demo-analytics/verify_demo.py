@@ -544,6 +544,65 @@ def main():
                 break
     check("page3_channel_reconciles_with_page2_lifetime_invariant_and_custom_ref_deltas", page3_full_ok)
 
+    # Check 35: Page 3 Compare Mode table rows (up to 5 channels, first row = base channel)
+    # reconcile 100% with Page 2 5-channel table rows for every channel & period, and diff vs base channel is exact.
+    compare_table_ok = True
+    for c_start, c_end, r_start, r_end in page3_ref_pairs:
+        c_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and c_start <= r["day"] <= c_end]
+        r_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and r_start <= r["day"] <= r_end]
+        all_cids = [ch_obj["id"] for ch_obj in baseline["channels"]]
+        # Test 5-channel groups across all 15 channels (including default compare group with Mellow Moon Lofi as base)
+        compare_groups = [
+            ["UCSJ4gkVC6NrvII8umztf0Ow", "UCJhjE7wbdYAae1G25m0tHAA", "UCM9KEEuzacwVlkt9JfJad7g"],
+            all_cids[0:5],
+            all_cids[5:10],
+            all_cids[10:15],
+        ]
+        for grp in compare_groups:
+            if not (2 <= len(grp) <= 5):
+                compare_table_ok = False
+                break
+            base_id = grp[0]
+            base_views = sum(index[base_id, d]["views"] for d in c_days)
+            base_subs = sum(index[base_id, d]["subscribersGained"] - index[base_id, d]["subscribersLost"] for d in c_days)
+            base_vids = sum(index[base_id, d]["daily_videos_published"] for d in c_days)
+            base_rev = sum(cents(index[base_id, d]["estimatedRevenue"]) for d in c_days)
+            for cid in grp:
+                # Page 3 Compare table row values
+                cmp_views = sum(index[cid, d]["views"] for d in c_days)
+                cmp_prev_views = sum(index[cid, d]["views"] for d in r_days)
+                cmp_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in c_days)
+                cmp_vids = sum(index[cid, d]["daily_videos_published"] for d in c_days)
+                cmp_rev = sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days)
+                cmp_eng = round((sum(index[cid, d]["likes"] + index[cid, d]["comments"] + index[cid, d]["shares"] for d in c_days) / cmp_views) * 100, 2) if cmp_views > 0 else 0.0
+
+                # Page 2 5-channel table row values for the same channel
+                p2_views = sum(index[cid, d]["views"] for d in c_days)
+                p2_prev_views = sum(index[cid, d]["views"] for d in r_days)
+                p2_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in c_days)
+                p2_vids = sum(index[cid, d]["daily_videos_published"] for d in c_days)
+                p2_rev = sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days)
+                p2_eng = round((sum(index[cid, d]["likes"] + index[cid, d]["comments"] + index[cid, d]["shares"] for d in c_days) / p2_views) * 100, 2) if p2_views > 0 else 0.0
+
+                # Diff vs base channel (Row 1)
+                diff_vs_base_views = cmp_views - base_views
+                diff_vs_base_subs = cmp_subs - base_subs
+                diff_vs_base_vids = cmp_vids - base_vids
+                diff_vs_base_rev = cmp_rev - base_rev
+
+                if not (
+                    cmp_views == p2_views and
+                    cmp_prev_views == p2_prev_views and
+                    cmp_subs == p2_subs and
+                    cmp_vids == p2_vids and
+                    cmp_rev == p2_rev and
+                    cmp_eng == p2_eng and
+                    (cid != base_id or (diff_vs_base_views == 0 and diff_vs_base_subs == 0 and diff_vs_base_vids == 0 and diff_vs_base_rev == 0))
+                ):
+                    compare_table_ok = False
+                    break
+    check("page3_compare_table_channels_reconcile_with_page2_5_channel_table", compare_table_ok)
+
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())
     (HERE / "independent_validation.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

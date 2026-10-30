@@ -4214,17 +4214,42 @@ function switchView(viewId) {
     });
 
     // Update Breadcrumbs & Heading
+    const bcGroup = document.getElementById('breadcrumb-group-label');
+    const bcActive = document.getElementById('breadcrumb-active-label');
+    if (bcGroup && bcActive) {
+      const bcMap = {
+        'view-report-overview': ['Báo cáo', 'Tổng quan'],
+        'view-report-team': ['Báo cáo', 'Theo Team'],
+        'view-report-channel': ['Báo cáo', 'Theo kênh'],
+        'view-report-staff': ['Báo cáo', 'Theo nhân viên'],
+        'view-report-staff-chart': ['Báo cáo', 'Theo nhân viên'],
+        'view-report-staff-data': ['Báo cáo', 'Theo nhân viên'],
+        'view-report-project': ['Báo cáo', 'Theo dự án'],
+        'view-report-network': ['Báo cáo', 'Theo Network'],
+        'view-report-guide': ['Báo cáo', 'Hướng dẫn'],
+        'view-mgmt-team': ['Quản lý', 'Đội ngũ (Teams)'],
+        'view-mgmt-channel': ['Quản lý', 'Kênh YouTube'],
+        'view-mgmt-video': ['Quản lý', 'Danh sách Video'],
+        'view-mgmt-network': ['Quản lý', 'Network MCN'],
+        'view-mgmt-project': ['Quản lý', 'Dự án'],
+        'view-mgmt-cost': ['Quản lý', 'Chi phí'],
+        'view-mgmt-general': ['Quản lý', 'Hệ thống']
+      };
+      const pair = bcMap[viewId] || ['Báo cáo', 'Tổng quan'];
+      bcGroup.textContent = pair[0];
+      bcActive.textContent = pair[1];
+    }
     if (elements.mainPageHeading) {
       const headingMap = {
-        'view-report-overview': 'Báo Cáo Tổng Quan Công Ty',
-        'view-report-channel': 'Báo Cáo Theo Kênh YouTube',
-        'view-report-staff': 'Báo Cáo Theo Nhân Viên',
-        'view-report-staff-chart': 'Báo Cáo Theo Nhân Viên',
-        'view-report-staff-data': 'Báo Cáo Theo Nhân Viên',
-        'view-report-team': 'Báo Cáo Theo Team Sản Xuất',
-        'view-report-project': 'Báo Cáo Theo Dự Án',
-        'view-report-network': 'Báo Cáo Theo Network (MCN)',
-        'view-report-guide': 'Hướng Dẫn & Từ Điển Chỉ Số BgMedia',
+        'view-report-overview': 'Báo cáo tổng quan',
+        'view-report-channel': 'Báo cáo theo kênh',
+        'view-report-staff': 'Báo cáo theo nhân viên',
+        'view-report-staff-chart': 'Báo cáo theo nhân viên',
+        'view-report-staff-data': 'Báo cáo theo nhân viên',
+        'view-report-team': 'Báo cáo theo Team',
+        'view-report-project': 'Báo cáo theo dự án',
+        'view-report-network': 'Báo cáo theo Network (MCN)',
+        'view-report-guide': 'Hướng dẫn & Từ điển chỉ số',
         'view-mgmt-team': 'Quản Lý Đội Ngũ (Teams)',
         'view-mgmt-channel': 'Quản Lý Hệ Thống Kênh YouTube',
         'view-mgmt-video': 'Quản Lý Danh Sách Video',
@@ -4233,7 +4258,7 @@ function switchView(viewId) {
         'view-mgmt-cost': 'Quản Lý Chi Phí Sản Xuất',
         'view-mgmt-general': 'Quản Lý Hệ Thống'
       };
-      elements.mainPageHeading.textContent = headingMap[viewId] || 'Báo Cáo Phân Tích BgMedia';
+      elements.mainPageHeading.textContent = headingMap[viewId] || 'Báo cáo tổng quan';
     }
 
     // Delegate v3 Report Pages to window.__REPORT_V3__ when initialized

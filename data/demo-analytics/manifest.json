@@ -64,8 +64,8 @@
     {
       "path": "channel_daily.json",
       "row_count": 9990,
-      "bytes": 7037347,
-      "sha256": "30b752c174624a05053a9a2f84a5603c7b8d9198279bb4bb1cac7581c0b61eed"
+      "bytes": 7307077,
+      "sha256": "5aba3e2e8d632397cc41f78a2e7e3688e27f1a03482d3ab71ee8a044bc44fbab"
     },
     {
       "path": "video_daily.json",
@@ -119,7 +119,7 @@
       "path": "scenarios.json",
       "row_count": 9,
       "bytes": 32516,
-      "sha256": "aa5a5c9288a26d81c17b10bf2e28010561ee809f194972e4439e0399ae61a063"
+      "sha256": "e4376b0f5fd3fe9695de6e269894cc026a08d844cfeb1d82a6d0d7e81527d35f"
     },
     {
       "path": "channel_summary_28d.csv",
@@ -130,8 +130,8 @@
     {
       "path": "channel_snapshot_daily.json",
       "row_count": 1350,
-      "bytes": 626948,
-      "sha256": "639271b300b1039f76b76919b01786406bec5bdf8f05fc161a4d5096011f2715"
+      "bytes": 663398,
+      "sha256": "6a975cd31a449a3cf4ba209ec8e35aecb78ef2a063efdf4d68b3e2b6d2846c31"
     }
   ]
 }

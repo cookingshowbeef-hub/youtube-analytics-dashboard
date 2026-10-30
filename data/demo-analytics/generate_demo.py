@@ -248,7 +248,18 @@ def main():
             raw["view_percent_basis"] = sum(b["view_percent_basis"] for b in buckets)
             residual_raw[channel_id, day] = buckets[-1]
 
-    channel_rows = [dict(channel_id=cid, day=day.isoformat(), content_type="VIDEO", **metrics(raw))
+    channel_vids_pub = {}
+    for ci, cid in enumerate(channel_ids):
+        for day in all_days:
+            r_pub = rng(f"daily_vids_pub:{ci}:{day}")
+            is_sched_day = ((day.timetuple().tm_yday + ci * 2) % 3 == 0)
+            v_pub = 1 if (is_sched_day and r_pub.random() < 0.78) else 0
+            if ci == 0 and day == dt.date(2026, 10, 14):
+                v_pub = 0
+            channel_vids_pub[cid, day] = v_pub
+
+    channel_rows = [dict(channel_id=cid, day=day.isoformat(), content_type="VIDEO",
+                         daily_videos_published=channel_vids_pub[cid, day], **metrics(raw))
                     for (cid, day), raw in channel_raw.items()]
     write("channel_daily.json", channel_rows, period_start=str(START), period_end=str(END),
           content_types=["VIDEO"], revenue_components=["estimatedAdRevenue", "estimatedRedPartnerRevenue"],
@@ -404,8 +415,9 @@ def main():
           rate_label="Tỷ giá minh họa, không phải tỷ giá thị trường", is_real_exchange_rate=False,
           conversion_rule="For demo only: convert each day's USD money using that day's rate, round VND, then sum. Do not multiply an entire period by one fixed rate.")
 
+    ANALYTICS_AVAILABLE_END = dt.date(2026, 10, 26)
     full_states = [dict(channel_id=cid, analytics_status="demo_ready", monetary_status="demo_ready",
-                        analytics_available_end=str(END), monetary_available_end=str(END)) for cid in channel_ids]
+                        analytics_available_end=str(ANALYTICS_AVAILABLE_END), monetary_available_end=str(ANALYTICS_AVAILABLE_END)) for cid in channel_ids]
     scenarios = []
     definitions = [
         ("all_demo_ready", "Đủ dữ liệu minh họa", 15, 15),
@@ -432,7 +444,7 @@ def main():
             elif key == "revoked" and i == 0:
                 state.update(analytics_status="revoked", monetary_status="revoked", analytics_available_end=None, monetary_available_end=None)
             elif key == "delayed_monetary":
-                state["monetary_available_end"] = str(END - dt.timedelta(days=2))
+                state["monetary_available_end"] = str(ANALYTICS_AVAILABLE_END - dt.timedelta(days=2))
         if key == "zero_revenue_positive_views":
             overrides = [dict(channel_id=channel_ids[0], period_key="last_28_days",
                               metrics=dict(estimatedRevenue=0, estimatedAdRevenue=0, estimatedRedPartnerRevenue=0, grossRevenue=0,
@@ -441,12 +453,12 @@ def main():
                                                                    gross_revenue_cents=0), expected_proxy=0)]
         if key == "zero_denominator":
             overrides = [dict(channel_id=channel_ids[0], period_key="last_28_days", metrics=metrics(zero_raw()), expected_proxy=None)]
-        scenarios.append(dict(scenario_id=key, label=label, period_start=str(DEFAULT_START), period_end=str(END),
+        scenarios.append(dict(scenario_id=key, label=label, period_start=str(ANALYTICS_AVAILABLE_END - dt.timedelta(days=29)), period_end=str(ANALYTICS_AVAILABLE_END),
             channel_states=states, metric_overrides=overrides,
             expected_coverage={"selected_channels": 15, "analytics_channels": analytics_count,
                                "monetary_channels": monetary_count, "is_partial_monetary": 0 < monetary_count < 15},
             null_metric_fields_when_missing=null_fields,
-            common_ratio_end=str(END - dt.timedelta(days=2)) if key == "delayed_monetary" else str(END)))
+            common_ratio_end=str(ANALYTICS_AVAILABLE_END - dt.timedelta(days=2)) if key == "delayed_monetary" else str(ANALYTICS_AVAILABLE_END)))
     write("scenarios.json", scenarios, application_rule="Explicit demo-state overlays only; missing/revoked/no-row metrics become null. Never change real OAuth status.")
 
     csv_path = OUT / "channel_summary_28d.csv"
@@ -518,6 +530,7 @@ def main():
                 raw_daily_views_delta=raw_v_delta,
                 is_negative_anomaly=is_neg_anom,
                 anomaly_reason=anom_reason,
+                daily_videos_published=channel_vids_pub[cid, day],
                 video_count_public=max(10, 45 + ci * 8 + len(ch_videos)),
                 last_video_published_pt=str(last_pub),
                 expected_upload_cycle_days=7))

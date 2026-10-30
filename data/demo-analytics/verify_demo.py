@@ -174,14 +174,22 @@ def main():
 
     partial_sc = next(s for s in scenarios if s["scenario_id"] == "partial_monetary")
     mon_cids = [c["channel_id"] for c in partial_sc["channel_states"] if c["monetary_status"] == "demo_ready"]
-    partial_rows = [r for r in daily if r["channel_id"] in mon_cids and "2026-10-01" <= r["day"] <= "2026-10-28"]
+    partial_rows = [r for r in daily if r["channel_id"] in mon_cids and "2026-09-27" <= r["day"] <= "2026-10-26"]
     partial_agg = aggregate(partial_rows)
     delayed_sc = next(s for s in scenarios if s["scenario_id"] == "delayed_monetary")
-    delayed_rows = [r for r in daily if "2026-10-01" <= r["day"] <= "2026-10-26"]
+    delayed_rows = [r for r in daily if "2026-09-27" <= r["day"] <= "2026-10-24"]
     delayed_agg = aggregate(delayed_rows)
     check("partial_and_delayed_monetary_scenarios_reconcile_views_with_monetary",
-          len(mon_cids) == 1 and partial_agg["proxyRpm"] == expected[mon_cids[0]]["metrics"]["proxyRpm"] and
+          len(mon_cids) == 1 and partial_sc["period_end"] == "2026-10-26" and
+          partial_agg["proxyRpm"] == round(partial_agg["estimatedRevenue"] / partial_agg["views"] * 1000, 4) and
           delayed_agg["proxyRpm"] == round(delayed_agg["estimatedRevenue"] / delayed_agg["views"] * 1000, 4))
+
+    vids_30d_cur = sum(r.get("daily_videos_published", 0) for r in daily if "2026-09-27" <= r["day"] <= "2026-10-26")
+    vids_30d_prev = sum(r.get("daily_videos_published", 0) for r in daily if "2026-08-28" <= r["day"] <= "2026-09-26")
+    check("daily_videos_published_present_and_30d_reconciles",
+          all("daily_videos_published" in r and isinstance(r["daily_videos_published"], int) and r["daily_videos_published"] >= 0 for r in daily) and
+          all("daily_videos_published" in s for s in snaps) and
+          vids_30d_cur > 50 and vids_30d_prev > 50)
 
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())

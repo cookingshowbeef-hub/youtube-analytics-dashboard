@@ -391,8 +391,8 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 28px 36px;
-  gap: 24px;
+  padding: 8px 24px 28px 24px;
+  gap: 6px;
 }
 
 /* Topbar */
@@ -5160,24 +5160,79 @@ input:checked + .slider:before {
 }
 
 .v3-shared-report-header {
-  margin-bottom: 18px;
+  margin-bottom: 2px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
 }
 
-.v3-scope-bar {
+.v3-demo-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 10px 16px;
-  padding: 10px 16px;
+  gap: 8px 14px;
+  padding: 3px 12px;
+  background: rgba(245, 158, 11, 0.09);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-radius: var(--radius-md);
+  font-size: 11.8px;
+  color: var(--text-main);
+}
+
+.v3-demo-left,
+.v3-demo-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.v3-demo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.22);
+  color: #F59E0B;
+  font-weight: 800;
+  font-size: 10.5px;
+  letter-spacing: 0.4px;
+}
+
+.v3-demo-text {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+
+.v3-demo-label {
+  color: #F59E0B;
+  font-weight: 700;
+  font-size: 11.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.v3-scope-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 7px 12px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--text-muted);
+}
+
+.v3-scope-row-1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  flex-wrap: wrap;
 }
 
 .v3-scope-left,
@@ -5185,7 +5240,7 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: 6px 10px;
 }
 
 .v3-scope-brand {
@@ -5193,7 +5248,51 @@ input:checked + .slider:before {
   color: var(--text-main);
   display: inline-flex;
   align-items: center;
+  gap: 5px;
+}
+
+.v3-scope-sep {
+  color: var(--text-dim);
+}
+
+.v3-scope-text {
+  color: var(--text-main);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.v3-scope-row-2 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.v3-scope-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border-subtle);
+  font-size: 11.8px;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.v3-scope-chip.analytics-tag {
+  border-color: rgba(56, 189, 248, 0.35);
+  background: rgba(56, 189, 248, 0.08);
+  color: #38BDF8;
+}
+
+.v3-scope-chip.monetary-tag {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+  color: #F59E0B;
 }
 
 .v3-scope-pill {
@@ -5220,48 +5319,108 @@ input:checked + .slider:before {
   color: #F59E0B;
 }
 
+.v3-export-dropdown {
+  position: relative;
+}
+
+.v3-export-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 185px;
+  background: #141B2D;
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+  padding: 4px;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 1100;
+}
+
+.v3-export-dropdown.open .v3-export-menu {
+  display: flex;
+}
+
+.v3-export-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.v3-export-item:hover {
+  background: rgba(56, 189, 248, 0.12);
+}
+
 .v3-time-filter-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 8px 12px;
+  padding: 6px 12px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
 }
 
-.v3-question-wrap {
+.v3-filter-left,
+.v3-filter-right {
   display: flex;
   align-items: center;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 6px 8px;
 }
 
-.v3-question-tag {
+.v3-date-inputs-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.v3-day-count-tag {
   font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: rgba(56, 189, 248, 0.12);
+  font-family: 'JetBrains Mono', monospace;
   color: #38BDF8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
-.v3-question-text {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text-main);
+.v3-select-sm {
+  padding: 3px 8px !important;
+  font-size: 11.8px !important;
+  height: 27px;
 }
 
-.v3-filter-controls {
+.v3-btn-sm {
+  padding: 3px 9px !important;
+  font-size: 11.8px !important;
+  height: 27px;
+}
+
+.v3-kpi-anomaly-note {
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #F59E0B;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
 }
 
 .v3-preset-group {
@@ -5381,15 +5540,17 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: space-between;
   gap: 6px;
+  flex-wrap: nowrap;
 }
 
 .v3-kpi-label {
-  font-size: 12.5px;
+  font-size: 12.2px;
   font-weight: 600;
   color: var(--text-muted);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  white-space: nowrap;
 }
 
 .v3-help-link {
@@ -5596,8 +5757,13 @@ input:checked + .slider:before {
 
 .v3-grid-2 .v3-table thead th,
 .v3-grid-2 .v3-table tbody td {
-  padding: 7px 8px;
-  font-size: 12px;
+  padding: 6px 5px;
+  font-size: 11.4px;
+}
+
+.v3-table-compact .v3-delta {
+  padding: 1px 5px;
+  font-size: 10.8px;
 }
 
 .v3-table tbody tr:hover td {

@@ -2880,36 +2880,6 @@
   // =========================================================================
   // PAGE 2: BÁO CÁO THEO TEAM (#view-report-team)
   // =========================================================================
-  const TEAM_SHADES = {
-    'TEAM-01': [
-      { bg: '#0284C7', fg: '#F8FAFC' },
-      { bg: '#0EA5E9', fg: '#090D16' },
-      { bg: '#29B6F6', fg: '#090D16' },
-      { bg: '#4FC3F7', fg: '#090D16' },
-      { bg: '#67E8F9', fg: '#090D16' }
-    ],
-    'TEAM-02': [
-      { bg: '#D97706', fg: '#090D16' },
-      { bg: '#EA8A08', fg: '#090D16' },
-      { bg: '#F59E0B', fg: '#090D16' },
-      { bg: '#FBBF24', fg: '#090D16' },
-      { bg: '#FCD34D', fg: '#090D16' }
-    ],
-    'TEAM-03': [
-      { bg: '#C2185B', fg: '#F8FAFC' },
-      { bg: '#D81B60', fg: '#F8FAFC' },
-      { bg: '#EC4899', fg: '#090D16' },
-      { bg: '#F06292', fg: '#090D16' },
-      { bg: '#F48FB1', fg: '#090D16' }
-    ]
-  };
-
-  function shortEmployeeName(fullName) {
-    const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
-    if (parts.length <= 2) return parts.join(' ');
-    return parts.slice(-2).join(' ');
-  }
-
   function renderTeamPage(snap) {
     const root = document.getElementById('v3-team-root');
     if (!root) return;
@@ -2977,72 +2947,25 @@
         }).join('')}
       </div>
 
-      <!-- 2. SIDE-BY-SIDE: 3-TEAM TREND CHART & STACKED MEMBER CONTRIBUTION BARS -->
-      <div class="v3-team-mid-grid">
-        <section class="v3-panel" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;">
-          <div class="v3-panel-header" style="margin-bottom:10px;">
-            <div>
-              <div class="v3-panel-title">
-                <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
-                ${esc(chartTitle)}
-              </div>
-            </div>
-            <div class="v3-preset-group">
-              <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'views' ? 'active' : ''}" data-tm-metric="views">Lượt xem</button>
-              <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'watchHours' ? 'active' : ''}" data-tm-metric="watchHours">Giờ xem [Analytics]</button>
-              <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'revenue' ? 'active' : ''}" data-tm-metric="revenue">Doanh thu [Analytics]</button>
-            </div>
-          </div>
-          <div style="flex:1;min-height:245px;position:relative;">
-            <canvas id="v3-team-trend-canvas"></canvas>
-          </div>
-        </section>
-
-        <section class="v3-panel" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;">
+      <!-- 2. FULL-WIDTH 3-TEAM TREND CHART -->
+      <section class="v3-panel">
+        <div class="v3-panel-header" style="margin-bottom:10px;">
           <div>
-            <div class="v3-panel-header" style="margin-bottom:12px;">
-              <div>
-                <div class="v3-panel-title">
-                  <i class="ri-pie-chart-box-line" style="color:#38BDF8;"></i>
-                  Đóng góp của từng nhân viên vào team
-                </div>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:14px;">
-              ${sortedTeams.map(tp => {
-                const tViews = Math.max(1, tp.curr.views || 1);
-                const palette = TEAM_SHADES[tp.id] || TEAM_SHADES['TEAM-01'];
-                const chSorted = [...tp.channels].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
-                return `
-                  <div>
-                    <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:5px;white-space:nowrap;">
-                      <span><span class="v3-team-dot" style="background:${tp.color};"></span> ${esc(tp.name)}</span>
-                      <span style="font-family:'JetBrains Mono',monospace;">${tp.curr.views !== null ? fmtInt(tp.curr.views) + ' views' : '—'}</span>
-                    </div>
-                    <div class="v3-contrib-bar">
-                      ${chSorted.map((cp, cIdx) => {
-                        const pct = tp.curr.views ? ((cp.curr.views || 0) / tViews) * 100 : 20;
-                        const shade = palette[cIdx % palette.length];
-                        const shortLabel = pct >= 20
-                          ? `${esc(shortEmployeeName(cp.meta.employeeName))} ${Math.round(pct)}%`
-                          : (pct >= 7 ? `${Math.round(pct)}%` : '');
-                        return `<div class="v3-contrib-seg" style="width:${pct.toFixed(2)}%;background:${shade.bg};color:${shade.fg};" title="${esc(cp.meta.employeeName)} (${esc(cp.meta.title)}): ${fmtInt(cp.curr.views)} views (${fmtDec(pct, 1)}%)">${shortLabel}</div>`;
-                      }).join('')}
-                    </div>
-                    <div class="v3-contrib-legend">
-                      ${chSorted.map((cp, cIdx) => {
-                        const pct = tp.curr.views ? ((cp.curr.views || 0) / tViews) * 100 : 0;
-                        const shade = palette[cIdx % palette.length];
-                        return `<span class="v3-contrib-legend-item"><span class="v3-contrib-swatch" style="background:${shade.bg};"></span>${esc(cp.meta.employeeName)}: <strong>${fmtDec(pct, 1)}%</strong></span>`;
-                      }).join('')}
-                    </div>
-                  </div>
-                `;
-              }).join('')}
+            <div class="v3-panel-title">
+              <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
+              ${esc(chartTitle)}
             </div>
           </div>
-        </section>
-      </div>
+          <div class="v3-preset-group">
+            <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'views' ? 'active' : ''}" data-tm-metric="views">Lượt xem</button>
+            <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'watchHours' ? 'active' : ''}" data-tm-metric="watchHours">Giờ xem [Analytics]</button>
+            <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'revenue' ? 'active' : ''}" data-tm-metric="revenue">Doanh thu [Analytics]</button>
+          </div>
+        </div>
+        <div style="height:265px;position:relative;">
+          <canvas id="v3-team-trend-canvas"></canvas>
+        </div>
+      </section>
 
       <!-- 3. 5-CHANNEL TABLE IN SELECTED TEAM -->
       <section class="v3-panel" style="margin-bottom:0;">

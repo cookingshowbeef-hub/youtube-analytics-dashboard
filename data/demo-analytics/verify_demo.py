@@ -91,15 +91,6 @@ def main():
     vs = {v["video_id"]: v for v in video_summary}
     check("video_activity_not_before_pacific_publication", all(r["day"] >= vs[r["video_id"]]["published_day_pacific"] for r in videos))
     check("video_watch_time_within_duration_capacity", all(r["estimatedMinutesWatched"] * 60 <= r["views"] * vs[r["video_id"]]["duration_seconds"] for r in videos))
-    retention_ok = True
-    for row in load("retention.json")["rows"]:
-        summary = vs[row["video_id"]]
-        metric = summary["metrics"]
-        points = row["points"]
-        integral = sum((points[i]["audienceWatchRatio"] + points[i + 1]["audienceWatchRatio"]) / 2 * (points[i + 1]["elapsedVideoTimeRatio"] - points[i]["elapsedVideoTimeRatio"]) for i in range(len(points) - 1))
-        target = metric["estimatedMinutesWatched"] * 60 / metric["views"] / summary["duration_seconds"]
-        retention_ok &= abs(integral - target) < 0.0001
-    check("retention_curves_reconcile_with_demo_video_watch_fraction", retention_ok)
     check("150_video_summaries_145_active_5_no_activity", len(vs) == 150 and sum(v["status"] == "demo_ready" for v in vs.values()) == 145 and sum(v["status"] == "no_activity_in_demo_period" and v["metrics"] is None for v in vs.values()) == 5)
 
     partitions = defaultdict(list)
@@ -409,6 +400,47 @@ def main():
                 chart_a_and_cross_page_ok = False
                 break
     check("page2_chart_a_custom_vs_global_period_and_5channel_table_reconcile", chart_a_and_cross_page_ok)
+
+    # Check 33 (Page 3): Country table (Hoa Kỳ, Việt Nam, Vương quốc Anh, Canada, Khác) and Traffic Source table
+    # (Danh sách phát, Người đăng ký, Tìm kiếm YouTube, Khác) sum to exact channel total views across all 15 channels
+    country_vn_map = {"US": "Hoa Kỳ", "VN": "Việt Nam", "GB": "Vương quốc Anh", "CA": "Canada"}
+    traffic_named_keys = ["PLAYLIST", "SUBSCRIBER", "YT_SEARCH"]
+    page3_geo_traffic_ok = True
+    bd_rows_all = load("breakdown_daily.json")["rows"]
+    for p_start, p_end in [("2026-10-20", "2026-10-26"), ("2026-09-27", "2026-10-26"), ("2026-10-01", "2026-10-26")]:
+        p_days = [r["day"] for r in daily if r["channel_id"] == baseline["channels"][0]["id"] and p_start <= r["day"] <= p_end]
+        for ch_obj in baseline["channels"]:
+            cid = ch_obj["id"]
+            ch_total_views = sum(index[cid, d]["views"] for d in p_days)
+            ch_bd_country = [b for b in bd_rows_all if b["channel_id"] == cid and b["dimension"] == "country" and p_start <= b["day"] <= p_end]
+            ch_bd_traffic = [b for b in bd_rows_all if b["channel_id"] == cid and b["dimension"] == "insightTrafficSourceType" and p_start <= b["day"] <= p_end]
+            # Raw breakdown partition sums equal channel views
+            if sum(b["views"] for b in ch_bd_country) != ch_total_views or sum(b["views"] for b in ch_bd_traffic) != ch_total_views:
+                page3_geo_traffic_ok = False
+                break
+            # Named countries + Khác == ch_total_views
+            named_c_views = [
+                sum(b["views"] for b in ch_bd_country if b["value"] == c_code)
+                for c_code in country_vn_map
+            ]
+            khac_c_views = ch_total_views - sum(named_c_views)
+            c_rows = named_c_views + [khac_c_views]
+            c_shares = allocate_exact_tenths_pct(c_rows)
+            # Named traffic (Danh sách phát, Người đăng ký, Tìm kiếm YouTube) + Khác == ch_total_views
+            named_t_views = [
+                sum(b["views"] for b in ch_bd_traffic if b["value"] == t_key)
+                for t_key in traffic_named_keys
+            ]
+            khac_t_views = ch_total_views - sum(named_t_views)
+            t_rows = named_t_views + [khac_t_views]
+            t_shares = allocate_exact_tenths_pct(t_rows)
+            if not (
+                khac_c_views >= 0 and sum(c_rows) == ch_total_views and round(sum(c_shares) * 10) == 1000 and
+                khac_t_views >= 0 and sum(t_rows) == ch_total_views and round(sum(t_shares) * 10) == 1000
+            ):
+                page3_geo_traffic_ok = False
+                break
+    check("page3_country_and_traffic_source_tables_with_khac_reconcile_channel_views", page3_geo_traffic_ok)
 
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())

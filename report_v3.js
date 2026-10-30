@@ -60,8 +60,7 @@
     channelMode: 'single',  // 'single' | 'compare'
     selectedChannelId: 'UCSJ4gkVC6NrvII8umztf0Ow',
     channelChartMetric: 'views',
-    selectedVideoIdForRetention: null,
-    deepAnalyticsOpen: true,
+    deepAnalyticsOpen: false,
     compareChannelIds: ['UCJhjE7wbdYAae1G25m0tHAA', 'UCM9KEEuzacwVlkt9JfJad7g', 'UCSJ4gkVC6NrvII8umztf0Ow'],
     compareChannelMetric: 'views',
     // Page 4 (Staff)
@@ -1724,11 +1723,6 @@
     const otherContentViews = curr.views !== null ? Math.max(0, curr.views - sampleViewsSum) : null;
     const sampleSharePct = (curr.views && curr.views > 0) ? ((sampleViewsSum / curr.views) * 100).toFixed(1) : '0.0';
 
-    if (!v3State.selectedVideoIdForRetention || !enrichedVideos.some(v => v.id === v3State.selectedVideoIdForRetention)) {
-      const firstActive = enrichedVideos.find(v => demo && demo.getVideoRetention && demo.getVideoRetention(v.id));
-      v3State.selectedVideoIdForRetention = firstActive ? firstActive.id : (enrichedVideos[0] ? enrichedVideos[0].id : null);
-    }
-
     // Channel MoM & QoQ rollups
     const rollups = (demo && demo.periodRollups) || [];
     const chRollupsMonth = ['2026-10', '2026-09', '2026-08', '2026-07']
@@ -1738,9 +1732,89 @@
       .map(pk => rollups.find(r => r.entity_type === 'channel' && r.entity_id === cp.id && r.period_key === pk))
       .filter(Boolean);
 
-    // Breakdowns
-    const bdKey = snap.win.dayCount <= 7 ? 'last_7_days' : 'last_28_days';
+    // Breakdowns: Country (Vietnamese names + "Khác") & Traffic Sources ("Danh sách phát", "Người đăng ký", "Tìm kiếm YouTube", "Khác")
+    const bdKey = snap.win.dayCount <= 7
+      ? 'last_7_days'
+      : (snap.win.dayCount <= 28 ? 'last_28_days' : (snap.win.dayCount <= 31 ? 'last_30_days' : 'last_90_days'));
     const breakdowns = (demo && demo.getChannelBreakdowns) ? demo.getChannelBreakdowns(cp.id, bdKey) : null;
+
+    const totalChViews = curr.views !== null ? curr.views : 0;
+    const totalChHours = curr.watchHours !== null ? curr.watchHours : null;
+    const totalChRev = (curr.hasMonetary && curr.estimatedRevenue !== null) ? curr.estimatedRevenue : null;
+
+    const COUNTRY_VN_MAP = {
+      US: 'Hoa Kỳ',
+      VN: 'Việt Nam',
+      GB: 'Vương quốc Anh',
+      CA: 'Canada'
+    };
+    const rawCountries = (breakdowns && breakdowns.country) ? breakdowns.country : [];
+    const rawCViewsSum = rawCountries.reduce((s, r) => s + (r.views || 0), 0);
+    const rawCHoursSum = rawCountries.reduce((s, r) => s + (r.estimatedHoursWatched || 0), 0);
+    const rawCRevSum = rawCountries.reduce((s, r) => s + (r.estimatedRevenue || 0), 0);
+
+    const namedCountries = rawCountries
+      .filter(r => r.value !== 'OTHER' && COUNTRY_VN_MAP[r.value])
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .map(r => ({
+        code: r.value,
+        label: COUNTRY_VN_MAP[r.value],
+        isOther: false,
+        views: rawCViewsSum > 0 ? Math.round((r.views / rawCViewsSum) * totalChViews) : 0,
+        hours: (rawCHoursSum > 0 && totalChHours !== null) ? Number(((r.estimatedHoursWatched / rawCHoursSum) * totalChHours).toFixed(2)) : 0,
+        revenue: (totalChRev !== null && rawCRevSum > 0 && r.estimatedRevenue !== null)
+          ? Number(((r.estimatedRevenue / rawCRevSum) * totalChRev).toFixed(2))
+          : (totalChRev === 0 ? 0 : null)
+      }));
+    const sumNamedCViews = namedCountries.reduce((s, x) => s + x.views, 0);
+    const sumNamedCHours = namedCountries.reduce((s, x) => s + (x.hours || 0), 0);
+    const sumNamedCRev = namedCountries.reduce((s, x) => s + (x.revenue || 0), 0);
+    const countryRows = [
+      ...namedCountries,
+      {
+        code: 'OTHER',
+        label: 'Khác',
+        isOther: true,
+        views: Math.max(0, totalChViews - sumNamedCViews),
+        hours: totalChHours !== null ? Math.max(0, Number((totalChHours - sumNamedCHours).toFixed(2))) : null,
+        revenue: totalChRev !== null ? Math.max(0, Number((totalChRev - sumNamedCRev).toFixed(2))) : null
+      }
+    ];
+    const countryShares = allocateExactTenthsPct(countryRows.map(r => r.views));
+
+    const TRAFFIC_VN_ITEMS = [
+      { key: 'PLAYLIST', label: 'Danh sách phát' },
+      { key: 'SUBSCRIBER', label: 'Người đăng ký' },
+      { key: 'YT_SEARCH', label: 'Tìm kiếm YouTube' }
+    ];
+    const rawTraffic = (breakdowns && breakdowns.insightTrafficSourceType) ? breakdowns.insightTrafficSourceType : [];
+    const rawTViewsSum = rawTraffic.reduce((s, r) => s + (r.views || 0), 0);
+    const rawTHoursSum = rawTraffic.reduce((s, r) => s + (r.estimatedHoursWatched || 0), 0);
+    const namedTraffic = TRAFFIC_VN_ITEMS.map(item => {
+      const found = rawTraffic.find(r => r.value === item.key);
+      const rawV = found ? (found.views || 0) : 0;
+      const rawH = found ? (found.estimatedHoursWatched || 0) : 0;
+      return {
+        key: item.key,
+        label: item.label,
+        isOther: false,
+        views: rawTViewsSum > 0 ? Math.round((rawV / rawTViewsSum) * totalChViews) : 0,
+        hours: (rawTHoursSum > 0 && totalChHours !== null) ? Number(((rawH / rawTHoursSum) * totalChHours).toFixed(2)) : 0
+      };
+    });
+    const sumNamedTViews = namedTraffic.reduce((s, x) => s + x.views, 0);
+    const sumNamedTHours = namedTraffic.reduce((s, x) => s + (x.hours || 0), 0);
+    const trafficRows = [
+      ...namedTraffic,
+      {
+        key: 'OTHER',
+        label: 'Khác',
+        isOther: true,
+        views: Math.max(0, totalChViews - sumNamedTViews),
+        hours: totalChHours !== null ? Math.max(0, Number((totalChHours - sumNamedTHours).toFixed(2))) : null
+      }
+    ];
+    const trafficShares = allocateExactTenthsPct(trafficRows.map(r => r.views));
 
     body.innerHTML = `
       <!-- 1. CHANNEL PROFILE HEADER -->
@@ -1755,8 +1829,11 @@
                 <span class="v3-badge" style="background:${meta.teamColor}22;color:${meta.teamColor};border:1px solid ${meta.teamColor}55;">
                   <span class="v3-team-dot" style="background:${meta.teamColor};"></span> ${esc(meta.teamName)}
                 </span>
-                <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}">
-                  ${curr.hasAnalytics ? '[Đã kết nối Analytics]' : `[Trạng thái: ${curr.analyticsStatus}]`}
+                <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}" id="v3-channel-oauth-status-badge">
+                  ${curr.hasAnalytics ? '[Đã kết nối Analytics]' : 'Chưa cấp quyền Analytics'}
+                </span>
+                <span class="v3-badge muted" id="v3-channel-analytics-delay-note">
+                  Dữ liệu Analytics trễ 2–3 ngày
                 </span>
               </div>
               <div style="font-size:12.5px;color:var(--text-muted);margin-top:4px;">
@@ -1827,11 +1904,11 @@
 
         <div class="v3-kpi-card">
           <div class="v3-kpi-top">
-            <span class="v3-kpi-label">Doanh thu & Giờ xem ${helpBadge('guide-rpm', 'Doanh thu ước tính và Thời lượng xem trung bình (AVD) từ YouTube Analytics')}</span>
-            <span class="v3-badge analytics">[Analytics]</span>
+            <span class="v3-kpi-label">Doanh thu & Giờ xem ${helpBadge('guide-rpm', 'Doanh thu ước tính và Thời lượng xem trung bình (AVD) từ YouTube Analytics (dữ liệu Analytics trễ 2–3 ngày)')}</span>
+            <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}">${curr.hasAnalytics ? '[Analytics]' : 'Chưa cấp quyền Analytics'}</span>
           </div>
-          <div class="v3-kpi-value">${curr.estimatedRevenue !== null ? fmtMoney(curr.estimatedRevenue) : '—'}</div>
-          <div class="v3-kpi-delta-row">${fmtDeltaBadge(curr.estimatedRevenue, prev.estimatedRevenue, true)}</div>
+          <div class="v3-kpi-value">${curr.estimatedRevenue !== null ? fmtMoney(curr.estimatedRevenue) : (curr.hasAnalytics ? '—' : '<span style="font-size:14px;color:#FBBF24;">Chưa cấp quyền Analytics</span>')}</div>
+          <div class="v3-kpi-delta-row">${curr.estimatedRevenue !== null ? fmtDeltaBadge(curr.estimatedRevenue, prev.estimatedRevenue, true) : `<span class="v3-delta flat">Dữ liệu Analytics trễ 2–3 ngày</span>`}</div>
           <div class="v3-kpi-sub">
             Giờ xem: <strong>${curr.watchHours !== null ? fmtInt(curr.watchHours) + 'h' : '—'}</strong> •
             AVD: <strong>${curr.avdSeconds !== null ? Math.floor(curr.avdSeconds / 60) + 'p' + String(Math.round(curr.avdSeconds % 60)).padStart(2, '0') + 's' : '—'}</strong> •
@@ -1886,7 +1963,6 @@
                 <th class="num">Views 7 ngày đầu ${helpBadge('guide-views-7d', 'Chỉ hiện số khi video có đủ 7 ngày snapshot kể từ lúc đăng')}</th>
                 <th class="num">Giờ xem</th>
                 <th class="num">Doanh thu</th>
-                <th>Retention</th>
               </tr>
             </thead>
             <tbody>
@@ -1904,12 +1980,11 @@
       const flags = [];
       if (v.likesHidden) flags.push(`<span class="v3-badge warn">[Ẩn like]</span>`);
       if (v.commentsDisabled) flags.push(`<span class="v3-badge warn">[Tắt bình luận]</span>`);
-      const isSelectedRet = v.id === v3State.selectedVideoIdForRetention;
       return `
-                  <tr class="clickable-row" data-select-retention-vid="${v.id}" style="${isSelectedRet ? 'background:rgba(56,189,248,0.08);' : ''}">
+                  <tr>
                     <td>${idx + 1}</td>
                     <td>
-                      <div style="font-weight:700;color:var(--text-main);max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(v.title)}">
+                      <div style="font-weight:700;color:var(--text-main);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(v.title)}">
                         ${esc(v.title)}
                       </div>
                       <div style="font-size:10.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">ID: ${esc(v.id)} ${flags.join(' ')}</div>
@@ -1920,11 +1995,6 @@
                     <td class="num">${first7dHtml}</td>
                     <td class="num">${v.periodHours !== null ? fmtInt(v.periodHours) + 'h' : '—'}</td>
                     <td class="num">${v.periodRev !== null ? fmtMoney(v.periodRev) : '—'}</td>
-                    <td>
-                      <button type="button" class="v3-btn ${isSelectedRet ? 'primary' : ''}" data-select-retention-vid="${v.id}" style="padding:3px 7px;font-size:10.8px;">
-                        <i class="ri-pulse-line"></i> ${isSelectedRet ? 'Đang xem' : 'Retention'}
-                      </button>
-                    </td>
                   </tr>
                 `;
     }).join('')}
@@ -1938,7 +2008,6 @@
                 <td class="num">—</td>
                 <td class="num">${curr.watchHours !== null ? fmtInt(curr.watchHours) + 'h' : '—'}</td>
                 <td class="num">${curr.estimatedRevenue !== null ? fmtMoney(curr.estimatedRevenue) : '—'}</td>
-                <td>Khớp 100% tổng kênh</td>
               </tr>
             </tfoot>
           </table>
@@ -1950,7 +2019,7 @@
         <section class="v3-panel" style="margin-bottom:0;">
           <div class="v3-panel-header" style="margin-bottom:10px;">
             <div class="v3-panel-title"><i class="ri-calendar-line" style="color:#38BDF8;"></i> Bảng Tháng với Tháng (MoM) của kênh</div>
-            <span class="v3-badge analytics">[Analytics]</span>
+            <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}">${curr.hasAnalytics ? '[Analytics]' : 'Chưa cấp quyền Analytics'}</span>
           </div>
           <div class="v3-table-wrap">
             <table class="v3-table">
@@ -1981,7 +2050,7 @@
         <section class="v3-panel" style="margin-bottom:0;">
           <div class="v3-panel-header" style="margin-bottom:10px;">
             <div class="v3-panel-title"><i class="ri-calendar-todo-line" style="color:#F59E0B;"></i> Bảng Quý với Quý (QoQ) của kênh</div>
-            <span class="v3-badge analytics">[Analytics]</span>
+            <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}">${curr.hasAnalytics ? '[Analytics]' : 'Chưa cấp quyền Analytics'}</span>
           </div>
           <div class="v3-table-wrap">
             <table class="v3-table">
@@ -2010,78 +2079,102 @@
         </section>
       </div>
 
-      <!-- 6. COLLAPSIBLE DEEP ANALYTICS SECTION (Audience Retention + Geo/Traffic/Device) -->
-      <section class="v3-panel">
+      <!-- 6. COLLAPSIBLE COUNTRY & TRAFFIC SOURCE SECTION ("Quốc gia và nguồn truy cập") -->
+      <section class="v3-panel" id="v3-channel-geo-traffic-panel" style="margin-bottom:0;" data-collapsed="${v3State.deepAnalyticsOpen ? 'false' : 'true'}">
         <div class="v3-panel-header" style="margin-bottom:${v3State.deepAnalyticsOpen ? '14px' : '0'};">
           <div>
-            <div class="v3-panel-title">
+            <div class="v3-panel-title" id="v3-channel-geo-traffic-title">
               <i class="ri-compass-3-line" style="color:#38BDF8;"></i>
-              Phân tích sâu: Giữ chân khán giả theo từng video · Địa lý · Nguồn truy cập · Thiết bị
-              <span class="v3-badge analytics">[Analytics]</span>
+              Quốc gia và nguồn truy cập
+              <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}">${curr.hasAnalytics ? '[Analytics]' : 'Chưa cấp quyền Analytics'}</span>
             </div>
             <div class="v3-panel-subtitle">
-              Phần chuyên sâu từ YouTube Analytics API v2 (chỉ áp dụng cho kênh đã cấp quyền OAuth Analytics)
+              Phân rã lượt xem và giờ xem theo Quốc gia và Nguồn truy cập từ YouTube Analytics API v2 · Dữ liệu Analytics trễ 2–3 ngày
             </div>
           </div>
           <button type="button" class="v3-btn" id="v3-btn-toggle-deep-analytics">
-            ${v3State.deepAnalyticsOpen ? 'Thu gọn phân tích sâu ▲' : 'Mở phân tích sâu [Analytics] ▼'}
+            ${v3State.deepAnalyticsOpen ? 'Thu gọn ▲' : 'Mở Quốc gia và nguồn truy cập ▼'}
           </button>
         </div>
 
         ${v3State.deepAnalyticsOpen ? (
         !curr.hasAnalytics ? `
-            <div style="padding:20px;border:1px dashed var(--border-medium);border-radius:8px;text-align:center;color:var(--text-muted);">
-              Kênh <strong>${esc(meta.title)}</strong> hiện đang ở chế độ <code>${esc(curr.analyticsStatus)}</code> (chưa có dữ liệu YouTube Analytics API v2).
-              Vui lòng cấp quyền OAuth hoặc chọn kịch bản <code>all_demo_ready</code> để xem đường cong Giữ chân khán giả (Retention) và phân rã Địa lý / Thiết bị.
+            <div id="v3-channel-no-oauth-notice" style="padding:20px;border:1px dashed var(--border-medium);border-radius:8px;text-align:center;color:var(--text-muted);">
+              <div style="font-size:14px;font-weight:700;color:#FBBF24;margin-bottom:6px;">Chưa cấp quyền Analytics</div>
+              <div>
+                Kênh <strong>${esc(meta.title)}</strong> chưa kết nối OAuth YouTube Analytics API v2.
+                Vui lòng cấp quyền OAuth để xem bảng Quốc gia và Nguồn truy cập (ghi chú: dữ liệu Analytics trễ 2–3 ngày).
+              </div>
             </div>
           ` : `
-            <div class="v3-grid-2" style="margin-bottom:0;">
+            <div class="v3-grid-2" style="margin-bottom:0;" id="v3-channel-geo-traffic-grid">
               <div>
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
-                  <strong style="font-size:13px;">Đường cong Giữ chân khán giả (Audience Retention)</strong>
-                  <select id="v3-retention-video-select" class="v3-select" style="max-width:280px;">
-                    ${enrichedVideos.map(v => `
-                      <option value="${v.id}" ${v.id === v3State.selectedVideoIdForRetention ? 'selected' : ''}>
-                        ${esc(v.title.slice(0, 42))} (${formatIsoToVN(v.publishedAt)})
-                      </option>
-                    `).join('')}
-                  </select>
-                </div>
-                <div style="height:230px;position:relative;">
-                  <canvas id="v3-channel-retention-canvas"></canvas>
-                </div>
-              </div>
-
-              <div>
-                <strong style="font-size:13px;display:block;margin-bottom:8px;">Phân rã Địa lý (Top Quốc gia) & Nguồn truy cập [Analytics]</strong>
+                <strong style="font-size:13px;display:block;margin-bottom:8px;">Bảng Quốc gia</strong>
                 <div class="v3-table-wrap">
-                  <table class="v3-table">
+                  <table class="v3-table" id="v3-channel-country-table">
                     <thead>
                       <tr>
-                        <th>Quốc gia / Nguồn</th>
+                        <th>Quốc gia</th>
                         <th class="num">Lượt xem</th>
+                        <th class="num">Tỷ trọng</th>
                         <th class="num">Giờ xem</th>
                         <th class="num">Doanh thu</th>
                       </tr>
                     </thead>
                     <tbody>
-                      ${(breakdowns && breakdowns.country ? breakdowns.country.slice(0, 5) : []).map(row => `
-                        <tr>
-                          <td><span class="v3-badge analytics">[Quốc gia]</span> <strong>${esc(row.value)}</strong></td>
-                          <td class="num">${fmtInt(row.views)}</td>
-                          <td class="num">${fmtInt(row.estimatedHoursWatched)}h</td>
-                          <td class="num">${curr.hasMonetary && row.estimatedRevenue !== null ? fmtMoney(row.estimatedRevenue) : '—'}</td>
-                        </tr>
-                      `).join('')}
-                      ${(breakdowns && breakdowns.insightTrafficSourceType ? breakdowns.insightTrafficSourceType.slice(0, 3) : []).map(row => `
-                        <tr>
-                          <td><span class="v3-badge muted">[Nguồn]</span> ${esc(row.value)}</td>
-                          <td class="num">${fmtInt(row.views)}</td>
-                          <td class="num">${fmtInt(row.estimatedHoursWatched)}h</td>
-                          <td class="num">—</td>
+                      ${countryRows.map((row, idx) => `
+                        <tr data-country-row="${esc(row.code)}" data-row-views="${row.views}">
+                          <td><strong>${esc(row.label)}</strong></td>
+                          <td class="num"><strong>${fmtInt(row.views)}</strong></td>
+                          <td class="num">${fmtDec(countryShares[idx] || 0, 1)}%</td>
+                          <td class="num">${row.hours !== null ? fmtInt(row.hours) + 'h' : '—'}</td>
+                          <td class="num">${curr.hasMonetary && row.revenue !== null ? fmtMoney(row.revenue) : '—'}</td>
                         </tr>
                       `).join('')}
                     </tbody>
+                    <tfoot>
+                      <tr id="v3-channel-country-total-row" data-total-views="${totalChViews}">
+                        <td><strong>Tổng cộng kênh</strong></td>
+                        <td class="num"><strong>${fmtInt(totalChViews)}</strong></td>
+                        <td class="num"><strong>100,0%</strong></td>
+                        <td class="num"><strong>${totalChHours !== null ? fmtInt(totalChHours) + 'h' : '—'}</strong></td>
+                        <td class="num"><strong>${curr.hasMonetary && totalChRev !== null ? fmtMoney(totalChRev) : '—'}</strong></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
+              <div>
+                <strong style="font-size:13px;display:block;margin-bottom:8px;">Bảng Nguồn truy cập</strong>
+                <div class="v3-table-wrap">
+                  <table class="v3-table" id="v3-channel-traffic-table">
+                    <thead>
+                      <tr>
+                        <th>Nguồn truy cập</th>
+                        <th class="num">Lượt xem</th>
+                        <th class="num">Tỷ trọng</th>
+                        <th class="num">Giờ xem</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${trafficRows.map((row, idx) => `
+                        <tr data-traffic-row="${esc(row.key)}" data-row-views="${row.views}">
+                          <td><strong>${esc(row.label)}</strong></td>
+                          <td class="num"><strong>${fmtInt(row.views)}</strong></td>
+                          <td class="num">${fmtDec(trafficShares[idx] || 0, 1)}%</td>
+                          <td class="num">${row.hours !== null ? fmtInt(row.hours) + 'h' : '—'}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                    <tfoot>
+                      <tr id="v3-channel-traffic-total-row" data-total-views="${totalChViews}">
+                        <td><strong>Tổng cộng kênh</strong></td>
+                        <td class="num"><strong>${fmtInt(totalChViews)}</strong></td>
+                        <td class="num"><strong>100,0%</strong></td>
+                        <td class="num"><strong>${totalChHours !== null ? fmtInt(totalChHours) + 'h' : '—'}</strong></td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </div>
@@ -2091,18 +2184,14 @@
       </section>
     `;
 
-    // Render Single Channel Trend Chart & Retention Chart
+    // Render Single Channel Trend Chart
     renderSingleChannelChart(cp, snap);
-    if (v3State.deepAnalyticsOpen && curr.hasAnalytics) {
-      renderSingleChannelRetentionChart(v3State.selectedVideoIdForRetention, demo);
-    }
 
     // Bind Single Channel Events
     const chSel = document.getElementById('v3-single-channel-select');
     if (chSel) {
       chSel.addEventListener('change', () => {
         v3State.selectedChannelId = chSel.value;
-        v3State.selectedVideoIdForRetention = null;
         renderSharedHeader(snap, 'view-report-channel');
         renderChannelPage(snap);
       });
@@ -2115,23 +2204,6 @@
         renderChannelPage(snap);
       });
     });
-
-    body.querySelectorAll('[data-select-retention-vid]').forEach(el => {
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        v3State.selectedVideoIdForRetention = el.getAttribute('data-select-retention-vid');
-        v3State.deepAnalyticsOpen = true;
-        renderChannelPage(snap);
-      });
-    });
-
-    const retSel = document.getElementById('v3-retention-video-select');
-    if (retSel) {
-      retSel.addEventListener('change', () => {
-        v3State.selectedVideoIdForRetention = retSel.value;
-        renderSingleChannelRetentionChart(v3State.selectedVideoIdForRetention, demo);
-      });
-    }
 
     const btnDeep = document.getElementById('v3-btn-toggle-deep-analytics');
     if (btnDeep) {
@@ -2197,58 +2269,6 @@
         scales: {
           x: { ticks: { color: '#94A3B8', maxTicksLimit: 14 }, grid: { color: 'rgba(255,255,255,0.04)' } },
           y: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(255,255,255,0.06)' } }
-        }
-      }
-    });
-  }
-
-  function renderSingleChannelRetentionChart(videoId, demo) {
-    destroyChart('channelRetention');
-    const canvas = document.getElementById('v3-channel-retention-canvas');
-    if (!canvas || typeof Chart === 'undefined' || !demo) return;
-
-    const points = demo.getVideoRetention(videoId) || [];
-    if (!points.length) return;
-
-    const labels = points.map(p => Math.round(p.elapsedVideoTimeRatio * 100) + '%');
-    const watchData = points.map(p => Number((p.audienceWatchRatio * 100).toFixed(1)));
-    const relData = points.map(p => Number((p.relativeRetentionPerformance * 100).toFixed(1)));
-
-    chartInstances['channelRetention'] = new Chart(canvas.getContext('2d'), {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: '% Khán giả còn xem (Audience Watch Ratio)',
-            data: watchData,
-            borderColor: '#38BDF8',
-            backgroundColor: 'rgba(56, 189, 248, 0.14)',
-            borderWidth: 2.4,
-            pointRadius: 0,
-            tension: 0.25,
-            fill: true
-          },
-          {
-            label: 'Hiệu suất giữ chân tương đối (%)',
-            data: relData,
-            borderColor: '#F59E0B',
-            borderDash: [4, 4],
-            borderWidth: 1.6,
-            pointRadius: 0,
-            tension: 0.25,
-            fill: false
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { labels: { color: '#CBD5E1', font: { size: 11 } } } },
-        scales: {
-          x: { ticks: { color: '#94A3B8', maxTicksLimit: 11 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-          y: { min: 0, max: 110, ticks: { color: '#94A3B8', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.06)' } }
         }
       }
     });

@@ -1086,13 +1086,13 @@
         </div> <!-- /v3-legacy-dom -->
       </div>
 
-      <!-- VIEW 3: BÁO CÁO THEO NHÂN VIÊN (GỘP 3 TAB: XẾP HẠNG, SO SÁNH, ĐỐI SOÁT) -->
+      <!-- VIEW 3: BÁO CÁO THEO NHÂN VIÊN (2 TAB: BÁO CÁO NV THEO SỐ LIỆU & BÁO CÁO NV THEO BIỂU ĐỒ) -->
       <div class="dashboard-view" id="view-report-staff">
         <div id="v3-staff-root" class="v3-page-root"></div>
       </div>
 
       <!-- LEGACY VIEW 3A: BÁO CÁO THEO NHÂN VIÊN (BIỂU ĐỒ) -->
-      <div class="dashboard-view" id="view-report-staff-chart">
+      <div class="dashboard-view" id="view-report-staff-chart" style="display:none !important;" aria-hidden="true">
         <section class="staff-report-section">
           <!-- Page Header -->
           <div class="section-title-wrap" style="margin-bottom: 16px;">
@@ -1273,7 +1273,7 @@
       </div>
 
       <!-- VIEW 4: BÁO CÁO THEO NHÂN VIÊN (SỐ LIỆU) -->
-      <div class="dashboard-view" id="view-report-staff-data">
+      <div class="dashboard-view" id="view-report-staff-data" style="display:none !important;" aria-hidden="true">
         <section class="staff-data-section">
           <!-- Page Header matching screenshot 20261028-111441.jpg -->
           <div class="section-title-wrap" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
@@ -1334,7 +1334,7 @@
               <label>Ngày bắt đầu</label>
               <div class="filter-input-wrap">
                 <i class="ri-calendar-line"></i>
-                <input type="date" id="staff-data-filter-start" value="2026-09-28">
+                <input type="date" id="staff-data-filter-start" value="2026-09-27">
               </div>
             </div>
 
@@ -1343,7 +1343,7 @@
               <label>Ngày kết thúc</label>
               <div class="filter-input-wrap">
                 <i class="ri-calendar-line"></i>
-                <input type="date" id="staff-data-filter-end" value="2026-10-29">
+                <input type="date" id="staff-data-filter-end" value="2026-10-26">
               </div>
             </div>
 

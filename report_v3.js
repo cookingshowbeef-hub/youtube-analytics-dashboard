@@ -19,9 +19,21 @@
   const COMPARE_LINE_COLORS = ['#38BDF8', '#F59E0B', '#EC4899', '#A855F7', '#14B8A6'];
 
   const FIXED_CHANNEL_PALETTE = [
-    '#38BDF8', '#F59E0B', '#EC4899', '#10B981', '#A855F7',
-    '#06B6D4', '#F97316', '#6366F1', '#14B8A6', '#EAB308',
-    '#F43F5E', '#8B5CF6', '#22C55E', '#0EA5E9', '#D946EF'
+    '#06B6D4', // 0: Nguyễn Văn An (Lunavia Vintage Melodies)
+    '#38BDF8', // 1: Lê Minh Anh (Mellow Moon Lofi)
+    '#A855F7', // 2: Phạm Hà Linh (Harbor Breeze Beats)
+    '#6366F1', // 3: Đỗ Gia Huy (Velvet Espresso Jazz)
+    '#F59E0B', // 4: Trần Ngọc Mai (Saigon Corner BGM)
+    '#F97316', // 5: Trần Minh Bình (Cassette Horizon 84)
+    '#14B8A6', // 6: Nguyễn Hoàng Nam (Aether Grid Synth)
+    '#EAB308', // 7: Võ Thanh Tùng (Neon Mirage Wave)
+    '#22C55E', // 8: Phan Bảo Ngọc (Arcade Midnight Club)
+    '#8B5CF6', // 9: Đặng Quốc Bảo (Prism Pulse Audio)
+    '#10B981', // 10: Hoàng Thảo Vy (Starlight Drift Music)
+    '#EC4899', // 11: Trịnh Minh Khang (Cloudburst Coast Chill)
+    '#F43F5E', // 12: Bùi Quỳnh Chi (Amber Campus Sessions)
+    '#0EA5E9', // 13: Đinh Tuấn Kiệt (Pinewood Indie Folk)
+    '#D946EF'  // 14: Dương Khánh An (Tidal Bloom Acoustic)
   ];
 
   const FIXED_CHANNEL_COLORS = {
@@ -92,15 +104,25 @@
     compareSortField: 'views',   // 'views' | 'netSubs' | 'videosPublished' | 'engagementRate' | 'revenue'
     compareSortAsc: false,
     // Page 4 (Staff)
-    staffTab: 'ranking',    // 'ranking' | 'compare' | 'matrix'
-    staffSortField: 'views',
+    staffTab: 'ranking',            // 'ranking' ("Báo cáo NV theo số liệu") | 'compare' ("Báo cáo NV theo biểu đồ")
+    staffSortField: 'views',        // 'views' | 'growth' | 'netSubs' | 'videos' | 'engagement' | 'revenue'
     staffSortAsc: false,
-    staffTeamFilter: 'ALL',
-    staffCompareMetric1: 'views',
-    staffCompareMetric2: 'none',
-    staffCompareChartType: 'bar', // 'bar' | 'line'
-    staffMatrixGranularity: 'month', // 'month' | 'quarter' | 'day'
-    staffMatrixMetric: 'views',
+    staffTeamFilter: 'ALL',         // 'ALL' | 'TEAM-01' | 'TEAM-02' | 'TEAM-03'
+    staffChartMetric: 'views',      // 'views' | 'netSubs' | 'revenue'
+    staffChartScale: 'actual',      // 'actual' | 'index100'
+    staffSelectedIds: ['EMP-005', 'EMP-012', 'EMP-011'], // Default top 3 by 30d views (max 5)
+    staffPickerOpen: false,
+    staffPickerQuery: '',
+    staffPickerTeamFilter: 'ALL',   // 'ALL' | 'TEAM-01' | 'TEAM-02' | 'TEAM-03'
+    staffShowTotalLine: true,
+    staffShowPrevLine: true,        // Enabled only when selectedStaff.length === 1
+    staffHiddenKeys: [],            // Dataset keys toggled off on legend ('EMP-xxx', 'TOTAL', 'PREV')
+    staffChartCustomPeriod: false,  // false = theo kỳ chung, true = kỳ riêng
+    staffChartPreset: '30d',        // '7d' | '30d' | 'month' | 'quarter' | 'custom'
+    staffChartMonthKey: '2026-10',
+    staffChartQuarterKey: '2026-Q4',
+    staffChartStartDate: '2026-09-27',
+    staffChartEndDate: '2026-10-26',
     // Page 5 (Project)
     projectConfigured: false,
     selectedProjectId: 'PRJ-01',
@@ -204,10 +226,10 @@
     } else if (Number(currVal) === 0) {
       pct = 0;
     }
-    // Item 12: Small |Δ%| (under 2%, or under 0.2 percentage points) shows neutral color ('flat')
+    // Neutral delta threshold: |Δ%| < 0,5% (or < 0,05 điểm % for percentage-point metrics)
     const isSmallChange = isPercentPoint
-      ? Math.abs(diff) < 0.20
-      : (pct !== null ? Math.abs(pct) < 2.0 : Math.abs(diff) < 0.0001);
+      ? Math.abs(diff) < 0.05
+      : (pct !== null ? Math.abs(pct) < 0.5 : Math.abs(diff) < 0.0001);
     const cls = isSmallChange ? 'flat' : (diff > 0.0001 ? 'up' : (diff < -0.0001 ? 'down' : 'flat'));
     const arrow = diff > 0.0001 ? '▲' : (diff < -0.0001 ? '▼' : '•');
     const sign = diff > 0.0001 ? '+' : (diff < -0.0001 ? '−' : '');
@@ -229,7 +251,7 @@
       return `<span class="v3-delta flat">—</span>`;
     }
     const v = Number(pct);
-    const isSmall = Math.abs(v) < 2.0;
+    const isSmall = Math.abs(v) < 0.5;
     const cls = isSmall ? 'flat' : (v > 0 ? 'up' : 'down');
     const arrow = v > 0.0001 ? '▲' : (v < -0.0001 ? '▼' : '•');
     return `<span class="v3-delta ${cls}">${arrow} ${fmtPct(v)}</span>`;
@@ -976,8 +998,12 @@
     }
     headerEl.style.display = 'flex';
 
-    // Determine active scope channels (omit redundant scope label on compact header pages Page 2 & Page 3 so USD/VND & Xuất never clip)
-    const isCompactHeaderPage = (activeViewId === 'view-report-team' || activeViewId === 'view-report-channel');
+    // Determine active scope channels (omit redundant scope label on compact header pages Page 2, Page 3 & Page 4 so USD/VND & Xuất never clip)
+    const isCompactHeaderPage = (
+      activeViewId === 'view-report-team' ||
+      activeViewId === 'view-report-channel' ||
+      activeViewId === 'view-report-staff'
+    );
     let scopeLabel = isCompactHeaderPage ? '' : '3 Team · 15 kênh';
     let scopeCurr = snap.systemCurr;
 
@@ -3571,28 +3597,135 @@
 
   // =========================================================================
   // PAGE 4: BÁO CÁO THEO NHÂN VIÊN (#view-report-staff)
-  // Question: "Ai đang tăng, ai đang chậm?" (Consolidated 3 Tabs)
+  // Question: "Ai đang tăng, ai đang chậm?" (2 Tabs: Số liệu & Biểu đồ)
   // =========================================================================
+  function buildStaffDataset(snap, customWin) {
+    const win = customWin || snap.win;
+    const isGlobalWin = !customWin || (
+      win.start === snap.win.start &&
+      win.end === snap.win.end &&
+      win.prevStart === snap.win.prevStart &&
+      win.prevEnd === snap.win.prevEnd
+    );
+
+    const currByChId = new Map();
+    const prevByChId = new Map();
+    if (isGlobalWin) {
+      snap.channelPairs.forEach(cp => {
+        currByChId.set(cp.id, cp.curr);
+        prevByChId.set(cp.id, cp.prev);
+      });
+    } else {
+      snap.channelsMeta.forEach(m => {
+        currByChId.set(m.id, computeChannelWindowMetrics(m, win.start, win.end, snap.scenarioId));
+        prevByChId.set(m.id, computeChannelWindowMetrics(m, win.prevStart, win.prevEnd, snap.scenarioId));
+      });
+    }
+
+    // Group assigned channels by employeeId so each employee's metrics equal the exact sum of their assigned channels in Page 2
+    const empGroups = new Map();
+    snap.channelPairs.forEach(cp => {
+      const empId = cp.meta.employeeId;
+      if (!empGroups.has(empId)) {
+        empGroups.set(empId, {
+          empId,
+          empName: cp.meta.employeeName,
+          teamId: cp.meta.teamId,
+          teamName: cp.meta.teamName,
+          teamColor: cp.meta.teamColor,
+          color: cp.meta.channelColor || cp.meta.teamColor,
+          channelPairs: []
+        });
+      }
+      empGroups.get(empId).channelPairs.push(cp);
+    });
+
+    const staffList = [];
+    empGroups.forEach(grp => {
+      const currList = grp.channelPairs.map(cp => currByChId.get(cp.id)).filter(Boolean);
+      const prevList = grp.channelPairs.map(cp => prevByChId.get(cp.id)).filter(Boolean);
+      const curr = aggregateChannelMetricsList(currList, win.days);
+      const prev = aggregateChannelMetricsList(prevList, win.prevDays);
+
+      const viewsGrowthPct = (curr.views !== null && prev.views !== null && prev.views > 0)
+        ? Number((((curr.views - prev.views) / prev.views) * 100).toFixed(2))
+        : null;
+      const engDiffPt = (curr.engagementRate !== null && prev.engagementRate !== null)
+        ? Number((curr.engagementRate - prev.engagementRate).toFixed(2))
+        : null;
+
+      const primaryCp = grp.channelPairs[0];
+      const channelTitleSummary = grp.channelPairs.length === 1
+        ? primaryCp.meta.title
+        : `${primaryCp.meta.title} (+${grp.channelPairs.length - 1} kênh)`;
+      const allChannelTitles = grp.channelPairs.map(c => c.meta.title).join(', ');
+
+      staffList.push({
+        empId: grp.empId,
+        empName: grp.empName,
+        teamId: grp.teamId,
+        teamName: grp.teamName,
+        teamColor: grp.teamColor,
+        color: grp.color,
+        channelPairs: grp.channelPairs,
+        primaryChannelId: primaryCp.id,
+        primaryAvatar: primaryCp.meta.avatar,
+        channelTitleSummary,
+        allChannelTitles,
+        curr,
+        prev,
+        viewsGrowthPct,
+        engDiffPt
+      });
+    });
+
+    return {
+      win,
+      staffList,
+      currByChId,
+      prevByChId
+    };
+  }
+
+  function fmtEngDeltaCompact(currEng, prevEng) {
+    if (currEng === null || currEng === undefined || prevEng === null || prevEng === undefined) {
+      return `<span class="v3-delta flat v3-staff-eng-delta">—</span>`;
+    }
+    const diff = Number(currEng) - Number(prevEng);
+    let pct = null;
+    if (Number(prevEng) !== 0) {
+      pct = (diff / Math.abs(Number(prevEng))) * 100;
+    } else if (Number(currEng) === 0) {
+      pct = 0;
+    }
+    // Neutral threshold: |delta| < 0,5% (or < 0,05 điểm %)
+    const isSmall = (pct !== null ? Math.abs(pct) < 0.5 : Math.abs(diff) < 0.05) || Math.abs(diff) < 0.05;
+    const cls = isSmall ? 'flat' : (diff > 0.0001 ? 'up' : (diff < -0.0001 ? 'down' : 'flat'));
+    const arrow = diff > 0.0001 ? '▲' : (diff < -0.0001 ? '▼' : '•');
+    const sign = diff > 0.0001 ? '+' : (diff < -0.0001 ? '−' : '');
+    return `<span class="v3-delta ${cls} v3-staff-eng-delta">${arrow} ${sign}${Math.abs(diff).toFixed(2).replace('.', ',')} điểm %</span>`;
+  }
+
   function renderStaffPage(snap) {
     const root = document.getElementById('v3-staff-root');
     if (!root) return;
 
     const c = core();
     if (c.state && c.state.staffActiveTab) {
-      v3State.staffTab = c.state.staffActiveTab;
+      v3State.staffTab = c.state.staffActiveTab === 'compare' ? 'compare' : 'ranking';
       delete c.state.staffActiveTab;
+    }
+    if (v3State.staffTab !== 'ranking' && v3State.staffTab !== 'compare') {
+      v3State.staffTab = 'ranking';
     }
 
     root.innerHTML = `
-      <div class="v3-tab-bar">
-        <button type="button" class="v3-tab-btn ${v3State.staffTab === 'ranking' ? 'active' : ''}" data-staff-tab="ranking">
-          <i class="ri-trophy-line"></i> Tab 1: Bảng xếp hạng 15 Nhân viên
+      <div class="v3-tab-bar" id="v3-staff-tab-bar" role="tablist" aria-label="Chế độ xem Báo cáo theo nhân viên">
+        <button type="button" class="v3-tab-btn ${v3State.staffTab === 'ranking' ? 'active' : ''}" data-staff-tab="ranking" role="tab" aria-selected="${v3State.staffTab === 'ranking' ? 'true' : 'false'}">
+          <i class="ri-table-2"></i> Báo cáo NV theo số liệu
         </button>
-        <button type="button" class="v3-tab-btn ${v3State.staffTab === 'compare' ? 'active' : ''}" data-staff-tab="compare">
-          <i class="ri-bar-chart-horizontal-line"></i> Tab 2: Biểu đồ so sánh (1–2 chỉ số)
-        </button>
-        <button type="button" class="v3-tab-btn ${v3State.staffTab === 'matrix' ? 'active' : ''}" data-staff-tab="matrix">
-          <i class="ri-grid-line"></i> Tab 3: Ma trận đối soát (Nhân viên × Thời gian)
+        <button type="button" class="v3-tab-btn ${v3State.staffTab === 'compare' ? 'active' : ''}" data-staff-tab="compare" role="tab" aria-selected="${v3State.staffTab === 'compare' ? 'true' : 'false'}">
+          <i class="ri-line-chart-line"></i> Báo cáo NV theo biểu đồ
         </button>
       </div>
       <div id="v3-staff-tab-body"></div>
@@ -3600,7 +3733,10 @@
 
     root.querySelectorAll('[data-staff-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
-        v3State.staffTab = btn.getAttribute('data-staff-tab');
+        const nextTab = btn.getAttribute('data-staff-tab');
+        if (nextTab === v3State.staffTab) return;
+        v3State.staffTab = nextTab === 'compare' ? 'compare' : 'ranking';
+        v3State.staffPickerOpen = false;
         renderStaffPage(snap);
       });
     });
@@ -3608,8 +3744,6 @@
     const body = document.getElementById('v3-staff-tab-body');
     if (v3State.staffTab === 'compare') {
       renderStaffCompareTab(body, snap);
-    } else if (v3State.staffTab === 'matrix') {
-      renderStaffMatrixTab(body, snap);
     } else {
       renderStaffRankingTab(body, snap);
     }
@@ -3618,16 +3752,18 @@
 
   function renderStaffRankingTab(body, snap) {
     const c = core();
-    const filtered = snap.channelPairs.filter(cp => v3State.staffTeamFilter === 'ALL' || cp.meta.teamId === v3State.staffTeamFilter);
+    const staffDs = buildStaffDataset(snap);
+    const allStaff = staffDs.staffList;
+    const filtered = allStaff.filter(st => v3State.staffTeamFilter === 'ALL' || st.teamId === v3State.staffTeamFilter);
 
-    const fieldGetter = (cp, f) => {
-      if (f === 'views') return cp.curr.views ?? -1;
-      if (f === 'growth') return cp.viewsGrowthPct ?? -9999;
-      if (f === 'netSubs') return cp.curr.netSubs ?? -999999;
-      if (f === 'videos') return cp.curr.videosPublished ?? 0;
-      if (f === 'engagement') return cp.curr.engagementRate ?? -1;
-      if (f === 'revenue') return cp.curr.estimatedRevenue ?? -1;
-      return cp.curr.views ?? -1;
+    const fieldGetter = (st, f) => {
+      if (f === 'views') return st.curr.views ?? -1;
+      if (f === 'growth') return st.viewsGrowthPct ?? -9999;
+      if (f === 'netSubs') return st.curr.netSubs ?? -999999;
+      if (f === 'videos') return st.curr.videosPublished ?? 0;
+      if (f === 'engagement') return st.curr.engagementRate ?? -1;
+      if (f === 'revenue') return st.curr.estimatedRevenue ?? -1;
+      return st.curr.views ?? -1;
     };
 
     const sorted = [...filtered].sort((a, b) => {
@@ -3636,105 +3772,229 @@
       return v3State.staffSortAsc ? (va - vb) : (vb - va);
     });
 
-    const maxViews = Math.max(1, ...sorted.map(cp => cp.curr.views || 0));
+    const maxViews = Math.max(1, ...sorted.map(st => st.curr.views || 0));
 
-    function sortHeader(field, label, isNum = true) {
-      const active = v3State.staffSortField === field;
-      const arrow = active ? (v3State.staffSortAsc ? ' ▲' : ' ▼') : '';
-      return `<th class="${isNum ? 'num' : ''}" data-staff-sort="${field}" style="cursor:pointer;user-select:none;${active ? 'color:#38BDF8;' : ''}">${label}${arrow}</th>`;
+    // Item 8: Growth badges ("Tăng nhanh nhất" only when delta > 0; if nobody > 0 then "Giảm ít nhất"; steepest drop < 0 gets "Giảm mạnh nhất")
+    const staffWithGrowth = sorted.filter(st => st.viewsGrowthPct !== null && st.viewsGrowthPct !== undefined);
+    let topGrowthEmpId = null;
+    let topGrowthPositive = false;
+    let steepestDropEmpId = null;
+    if (staffWithGrowth.length >= 2) {
+      const byGrowth = [...staffWithGrowth].sort((a, b) => (b.viewsGrowthPct ?? -9999) - (a.viewsGrowthPct ?? -9999));
+      if (byGrowth[0].viewsGrowthPct !== byGrowth[byGrowth.length - 1].viewsGrowthPct) {
+        topGrowthEmpId = byGrowth[0].empId;
+        topGrowthPositive = (byGrowth[0].viewsGrowthPct ?? 0) > 0;
+        const lastSt = byGrowth[byGrowth.length - 1];
+        if ((lastSt.viewsGrowthPct ?? 0) < 0 && lastSt.empId !== topGrowthEmpId) {
+          steepestDropEmpId = lastSt.empId;
+        }
+      }
     }
 
+    // Group totals for footer row ("TỔNG CỘNG")
+    const filteredCurrChannels = [];
+    const filteredPrevChannels = [];
+    sorted.forEach(st => {
+      st.channelPairs.forEach(cp => {
+        const currCh = staffDs.currByChId.get(cp.id);
+        const prevCh = staffDs.prevByChId.get(cp.id);
+        if (currCh) filteredCurrChannels.push(currCh);
+        if (prevCh) filteredPrevChannels.push(prevCh);
+      });
+    });
+    const groupCurr = v3State.staffTeamFilter === 'ALL'
+      ? snap.systemCurr
+      : aggregateChannelMetricsList(filteredCurrChannels, snap.win.days);
+    const groupPrev = v3State.staffTeamFilter === 'ALL'
+      ? snap.systemPrev
+      : aggregateChannelMetricsList(filteredPrevChannels, snap.win.prevDays);
+
+    const currRangeFullVN = `${formatIsoToVN(snap.win.start)} – ${formatIsoToVN(snap.win.end)}`;
+    const activeTeamObj = snap.teamPairs.find(t => t.id === v3State.staffTeamFilter);
+
+    // Status chip in Row 1 (always occupies space via visibility)
+    let rankChipVisible = false;
+    let rankChipText = 'Đủ 15/15 nhân viên';
+    let rankChipHasReset = false;
+    if (v3State.staffTeamFilter !== 'ALL' && activeTeamObj) {
+      rankChipVisible = true;
+      rankChipText = `Đang lọc: ${activeTeamObj.name} (${sorted.length}/15 NV)`;
+      rankChipHasReset = true;
+    } else if (snap.win.isPartialQuarter) {
+      rankChipVisible = true;
+      rankChipText = `Chưa trọn quý (${snap.win.dayCount}/${snap.win.quarterCalendarDays} ngày)`;
+    }
+
+    function sortHeader(field, label, isNum = true, widthStyle = '') {
+      const active = v3State.staffSortField === field;
+      const arrow = active ? (v3State.staffSortAsc ? ' ▲' : ' ▼') : '';
+      return `<th class="${isNum ? 'num' : ''}" data-staff-sort="${field}" style="${widthStyle}cursor:pointer;user-select:none;${active ? 'color:#38BDF8;' : ''}">${label}${arrow}</th>`;
+    }
+
+    const growthSortActive = v3State.staffSortField === 'growth';
+    const growthSortArrow = growthSortActive ? (v3State.staffSortAsc ? ' ▲' : ' ▼') : '';
+
     body.innerHTML = `
-      <section class="v3-panel">
-        <div class="v3-panel-header">
-          <div>
-            <div class="v3-panel-title">
+      <section class="v3-panel v3-staff-panel-locked" id="v3-staff-main-panel" data-staff-active-tab="ranking">
+        <div class="v3-chart-a-header" id="v3-staff-ranking-header">
+          <!-- Hàng 1 cố định: Tên khối + ngày kỳ + chip trạng thái (luôn giữ chỗ) + ghi chú -->
+          <div class="v3-chart-a-header-row1" id="v3-staff-ranking-header-row1">
+            <div class="v3-panel-title" style="white-space:nowrap;">
               <i class="ri-user-star-line" style="color:#38BDF8;"></i>
-              Xếp hạng 15 Nhân viên phụ trách kênh (Nhấn tiêu đề cột để sắp xếp · Nhấn vào dòng để mở chi tiết kênh)
+              <span>Bảng xếp hạng 15 Nhân viên phụ trách kênh</span>
+              <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
             </div>
-            <div class="v3-panel-subtitle">
-              Thanh dữ liệu (Data-bar) thể hiện quy mô Views; ô % tăng trưởng tô màu theo hiệu suất so với kỳ trước
+            <div style="display:inline-flex;align-items:center;gap:8px;flex-wrap:nowrap;flex-shrink:0;">
+              <span class="v3-chart-status-chip ${rankChipVisible ? 'is-visible' : 'is-hidden'}" id="v3-staff-ranking-status-chip">
+                <span class="v3-chart-status-chip-text">${esc(rankChipText)}</span>
+                ${rankChipHasReset ? `<button type="button" class="v3-chart-status-chip-close" id="v3-staff-team-reset-btn" title="Về tất cả 15 nhân viên" aria-label="Về tất cả 15 nhân viên">×</button>` : ''}
+              </span>
+              <span class="v3-staff-header-hint">Nhấn tiêu đề cột để sắp xếp · Nhấn dòng để mở kênh</span>
             </div>
           </div>
-          <div class="v3-preset-group">
-            <button type="button" class="v3-preset-btn ${v3State.staffTeamFilter === 'ALL' ? 'active' : ''}" data-staff-team="ALL">Tất cả (15 NV)</button>
-            ${snap.teamPairs.map(tp => `
-              <button type="button" class="v3-preset-btn ${v3State.staffTeamFilter === tp.id ? 'active' : ''}" data-staff-team="${tp.id}">
-                <span class="v3-team-dot" style="background:${tp.color};"></span> ${esc(tp.name)} (5)
-              </button>
-            `).join('')}
+
+          <!-- Hàng 2 cố định: Bộ lọc Team + chú thích ngưỡng delta trung tính -->
+          <div class="v3-chart-a-header-row2" id="v3-staff-ranking-header-row2">
+            <span class="v3-chart-row-label">Lọc theo Team:</span>
+            <div class="v3-preset-group" id="v3-staff-team-filter-group" role="group" aria-label="Lọc nhân viên theo Team">
+              <button type="button" class="v3-preset-btn ${v3State.staffTeamFilter === 'ALL' ? 'active' : ''}" data-staff-team="ALL">Tất cả (15 NV)</button>
+              ${snap.teamPairs.map(tp => `
+                <button type="button" class="v3-preset-btn ${v3State.staffTeamFilter === tp.id ? 'active' : ''}" data-staff-team="${tp.id}">
+                  <span class="v3-team-dot" style="background:${tp.color};"></span> ${esc(tp.name)} (5)
+                </button>
+              `).join('')}
+            </div>
+            <span class="v3-staff-header-hint" style="margin-left:auto;">Ngưỡng delta trung tính: |Δ| &lt; 0,5% · Delta tương tác: điểm %</span>
           </div>
         </div>
 
-        <div class="v3-table-wrap">
-          <table class="v3-table">
+        <div class="v3-table-wrap v3-staff-table-wrap" id="v3-staff-ranking-table-wrap">
+          <table class="v3-table v3-staff-ranking-table" id="v3-staff-ranking-table">
             <thead>
               <tr>
-                <th>Hạng</th>
-                <th>Nhân viên (PIC)</th>
-                <th>Team</th>
-                <th>Kênh phụ trách</th>
-                ${sortHeader('views', 'Views kỳ này (Data-bar)', false)}
-                ${sortHeader('growth', 'So với kỳ trước')}
-                ${sortHeader('netSubs', 'Sub ròng')}
-                ${sortHeader('videos', 'Video')}
-                ${sortHeader('engagement', 'Tương tác')}
-                ${sortHeader('revenue', 'Doanh thu')}
+                <th style="width:7.0%;">Hạng</th>
+                <th style="width:16.9%;">Nhân viên (PIC)</th>
+                <th style="width:9.5%;">Team</th>
+                <th style="width:11.5%;">Kênh phụ trách</th>
+                ${sortHeader('views', 'Views kỳ này (Data-bar)', false, 'width:14.5%;')}
+                <th class="num" style="width:13.0%;vertical-align:middle;">
+                  <div style="display:inline-flex;flex-direction:column;align-items:flex-end;gap:1px;max-width:100%;">
+                    <div data-staff-sort="growth" style="cursor:pointer;user-select:none;line-height:1.1;${growthSortActive ? 'color:#38BDF8;' : ''}">
+                      <div>So với ${esc(snap.win.compareModeName)}${growthSortArrow}</div>
+                      <div class="v3-th-sub">(${esc(snap.win.compareRangeShort)})</div>
+                    </div>
+                    <div class="v3-th-cmp-switch v3-staff-th-cmp-switch" role="group" aria-label="Đổi kỳ đối chứng bảng nhân viên">
+                      <button type="button" class="v3-th-cmp-btn ${v3State.compareMode !== 'yoy' ? 'active' : ''}" data-staff-table-cmp="prev">Kỳ trước</button>
+                      <button type="button" class="v3-th-cmp-btn ${v3State.compareMode === 'yoy' ? 'active' : ''}" data-staff-table-cmp="yoy" ${!snap.systemCurr.allHaveYoY ? 'disabled' : ''}>Cùng kỳ năm ngoái</button>
+                    </div>
+                  </div>
+                </th>
+                ${sortHeader('netSubs', 'Sub ròng', true, 'width:5.0%;')}
+                ${sortHeader('videos', 'Video', true, 'width:3.8%;')}
+                ${sortHeader('engagement', 'Tương tác', true, 'width:10.4%;')}
+                ${sortHeader('revenue', 'Doanh thu', true, 'width:8.4%;')}
               </tr>
             </thead>
             <tbody>
-              ${sorted.map((cp, idx) => {
-      const pctBar = cp.curr.views ? Math.max(3, Math.round((cp.curr.views / maxViews) * 100)) : 0;
-      const g = cp.viewsGrowthPct;
-      const gBg = g === null ? 'transparent' : (g >= 0 ? 'rgba(16, 185, 129, 0.10)' : 'rgba(239, 68, 68, 0.12)');
-      return `
-                  <tr class="clickable-row" data-staff-open-channel="${cp.id}" title="Nhấn để mở Báo cáo theo kênh: ${esc(cp.meta.title)}">
+              ${sorted.map((st, idx) => {
+                const pctBar = st.curr.views ? Math.max(3, Math.round((st.curr.views / maxViews) * 100)) : 0;
+                const g = st.viewsGrowthPct;
+                const isNeutral = g === null || Math.abs(g) < 0.5;
+                const gBg = isNeutral ? 'transparent' : (g > 0 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.10)');
+                let growthBadgeHtml = '';
+                if (st.empId === topGrowthEmpId) {
+                  growthBadgeHtml = topGrowthPositive
+                    ? `<span class="v3-badge highest v3-staff-growth-tag" data-staff-growth-badge="fastest">Tăng nhanh nhất</span>`
+                    : `<span class="v3-badge muted v3-staff-growth-tag" data-staff-growth-badge="least_drop">Giảm ít nhất</span>`;
+                } else if (st.empId === steepestDropEmpId) {
+                  growthBadgeHtml = `<span class="v3-badge lowest v3-staff-growth-tag" data-staff-growth-badge="steepest_drop">Giảm mạnh nhất</span>`;
+                }
+                const shortTeamName = st.teamName.replace(/^Team\s+/i, '');
+                return `
+                  <tr class="clickable-row v3-staff-row"
+                      data-staff-row-emp="${st.empId}"
+                      data-staff-open-channel="${st.primaryChannelId}"
+                      data-emp-views="${st.curr.views ?? ''}"
+                      data-emp-prev-views="${st.prev.views ?? ''}"
+                      data-emp-subs="${st.curr.netSubs ?? ''}"
+                      data-emp-videos="${st.curr.videosPublished ?? 0}"
+                      data-emp-eng="${st.curr.engagementRate ?? ''}"
+                      data-emp-rev="${st.curr.estimatedRevenue ?? ''}"
+                      title="Nhấn để mở Báo cáo theo kênh: ${esc(st.allChannelTitles)}">
                     <td>
-                      <span class="v3-badge ${idx === 0 ? 'highest' : (idx === sorted.length - 1 && sorted.length > 2 ? 'lowest' : 'muted')}">
-                        #${idx + 1}${idx === 0 ? ' [Cao nhất]' : (idx === sorted.length - 1 && sorted.length > 2 ? ' [Thấp nhất]' : '')}
+                      <span class="v3-badge v3-staff-rank-badge ${idx === 0 ? 'highest' : (idx === sorted.length - 1 && sorted.length > 2 ? 'lowest' : 'muted')}">
+                        #${idx + 1}${idx === 0 ? ' · Cao nhất' : (idx === sorted.length - 1 && sorted.length > 2 ? ' · Thấp nhất' : '')}
                       </span>
                     </td>
                     <td>
-                      <strong>${esc(cp.meta.employeeName)}</strong>
+                      <div class="v3-staff-name-cell">
+                        <span class="v3-team-dot" style="background:${st.color};flex-shrink:0;"></span>
+                        <strong class="v3-staff-emp-name">${esc(st.empName)}</strong>
+                        ${growthBadgeHtml}
+                      </div>
                     </td>
                     <td>
-                      <span class="v3-badge" style="background:${cp.meta.teamColor}20;color:${cp.meta.teamColor};border:1px solid ${cp.meta.teamColor}55;">
-                        <span class="v3-team-dot" style="background:${cp.meta.teamColor};"></span> ${esc(cp.meta.teamName)}
+                      <span class="v3-badge v3-staff-team-badge" style="background:${st.teamColor}1D;color:${st.teamColor};border:1px solid ${st.teamColor}50;">
+                        <span class="v3-team-dot" style="background:${st.teamColor};"></span>
+                        <span>${esc(shortTeamName)}</span>
                       </span>
                     </td>
                     <td>
-                      <div style="display:flex;align-items:center;gap:7px;">
-                        <img src="${esc(cp.meta.avatar)}" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">
-                        <span style="font-weight:600;">${esc(cp.meta.title)}</span>
+                      <div class="v3-staff-channel-cell" title="${esc(st.allChannelTitles)}">
+                        <img src="${esc(st.primaryAvatar)}" alt="" class="v3-staff-ch-avatar" onerror="this.style.display='none'">
+                        <span class="v3-staff-ch-title">${esc(st.channelTitleSummary)}</span>
                       </div>
                     </td>
                     <td class="v3-bar-cell">
-                      <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:12.5px;">
-                        <strong>${cp.curr.views !== null ? fmtInt(cp.curr.views) : '—'}</strong>
-                        <span style="color:var(--text-muted);font-size:11px;">Kỳ trước: ${cp.prev.views !== null ? fmtCompact(cp.prev.views) : '—'}</span>
+                      <div class="v3-staff-views-top">
+                        <strong>${st.curr.views !== null ? fmtInt(st.curr.views) : '—'}</strong>
+                        <span class="v3-staff-prev-views">Kỳ trước: ${st.prev.views !== null ? fmtInt(st.prev.views) : '—'}</span>
                       </div>
                       <div class="v3-bar-track">
-                        <div class="v3-bar-fill" style="width:${pctBar}%;background:${cp.meta.teamColor};"></div>
+                        <div class="v3-bar-fill" style="width:${pctBar}%;background:${st.teamColor};"></div>
                       </div>
                     </td>
-                    <td class="num" style="background:${gBg};">${fmtDeltaBadge(cp.curr.views, cp.prev.views)}</td>
-                    <td class="num">${cp.curr.netSubs !== null ? (cp.curr.netSubs > 0 ? '+' + fmtInt(cp.curr.netSubs) : fmtInt(cp.curr.netSubs)) : '—'}</td>
-                    <td class="num">${fmtInt(cp.curr.videosPublished)}</td>
-                    <td class="num">${cp.curr.engagementRate !== null ? cp.curr.engagementRate.toFixed(2) + '%' : '—'}</td>
-                    <td class="num">${cp.curr.estimatedRevenue !== null ? fmtMoney(cp.curr.estimatedRevenue) : '—'}</td>
+                    <td class="num" style="background:${gBg};">${fmtDeltaBadge(st.curr.views, st.prev.views)}</td>
+                    <td class="num">${st.curr.netSubs !== null ? (st.curr.netSubs > 0 ? '+' + fmtInt(st.curr.netSubs) : fmtInt(st.curr.netSubs)) : '—'}</td>
+                    <td class="num">${fmtInt(st.curr.videosPublished)}</td>
+                    <td class="num">
+                      <div class="v3-staff-eng-cell">
+                        <strong>${st.curr.engagementRate !== null ? fmtDec(st.curr.engagementRate, 2) + '%' : '—'}</strong>
+                        ${fmtEngDeltaCompact(st.curr.engagementRate, st.prev.engagementRate)}
+                      </div>
+                    </td>
+                    <td class="num"><strong>${st.curr.estimatedRevenue !== null ? fmtMoney(st.curr.estimatedRevenue) : '—'}</strong></td>
                   </tr>
                 `;
-    }).join('')}
+              }).join('')}
             </tbody>
             <tfoot>
-              <tr>
-                <td colspan="4">TỔNG CỘNG (${sorted.length} NHÂN VIÊN ĐANG HIỂN THỊ)</td>
-                <td class="num">${snap.systemCurr.views !== null ? fmtInt(sorted.reduce((s, x) => s + (x.curr.views || 0), 0)) : '—'}</td>
-                <td class="num">${v3State.staffTeamFilter === 'ALL' ? fmtDeltaBadge(snap.systemCurr.views, snap.systemPrev.views) : '—'}</td>
-                <td class="num">${snap.systemCurr.netSubs !== null ? fmtInt(sorted.reduce((s, x) => s + (x.curr.netSubs || 0), 0)) : '—'}</td>
-                <td class="num">${fmtInt(sorted.reduce((s, x) => s + (x.curr.videosPublished || 0), 0))}</td>
-                <td class="num">${snap.systemCurr.engagementRate !== null ? snap.systemCurr.engagementRate.toFixed(2) + '%' : '—'}</td>
-                <td class="num">${snap.systemCurr.estimatedRevenue !== null ? fmtMoney(sorted.reduce((s, x) => s + (x.curr.estimatedRevenue || 0), 0)) : '—'}</td>
+              <tr id="v3-staff-total-row"
+                  data-total-views="${groupCurr.views ?? ''}"
+                  data-total-prev-views="${groupPrev.views ?? ''}"
+                  data-total-subs="${groupCurr.netSubs ?? ''}"
+                  data-total-videos="${groupCurr.videosPublished ?? 0}"
+                  data-total-eng="${groupCurr.engagementRate ?? ''}"
+                  data-total-rev="${groupCurr.estimatedRevenue ?? ''}">
+                <td colspan="4" style="white-space:nowrap;">
+                  <strong>TỔNG CỘNG (${sorted.length === 15 ? 'TẤT CẢ 15 NHÂN VIÊN = TOÀN NETWORK' : `${sorted.length} NHÂN VIÊN ĐANG HIỂN THỊ`})</strong>
+                </td>
+                <td class="v3-bar-cell">
+                  <div class="v3-staff-views-top">
+                    <strong>${groupCurr.views !== null ? fmtInt(groupCurr.views) : '—'}</strong>
+                    <span class="v3-staff-prev-views">Kỳ trước: ${groupPrev.views !== null ? fmtInt(groupPrev.views) : '—'}</span>
+                  </div>
+                </td>
+                <td class="num">${fmtDeltaBadge(groupCurr.views, groupPrev.views)}</td>
+                <td class="num"><strong>${groupCurr.netSubs !== null ? (groupCurr.netSubs > 0 ? '+' + fmtInt(groupCurr.netSubs) : fmtInt(groupCurr.netSubs)) : '—'}</strong></td>
+                <td class="num"><strong>${fmtInt(groupCurr.videosPublished)}</strong></td>
+                <td class="num">
+                  <div class="v3-staff-eng-cell">
+                    <strong>${groupCurr.engagementRate !== null ? fmtDec(groupCurr.engagementRate, 2) + '%' : '—'}</strong>
+                    ${fmtEngDeltaCompact(groupCurr.engagementRate, groupPrev.engagementRate)}
+                  </div>
+                </td>
+                <td class="num"><strong>${groupCurr.estimatedRevenue !== null ? fmtMoney(groupCurr.estimatedRevenue) : '—'}</strong></td>
               </tr>
             </tfoot>
           </table>
@@ -3742,8 +4002,10 @@
       </section>
     `;
 
+    // Bind sorting
     body.querySelectorAll('[data-staff-sort]').forEach(th => {
-      th.addEventListener('click', () => {
+      th.addEventListener('click', (e) => {
+        e.stopPropagation();
         const f = th.getAttribute('data-staff-sort');
         if (v3State.staffSortField === f) {
           v3State.staffSortAsc = !v3State.staffSortAsc;
@@ -3755,6 +4017,20 @@
       });
     });
 
+    // Bind Kỳ trước | Cùng kỳ năm ngoái in delta column header
+    body.querySelectorAll('[data-staff-table-cmp]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (btn.disabled) return;
+        const nextCmp = btn.getAttribute('data-staff-table-cmp');
+        if (nextCmp && nextCmp !== v3State.compareMode) {
+          v3State.compareMode = nextCmp;
+          refreshActiveView();
+        }
+      });
+    });
+
+    // Bind team filter buttons
     body.querySelectorAll('[data-staff-team]').forEach(btn => {
       btn.addEventListener('click', () => {
         v3State.staffTeamFilter = btn.getAttribute('data-staff-team');
@@ -3762,6 +4038,12 @@
       });
     });
 
+    document.getElementById('v3-staff-team-reset-btn')?.addEventListener('click', () => {
+      v3State.staffTeamFilter = 'ALL';
+      renderStaffPage(snap);
+    });
+
+    // Bind row click to open channel report
     body.querySelectorAll('[data-staff-open-channel]').forEach(tr => {
       tr.addEventListener('click', () => {
         v3State.selectedChannelId = tr.getAttribute('data-staff-open-channel');
@@ -3772,331 +4054,695 @@
   }
 
   function renderStaffCompareTab(body, snap) {
-    const filtered = snap.channelPairs.filter(cp => v3State.staffTeamFilter === 'ALL' || cp.meta.teamId === v3State.staffTeamFilter);
+    // Independent period selector for Tab 2 ("Báo cáo NV theo biểu đồ")
+    const isCustomChartPeriod = !!v3State.staffChartCustomPeriod;
+    const effPreset = isCustomChartPeriod ? (v3State.staffChartPreset || '30d') : v3State.preset;
+    const effMonthKey = isCustomChartPeriod ? (v3State.staffChartMonthKey || '2026-10') : v3State.monthKey;
+    const effQuarterKey = isCustomChartPeriod ? (v3State.staffChartQuarterKey || '2026-Q4') : v3State.quarterKey;
+    const effStartDate = isCustomChartPeriod ? (v3State.staffChartStartDate || '2026-09-27') : v3State.startDate;
+    const effEndDate = isCustomChartPeriod ? (v3State.staffChartEndDate || '2026-10-26') : v3State.endDate;
+
+    const chartWin = isCustomChartPeriod
+      ? buildPeriodWindow({
+          preset: effPreset,
+          monthKey: effMonthKey,
+          quarterKey: effQuarterKey,
+          startDate: effStartDate,
+          endDate: effEndDate,
+          compareMode: 'prev'
+        })
+      : snap.win;
+
+    const staffDs = buildStaffDataset(snap, chartWin);
+    const allStaffByViews = [...staffDs.staffList].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
+
+    // Validate selected employee IDs (1..5 employees; default top 3 by period views)
+    const validSelectedIds = (v3State.staffSelectedIds || []).filter(id => allStaffByViews.some(st => st.empId === id)).slice(0, 5);
+    if (validSelectedIds.length === 0) {
+      allStaffByViews.slice(0, 3).forEach(st => validSelectedIds.push(st.empId));
+    }
+    v3State.staffSelectedIds = validSelectedIds;
+
+    const selectedStaff = v3State.staffSelectedIds
+      .map(id => allStaffByViews.find(st => st.empId === id))
+      .filter(Boolean);
+
+    const metric = ['views', 'netSubs', 'revenue'].includes(v3State.staffChartMetric) ? v3State.staffChartMetric : 'views';
+    v3State.staffChartMetric = metric;
+    const scaleMode = v3State.staffChartScale === 'index100' ? 'index100' : 'actual';
+    v3State.staffChartScale = scaleMode;
+
+    const metricLabelMap = {
+      views: 'Lượt xem (Views)',
+      netSubs: 'Sub ròng',
+      revenue: 'Doanh thu [Analytics]'
+    };
+
+    const chartRangeFullVN = `${formatIsoToVN(chartWin.start)} – ${formatIsoToVN(chartWin.end)}`;
+    const chartRangeShort = `${formatIsoToShortVN(chartWin.start)}–${formatIsoToShortVN(chartWin.end)}`;
+    const prevRangeShort = chartWin.compareRangeShort || `${formatIsoToShortVN(chartWin.prevStart)}–${formatIsoToShortVN(chartWin.prevEnd)}`;
+
+    // Status chip in Row 1 (always occupies space via visibility)
+    let statusChipVisible = false;
+    let statusChipText = '';
+    let statusChipHasReset = false;
+    if (isCustomChartPeriod) {
+      statusChipVisible = true;
+      statusChipText = `Kỳ riêng · ${chartWin.shortPresetName} · ${chartRangeShort}${chartWin.isPartialPeriod ? ` · chưa trọn ${chartWin.dayCount}/${chartWin.totalCalendarDays} ngày` : ''}`;
+      statusChipHasReset = true;
+    } else if (chartWin.isPartialQuarter) {
+      statusChipVisible = true;
+      statusChipText = `Chưa trọn quý (${chartWin.dayCount}/${chartWin.quarterCalendarDays} ngày)`;
+    } else if (chartWin.isPartialPeriod) {
+      statusChipVisible = true;
+      statusChipText = `Chưa trọn tháng (${chartWin.dayCount}/${chartWin.totalCalendarDays} ngày)`;
+    }
+
+    // Calculate daily sums per employee & group total for reconciliation & legend display
+    const days = chartWin.days || [];
+    const prevDays = chartWin.prevDays || [];
+    const getPointMetricVal = (pt, m) => {
+      if (!pt) return 0;
+      if (m === 'revenue') return pt.revenue !== null && pt.revenue !== undefined ? Number(pt.revenue) : 0;
+      if (m === 'netSubs') return pt.netSubs !== null && pt.netSubs !== undefined ? Number(pt.netSubs) : 0;
+      return pt.views !== null && pt.views !== undefined ? Number(pt.views) : 0;
+    };
+
+    const dailyMapByEmp = new Map();
+    const dailySumByEmp = {};
+    allStaffByViews.forEach(st => {
+      const sMap = new Map();
+      (st.curr.dailySeries || []).forEach(pt => sMap.set(pt.day, pt));
+      dailyMapByEmp.set(st.empId, sMap);
+      const sumVal = days.reduce((acc, d) => {
+        const v = getPointMetricVal(sMap.get(d), metric);
+        return metric === 'revenue' ? Number((acc + v).toFixed(2)) : (acc + v);
+      }, 0);
+      dailySumByEmp[st.empId] = sumVal;
+    });
+
+    const groupDailySum = selectedStaff.reduce((acc, st) => {
+      const v = dailySumByEmp[st.empId] || 0;
+      return metric === 'revenue' ? Number((acc + v).toFixed(2)) : (acc + v);
+    }, 0);
+
+    // Single-staff previous period sum (for dashed line when selectedStaff.length === 1)
+    let singlePrevSum = null;
+    if (selectedStaff.length === 1) {
+      const onlySt = selectedStaff[0];
+      const pMap = new Map();
+      (onlySt.prev.dailySeries || []).forEach(pt => pMap.set(pt.day, pt));
+      singlePrevSum = prevDays.reduce((acc, d) => {
+        const v = getPointMetricVal(pMap.get(d), metric);
+        return metric === 'revenue' ? Number((acc + v).toFixed(2)) : (acc + v);
+      }, 0);
+    }
+
+    const fmtLegendMetricVal = (val) => {
+      if (val === null || val === undefined || Number.isNaN(Number(val))) return '—';
+      if (metric === 'revenue') return fmtMoney(val);
+      if (metric === 'netSubs') return val > 0 ? '+' + fmtInt(val) : fmtInt(val);
+      return fmtInt(val);
+    };
+
+    const hiddenSet = new Set(v3State.staffHiddenKeys || []);
+    const isSingleStaff = selectedStaff.length === 1;
+    const prevLineActive = isSingleStaff && !hiddenSet.has('PREV');
 
     body.innerHTML = `
-      <section class="v3-panel">
-        <div class="v3-panel-header">
-          <div>
-            <div class="v3-panel-title">
-              <i class="ri-bar-chart-horizontal-line" style="color:#38BDF8;"></i>
-              Biểu đồ so sánh hiệu suất nhân sự (Thay thế 5 biểu đồ rời rạc bằng 1 biểu đồ tự chọn 1–2 chỉ số)
+      <section class="v3-panel v3-staff-panel-locked" id="v3-staff-main-panel"
+               data-staff-active-tab="compare"
+               data-chart-period-mode="${isCustomChartPeriod ? 'custom' : 'global'}"
+               data-staff-daily-sums='${esc(JSON.stringify(dailySumByEmp))}'
+               data-staff-group-sum="${groupDailySum}">
+        <div class="v3-chart-a-header" id="v3-staff-chart-header">
+          <!-- Hàng 1 cố định: Tên khối + ngày thật + chip trạng thái (luôn giữ chỗ) + Công tắc Thực tế|Chuẩn hóa + Công tắc Views|Sub ròng|Doanh thu -->
+          <div class="v3-chart-a-header-row1" id="v3-staff-chart-header-row1">
+            <div class="v3-panel-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.2px;">
+              <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
+              <span>Xu hướng nhân viên — ${esc(metricLabelMap[metric])}</span>
+              <span class="v3-panel-date-tag">(${chartRangeFullVN})</span>
             </div>
-            <div class="v3-panel-subtitle">
-              Chọn 1 hoặc 2 chỉ số, lọc theo Team và chuyển đổi giữa Biểu đồ Cột xếp hạng hoặc Biểu đồ Đường theo thời gian
+            <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap;flex-shrink:0;">
+              <span class="v3-chart-status-chip ${statusChipVisible ? 'is-visible' : 'is-hidden'}" id="v3-staff-chart-period-chip" data-custom-active="${isCustomChartPeriod ? 'true' : 'false'}">
+                <span class="v3-chart-status-chip-text">${esc(statusChipText || 'Kỳ chung')}</span>
+                ${statusChipHasReset ? `<button type="button" class="v3-chart-status-chip-close" id="v3-staff-chart-reset-btn" title="Về kỳ chung" aria-label="Về kỳ chung">×</button>` : ''}
+              </span>
+              <div class="v3-preset-group" id="v3-staff-scale-switch" role="group" aria-label="Chế độ thang đo Thực tế hoặc Chuẩn hóa">
+                <button type="button" class="v3-preset-btn ${scaleMode === 'actual' ? 'active' : ''}" data-staff-scale="actual" title="Hiển thị giá trị thực tế theo ngày">Thực tế</button>
+                <button type="button" class="v3-preset-btn ${scaleMode === 'index100' ? 'active' : ''}" data-staff-scale="index100" title="Quy chuẩn ngày đầu tiên của kỳ = 100 để nhân viên nhỏ không bị nhân viên lớn làm chìm">Chuẩn hóa (ngày đầu = 100)</button>
+              </div>
+              <div class="v3-preset-group" id="v3-staff-metric-switch" role="group" aria-label="Chỉ số biểu đồ nhân viên">
+                <button type="button" class="v3-preset-btn ${metric === 'views' ? 'active' : ''}" data-staff-metric="views">Views</button>
+                <button type="button" class="v3-preset-btn ${metric === 'netSubs' ? 'active' : ''}" data-staff-metric="netSubs">Sub ròng</button>
+                <button type="button" class="v3-preset-btn ${metric === 'revenue' ? 'active' : ''}" data-staff-metric="revenue">Doanh thu</button>
+              </div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <select id="v3-staff-cmp-team" class="v3-select">
-              <option value="ALL" ${v3State.staffTeamFilter === 'ALL' ? 'selected' : ''}>Phạm vi: Tất cả 15 Nhân viên</option>
-              ${snap.teamPairs.map(tp => `<option value="${tp.id}" ${v3State.staffTeamFilter === tp.id ? 'selected' : ''}>Team: ${esc(tp.name)} (5 NV)</option>`).join('')}
-            </select>
 
-            <select id="v3-staff-cmp-m1" class="v3-select">
-              <option value="views" ${v3State.staffCompareMetric1 === 'views' ? 'selected' : ''}>Chỉ số 1: Lượt xem (Views)</option>
-              <option value="growth" ${v3State.staffCompareMetric1 === 'growth' ? 'selected' : ''}>Chỉ số 1: % Tăng trưởng Views</option>
-              <option value="netSubs" ${v3State.staffCompareMetric1 === 'netSubs' ? 'selected' : ''}>Chỉ số 1: Sub ròng (Net Subs)</option>
-              <option value="watchHours" ${v3State.staffCompareMetric1 === 'watchHours' ? 'selected' : ''}>Chỉ số 1: Giờ xem [Analytics]</option>
-              <option value="revenue" ${v3State.staffCompareMetric1 === 'revenue' ? 'selected' : ''}>Chỉ số 1: Doanh thu [Analytics]</option>
-            </select>
+          <!-- Hàng 2 cố định: Ô chọn nhiều nhân viên (tìm kiếm + lọc team, tối đa 5) + Đối chứng kỳ trước (nét đứt, chỉ bật khi 1 NV) + Bộ chọn kỳ riêng -->
+          <div class="v3-chart-a-header-row2" id="v3-staff-chart-header-row2">
+            <div class="v3-ch-search-picker" id="v3-staff-multi-picker">
+              <button type="button" class="v3-ch-picker-btn v3-staff-picker-trigger" id="v3-staff-picker-btn" aria-haspopup="listbox" aria-expanded="${v3State.staffPickerOpen ? 'true' : 'false'}" title="Chọn từ 1 đến 5 nhân viên để vẽ đường xu hướng">
+                <i class="ri-user-search-line" style="color:#38BDF8;font-size:13.5px;"></i>
+                <span class="v3-ch-picker-btn-text">
+                  <strong>Nhân viên (${selectedStaff.length}/5 đang chọn)</strong>
+                </span>
+                <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:14px;margin-left:auto;"></i>
+              </button>
 
-            <select id="v3-staff-cmp-m2" class="v3-select">
-              <option value="none" ${v3State.staffCompareMetric2 === 'none' ? 'selected' : ''}>Chỉ số 2: Không chọn (1 trục)</option>
-              <option value="revenue" ${v3State.staffCompareMetric2 === 'revenue' ? 'selected' : ''}>Chỉ số 2: Doanh thu [Analytics]</option>
-              <option value="watchHours" ${v3State.staffCompareMetric2 === 'watchHours' ? 'selected' : ''}>Chỉ số 2: Giờ xem [Analytics]</option>
-              <option value="netSubs" ${v3State.staffCompareMetric2 === 'netSubs' ? 'selected' : ''}>Chỉ số 2: Sub ròng</option>
-              <option value="videos" ${v3State.staffCompareMetric2 === 'videos' ? 'selected' : ''}>Chỉ số 2: Số video đăng</option>
-            </select>
+              <div class="v3-ch-picker-menu ${v3State.staffPickerOpen ? 'open' : ''}" id="v3-staff-picker-menu" style="width:450px;" role="listbox">
+                <div class="v3-ch-picker-search-wrap">
+                  <i class="ri-search-line"></i>
+                  <input type="text" id="v3-staff-picker-search" placeholder="Tìm tên nhân viên, tên kênh demo..." value="${esc(v3State.staffPickerQuery)}" autocomplete="off" aria-label="Tìm kiếm nhân viên">
+                </div>
+                <div class="v3-cmp-team-filter-bar" id="v3-staff-picker-team-bar">
+                  <button type="button" class="v3-cmp-team-chip ${v3State.staffPickerTeamFilter === 'ALL' ? 'active' : ''}" data-stf-picker-team="ALL">Tất cả (15)</button>
+                  <button type="button" class="v3-cmp-team-chip ${v3State.staffPickerTeamFilter === 'TEAM-01' ? 'active' : ''}" data-stf-picker-team="TEAM-01">Jazz & Lo-fi (5)</button>
+                  <button type="button" class="v3-cmp-team-chip ${v3State.staffPickerTeamFilter === 'TEAM-02' ? 'active' : ''}" data-stf-picker-team="TEAM-02">Retro & Electronic (5)</button>
+                  <button type="button" class="v3-cmp-team-chip ${v3State.staffPickerTeamFilter === 'TEAM-03' ? 'active' : ''}" data-stf-picker-team="TEAM-03">Indie & Chill (5)</button>
+                  <button type="button" class="v3-cmp-team-chip" id="v3-staff-pick-top3" style="margin-left:auto;color:#38BDF8;border-color:rgba(56,189,248,0.4);">Mặc định Top 3</button>
+                </div>
+                <div class="v3-ch-picker-list" id="v3-staff-picker-list">
+                  ${allStaffByViews.map(item => {
+                    const isChecked = v3State.staffSelectedIds.includes(item.empId);
+                    const searchBlob = `${item.empName} ${item.allChannelTitles} ${item.teamName}`.toLowerCase();
+                    const shortTeam = item.teamName.replace(/^Team\s+/i, '');
+                    return `
+                      <div class="v3-ch-picker-item ${isChecked ? 'active' : ''}"
+                           data-stf-toggle-id="${item.empId}"
+                           data-stf-team-id="${item.teamId}"
+                           data-search-text="${esc(searchBlob)}"
+                           role="option"
+                           aria-selected="${isChecked ? 'true' : 'false'}">
+                        <span class="v3-cmp-check ${isChecked ? 'checked' : ''}">${isChecked ? '✓' : ''}</span>
+                        <span class="v3-team-dot" style="background:${item.color};"></span>
+                        <span class="v3-ch-picker-item-main">
+                          <strong>${esc(item.empName)}</strong>
+                          <span class="v3-ch-picker-item-sub">${esc(item.channelTitleSummary)} · ${fmtInt(item.curr.views)} views</span>
+                        </span>
+                        <button type="button" class="v3-staff-only-btn" data-stf-only-id="${item.empId}" title="Chỉ chọn riêng nhân viên này để bật đường đối chứng kỳ trước">Chỉ 1 NV</button>
+                        <span class="v3-badge" style="background:${item.teamColor}18;color:${item.teamColor};border:1px solid ${item.teamColor}44;font-size:9.8px;">${esc(shortTeam)}</span>
+                      </div>
+                    `;
+                  }).join('')}
+                  <div id="v3-staff-picker-empty" style="display:none;padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">
+                    Không tìm thấy nhân viên phù hợp
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <div class="v3-preset-group">
-              <button type="button" class="v3-preset-btn ${v3State.staffCompareChartType === 'bar' ? 'active' : ''}" data-staff-chart-type="bar">Biểu đồ Cột</button>
-              <button type="button" class="v3-preset-btn ${v3State.staffCompareChartType === 'line' ? 'active' : ''}" data-staff-chart-type="line">Biểu đồ Đường (Theo ngày)</button>
+            <button type="button"
+                    class="v3-preset-btn v3-staff-prev-ref-btn ${prevLineActive ? 'active' : ''}"
+                    id="v3-staff-prev-toggle-btn"
+                    ${!isSingleStaff ? 'disabled' : ''}
+                    title="${isSingleStaff ? `Bật/tắt đường nét đứt đối chứng kỳ trước (${prevRangeShort})` : 'Đối chứng kỳ trước (nét đứt) chỉ bật khi chọn đúng 1 nhân viên'}">
+              <i class="${isSingleStaff ? 'ri-git-commit-line' : 'ri-lock-line'}"></i>
+              <span>${isSingleStaff ? `Kỳ trước (${prevRangeShort}) · Nét đứt` : 'Kỳ trước (chọn 1 NV để bật)'}</span>
+            </button>
+
+            <span class="v3-chart-row-label" style="margin-left:auto;">Kỳ hiển thị:</span>
+            <div class="v3-preset-group" id="v3-staff-chart-period-presets" role="group" aria-label="Bộ chọn kỳ riêng biểu đồ nhân viên">
+              <button type="button" class="v3-preset-btn ${effPreset === '7d' ? 'active' : ''}" data-stf-chart-preset="7d">7 ngày</button>
+              <button type="button" class="v3-preset-btn ${(effPreset === '30d' || effPreset === '28d') ? 'active' : ''}" data-stf-chart-preset="30d">30 ngày</button>
+              <button type="button" class="v3-preset-btn ${effPreset === 'month' ? 'active' : ''}" data-stf-chart-preset="month">Tháng</button>
+              <button type="button" class="v3-preset-btn ${effPreset === 'quarter' ? 'active' : ''}" data-stf-chart-preset="quarter">Quý</button>
+              <button type="button" class="v3-preset-btn ${effPreset === 'custom' ? 'active' : ''}" data-stf-chart-preset="custom">Tùy chỉnh</button>
+            </div>
+            <div class="v3-chart-period-slot" id="v3-staff-chart-period-slot">
+              ${effPreset === 'month' ? `
+                <select id="v3-stf-chart-month-select" class="v3-select v3-select-sm v3-chart-slot-control" aria-label="Chọn tháng cụ thể">
+                  <option value="2026-10" ${effMonthKey === '2026-10' ? 'selected' : ''}>Tháng 10/2026 (26/31 ngày)</option>
+                  <option value="2026-09" ${effMonthKey === '2026-09' ? 'selected' : ''}>Tháng 09/2026 (30 ngày)</option>
+                  <option value="2026-08" ${effMonthKey === '2026-08' ? 'selected' : ''}>Tháng 08/2026 (31 ngày)</option>
+                </select>
+              ` : effPreset === 'quarter' ? `
+                <select id="v3-stf-chart-quarter-select" class="v3-select v3-select-sm v3-chart-slot-control" aria-label="Chọn quý cụ thể">
+                  <option value="2026-Q4" ${effQuarterKey === '2026-Q4' ? 'selected' : ''}>Quý 4/2026 (26/92 ngày)</option>
+                  <option value="2026-Q3" ${effQuarterKey === '2026-Q3' ? 'selected' : ''}>Quý 3/2026 (92 ngày)</option>
+                  <option value="2026-Q2" ${effQuarterKey === '2026-Q2' ? 'selected' : ''}>Quý 2/2026 (91 ngày)</option>
+                </select>
+              ` : effPreset === 'custom' ? `
+                <div class="v3-chart-custom-dates" id="v3-stf-chart-custom-wrap">
+                  <input type="date" id="v3-stf-chart-start" class="v3-select v3-select-sm v3-chart-date-input" value="${chartWin.start}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày">
+                  <span class="v3-chart-date-sep">→</span>
+                  <input type="date" id="v3-stf-chart-end" class="v3-select v3-select-sm v3-chart-date-input" value="${chartWin.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
+                </div>
+              ` : `
+                <select id="v3-stf-chart-fixed-select" class="v3-select v3-select-sm v3-chart-slot-control" disabled aria-label="Khoảng ngày kỳ đang chọn">
+                  <option>${effPreset === '7d' ? '20/10/2026 – 26/10/2026 (7 ngày)' : '27/09/2026 – 26/10/2026 (30 ngày)'}</option>
+                </select>
+              `}
             </div>
           </div>
         </div>
-        <div style="height: 360px; position: relative;">
+
+        <!-- Dải chú giải tương tác (Bấm để bật/tắt từng nhân viên, đường Tổng đậm, và đường Kỳ trước nét đứt khi chọn 1 NV) -->
+        <div class="v3-staff-legend-strip" id="v3-staff-chart-legend">
+          <div class="v3-staff-legend-pills" id="v3-staff-legend-pills">
+            ${selectedStaff.map(st => {
+              const isHidden = hiddenSet.has(st.empId);
+              const empSum = dailySumByEmp[st.empId] || 0;
+              return `
+                <button type="button"
+                        class="v3-staff-legend-pill ${isHidden ? 'is-muted' : ''}"
+                        data-staff-legend-key="${st.empId}"
+                        data-emp-daily-sum="${empSum}"
+                        style="border-color:${st.color}88;background:${st.color}15;"
+                        title="Nhấn để bật/tắt đường của ${esc(st.empName)} (${esc(st.channelTitleSummary)})">
+                  <span class="v3-team-dot" style="background:${st.color};"></span>
+                  <strong>${esc(st.empName)}</strong>
+                  <span class="v3-staff-legend-val">${fmtLegendMetricVal(empSum)}</span>
+                </button>
+              `;
+            }).join('')}
+
+            <!-- Đường "Tổng" của nhóm đang chọn (nét đậm, bật/tắt trên chú giải) -->
+            <button type="button"
+                    class="v3-staff-legend-pill is-total-pill ${hiddenSet.has('TOTAL') ? 'is-muted' : ''}"
+                    data-staff-legend-key="TOTAL"
+                    data-total-daily-sum="${groupDailySum}"
+                    title="Nhấn để bật/tắt đường Tổng của nhóm nhân viên đang chọn (Nét đậm)">
+              <span class="v3-staff-legend-line-bold"></span>
+              <strong>Tổng (${selectedStaff.length} NV)</strong>
+              <span class="v3-staff-legend-val">${fmtLegendMetricVal(groupDailySum)}</span>
+            </button>
+
+            ${isSingleStaff ? `
+              <button type="button"
+                      class="v3-staff-legend-pill is-prev-pill ${hiddenSet.has('PREV') ? 'is-muted' : ''}"
+                      data-staff-legend-key="PREV"
+                      data-prev-daily-sum="${singlePrevSum ?? ''}"
+                      title="Nhấn để bật/tắt đường đối chứng kỳ trước (Nét đứt)">
+                <span class="v3-ch-legend-line dashed"></span>
+                <strong>Kỳ trước (${esc(prevRangeShort)})</strong>
+                <span class="v3-staff-legend-val">${fmtLegendMetricVal(singlePrevSum)}</span>
+              </button>
+            ` : ''}
+          </div>
+          <span class="v3-staff-legend-hint">Nhấn vào chú giải để bật/tắt đường</span>
+        </div>
+
+        <div class="v3-staff-chart-canvas-wrap" id="v3-staff-chart-canvas-wrap">
           <canvas id="v3-staff-compare-canvas"></canvas>
         </div>
       </section>
     `;
 
-    destroyChart('staffCompare');
-    const canvas = document.getElementById('v3-staff-compare-canvas');
-    if (canvas && typeof Chart !== 'undefined') {
-      const m1 = v3State.staffCompareMetric1;
-      const m2 = v3State.staffCompareMetric2;
-      const valOf = (cp, m) => {
-        if (m === 'views') return cp.curr.views || 0;
-        if (m === 'growth') return cp.viewsGrowthPct || 0;
-        if (m === 'netSubs') return cp.curr.netSubs || 0;
-        if (m === 'watchHours') return cp.curr.watchHours || 0;
-        if (m === 'revenue') return cp.curr.estimatedRevenue || 0;
-        if (m === 'videos') return cp.curr.videosPublished || 0;
-        return 0;
-      };
-      const labelOf = {
-        views: 'Lượt xem (Views)',
-        growth: '% Tăng trưởng Views',
-        netSubs: 'Sub ròng',
-        watchHours: 'Giờ xem [Analytics]',
-        revenue: 'Doanh thu USD [Analytics]',
-        videos: 'Video đăng'
-      };
+    renderStaffCompareChart(selectedStaff, chartWin, metric, scaleMode, dailyMapByEmp, hiddenSet);
 
-      if (v3State.staffCompareChartType === 'line') {
-        const days = snap.win.days;
-        const labels = days.map(d => d.slice(8, 10) + '/' + d.slice(5, 7));
-        const topStaff = [...filtered].sort((a, b) => valOf(b, m1) - valOf(a, m1)).slice(0, 5);
-        const datasets = topStaff.map((cp, idx) => {
-          const color = COMPARE_LINE_COLORS[idx % COMPARE_LINE_COLORS.length];
-          const dKey = (m1 === 'watchHours' || m1 === 'revenue' || m1 === 'netSubs') ? m1 : 'views';
-          const series = days.map(d => {
-            const pt = cp.curr.dailyMap.get(d);
-            return pt ? pt[dKey] : 0;
-          });
-          return {
-            label: `${cp.meta.employeeName} — ${cp.meta.title}`,
-            data: series,
-            borderColor: color,
-            backgroundColor: 'transparent',
-            borderWidth: 2.2,
-            pointRadius: 2,
-            tension: 0.3
-          };
-        });
-        chartInstances['staffCompare'] = new Chart(canvas.getContext('2d'), {
-          type: 'line',
-          data: { labels, datasets },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { labels: { color: '#CBD5E1' } } },
-            scales: {
-              x: { ticks: { color: '#94A3B8', maxTicksLimit: 14 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-              y: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(255,255,255,0.06)' } }
-            }
-          }
-        });
-      } else {
-        const sortedStaff = [...filtered].sort((a, b) => valOf(b, m1) - valOf(a, m1));
-        const labels = sortedStaff.map(cp => `${cp.meta.employeeName} (${cp.meta.title.slice(0, 14)})`);
-        const datasets = [
-          {
-            label: labelOf[m1] || m1,
-            data: sortedStaff.map(cp => valOf(cp, m1)),
-            backgroundColor: sortedStaff.map(cp => cp.meta.teamColor + 'CC'),
-            borderColor: sortedStaff.map(cp => cp.meta.teamColor),
-            borderWidth: 1.5,
-            borderRadius: 4,
-            yAxisID: 'y'
-          }
-        ];
-        if (m2 && m2 !== 'none' && m2 !== m1) {
-          datasets.push({
-            label: labelOf[m2] || m2,
-            data: sortedStaff.map(cp => valOf(cp, m2)),
-            type: 'line',
-            borderColor: '#F8FAFC',
-            backgroundColor: '#F8FAFC',
-            borderWidth: 2,
-            pointRadius: 3.5,
-            yAxisID: 'y1'
-          });
-        }
-        chartInstances['staffCompare'] = new Chart(canvas.getContext('2d'), {
-          type: 'bar',
-          data: { labels, datasets },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { labels: { color: '#CBD5E1' } } },
-            scales: {
-              x: { ticks: { color: '#CBD5E1', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-              y: { position: 'left', ticks: { color: '#94A3B8' }, grid: { color: 'rgba(255,255,255,0.06)' } },
-              ...(m2 && m2 !== 'none' && m2 !== m1 ? {
-                y1: { position: 'right', ticks: { color: '#F8FAFC' }, grid: { drawOnChartArea: false } }
-              } : {})
-            }
-          }
-        });
-      }
-    }
-
-    document.getElementById('v3-staff-cmp-team')?.addEventListener('change', e => {
-      v3State.staffTeamFilter = e.target.value;
-      renderStaffPage(snap);
-    });
-    document.getElementById('v3-staff-cmp-m1')?.addEventListener('change', e => {
-      v3State.staffCompareMetric1 = e.target.value;
-      renderStaffPage(snap);
-    });
-    document.getElementById('v3-staff-cmp-m2')?.addEventListener('change', e => {
-      v3State.staffCompareMetric2 = e.target.value;
-      renderStaffPage(snap);
-    });
-    body.querySelectorAll('[data-staff-chart-type]').forEach(btn => {
+    // Bind Scale Switch ("Thực tế" | "Chuẩn hóa (ngày đầu = 100)")
+    body.querySelectorAll('[data-staff-scale]').forEach(btn => {
       btn.addEventListener('click', () => {
-        v3State.staffCompareChartType = btn.getAttribute('data-staff-chart-type');
+        v3State.staffChartScale = btn.getAttribute('data-staff-scale') || 'actual';
         renderStaffPage(snap);
       });
+    });
+
+    // Bind Metric Switch ("Views" | "Sub ròng" | "Doanh thu")
+    body.querySelectorAll('[data-staff-metric]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        v3State.staffChartMetric = btn.getAttribute('data-staff-metric') || 'views';
+        renderStaffPage(snap);
+      });
+    });
+
+    // Bind Multi-Staff Picker Open/Close & Search/Team Filter
+    const pickerBtn = document.getElementById('v3-staff-picker-btn');
+    const pickerMenu = document.getElementById('v3-staff-picker-menu');
+    const pickerSearch = document.getElementById('v3-staff-picker-search');
+    const filterStaffPickerDom = () => {
+      const q = (v3State.staffPickerQuery || '').trim().toLowerCase();
+      const tf = v3State.staffPickerTeamFilter || 'ALL';
+      let visibleCount = 0;
+      body.querySelectorAll('#v3-staff-picker-list [data-stf-toggle-id]').forEach(el => {
+        const blob = el.getAttribute('data-search-text') || '';
+        const tid = el.getAttribute('data-stf-team-id') || '';
+        const matchQ = !q || blob.includes(q);
+        const matchT = tf === 'ALL' || tid === tf;
+        const show = matchQ && matchT;
+        el.style.display = show ? 'flex' : 'none';
+        if (show) visibleCount++;
+      });
+      const emptyEl = document.getElementById('v3-staff-picker-empty');
+      if (emptyEl) emptyEl.style.display = visibleCount === 0 ? 'block' : 'none';
+    };
+
+    if (pickerBtn && pickerMenu) {
+      pickerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        v3State.staffPickerOpen = !v3State.staffPickerOpen;
+        pickerMenu.classList.toggle('open', v3State.staffPickerOpen);
+        pickerBtn.setAttribute('aria-expanded', v3State.staffPickerOpen ? 'true' : 'false');
+        if (v3State.staffPickerOpen && pickerSearch) {
+          filterStaffPickerDom();
+          setTimeout(() => pickerSearch.focus(), 20);
+        }
+      });
+    }
+
+    if (pickerSearch) {
+      pickerSearch.addEventListener('input', (e) => {
+        v3State.staffPickerQuery = e.target.value;
+        filterStaffPickerDom();
+      });
+      pickerSearch.addEventListener('click', e => e.stopPropagation());
+    }
+
+    body.querySelectorAll('[data-stf-picker-team]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        v3State.staffPickerTeamFilter = btn.getAttribute('data-stf-picker-team') || 'ALL';
+        body.querySelectorAll('[data-stf-picker-team]').forEach(b => b.classList.toggle('active', b === btn));
+        filterStaffPickerDom();
+      });
+    });
+
+    document.getElementById('v3-staff-pick-top3')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      v3State.staffSelectedIds = allStaffByViews.slice(0, 3).map(st => st.empId);
+      v3State.staffHiddenKeys = [];
+      renderStaffPage(snap);
+    });
+
+    body.querySelectorAll('[data-stf-only-id]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const empId = btn.getAttribute('data-stf-only-id');
+        if (!empId) return;
+        v3State.staffSelectedIds = [empId];
+        v3State.staffHiddenKeys = (v3State.staffHiddenKeys || []).filter(k => k !== 'PREV' && k !== empId);
+        v3State.staffPickerOpen = false;
+        renderStaffPage(snap);
+      });
+    });
+
+    body.querySelectorAll('[data-stf-toggle-id]').forEach(row => {
+      row.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const empId = row.getAttribute('data-stf-toggle-id');
+        if (!empId) return;
+        const curr = [...(v3State.staffSelectedIds || [])];
+        const idx = curr.indexOf(empId);
+        if (idx >= 0) {
+          if (curr.length <= 1) {
+            if (core().showToast) core().showToast('Cần chọn tối thiểu 1 nhân viên trên biểu đồ.');
+            return;
+          }
+          curr.splice(idx, 1);
+        } else {
+          if (curr.length >= 5) {
+            if (core().showToast) core().showToast('Tối đa 5 nhân viên trên biểu đồ để tránh rối mắt.');
+            return;
+          }
+          curr.push(empId);
+        }
+        v3State.staffSelectedIds = curr;
+        renderStaffPage(snap);
+      });
+    });
+
+    // Bind Previous-Period Dashed Line Toggle Button (when 1 staff is selected)
+    document.getElementById('v3-staff-prev-toggle-btn')?.addEventListener('click', () => {
+      if (selectedStaff.length !== 1) return;
+      const hs = new Set(v3State.staffHiddenKeys || []);
+      if (hs.has('PREV')) hs.delete('PREV');
+      else hs.add('PREV');
+      v3State.staffHiddenKeys = Array.from(hs);
+      renderStaffPage(snap);
+    });
+
+    // Bind Clickable Legend Pills (toggle individual lines, Total line, or Prev line)
+    body.querySelectorAll('[data-staff-legend-key]').forEach(pill => {
+      pill.addEventListener('click', () => {
+        const key = pill.getAttribute('data-staff-legend-key');
+        if (!key) return;
+        const hs = new Set(v3State.staffHiddenKeys || []);
+        if (hs.has(key)) hs.delete(key);
+        else hs.add(key);
+        v3State.staffHiddenKeys = Array.from(hs);
+        const inst = chartInstances['staffCompare'];
+        if (inst && inst.data && inst.data.datasets) {
+          inst.data.datasets.forEach((ds, dsIdx) => {
+            if (ds._legendKey === key) {
+              const isHiddenNow = hs.has(key);
+              inst.setDatasetVisibility(dsIdx, !isHiddenNow);
+            }
+          });
+          inst.update('none');
+        }
+        pill.classList.toggle('is-muted', hs.has(key));
+        if (key === 'PREV') {
+          const prevBtn = document.getElementById('v3-staff-prev-toggle-btn');
+          if (prevBtn) prevBtn.classList.toggle('active', !hs.has('PREV'));
+        }
+      });
+    });
+
+    // Bind Independent Period Selector in Tab 2
+    body.querySelectorAll('[data-stf-chart-preset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const nextPreset = btn.getAttribute('data-stf-chart-preset');
+        v3State.staffChartCustomPeriod = true;
+        v3State.staffChartPreset = nextPreset;
+        if (nextPreset === '7d') {
+          v3State.staffChartStartDate = '2026-10-20';
+          v3State.staffChartEndDate = '2026-10-26';
+        } else if (nextPreset === '30d') {
+          v3State.staffChartStartDate = '2026-09-27';
+          v3State.staffChartEndDate = '2026-10-26';
+        }
+        renderStaffPage(snap);
+      });
+    });
+
+    document.getElementById('v3-stf-chart-month-select')?.addEventListener('change', (e) => {
+      v3State.staffChartCustomPeriod = true;
+      v3State.staffChartPreset = 'month';
+      v3State.staffChartMonthKey = e.target.value;
+      renderStaffPage(snap);
+    });
+
+    document.getElementById('v3-stf-chart-quarter-select')?.addEventListener('change', (e) => {
+      v3State.staffChartCustomPeriod = true;
+      v3State.staffChartPreset = 'quarter';
+      v3State.staffChartQuarterKey = e.target.value;
+      renderStaffPage(snap);
+    });
+
+    const applyCustomChartDates = () => {
+      const sEl = document.getElementById('v3-stf-chart-start');
+      const eEl = document.getElementById('v3-stf-chart-end');
+      if (!sEl || !eEl) return;
+      let s = sEl.value || '2026-09-27';
+      let e = eEl.value || '2026-10-26';
+      if (s > '2026-10-26') s = '2026-10-26';
+      if (e > '2026-10-26') e = '2026-10-26';
+      if (s > e) { const t = s; s = e; e = t; }
+      v3State.staffChartCustomPeriod = true;
+      v3State.staffChartPreset = 'custom';
+      v3State.staffChartStartDate = s;
+      v3State.staffChartEndDate = e;
+      renderStaffPage(snap);
+    };
+    document.getElementById('v3-stf-chart-start')?.addEventListener('change', applyCustomChartDates);
+    document.getElementById('v3-stf-chart-end')?.addEventListener('change', applyCustomChartDates);
+
+    document.getElementById('v3-staff-chart-reset-btn')?.addEventListener('click', () => {
+      v3State.staffChartCustomPeriod = false;
+      renderStaffPage(snap);
     });
   }
 
-  function renderStaffMatrixTab(body, snap) {
-    const demo = core().DEMO_STORE;
-    const rollups = (demo && demo.periodRollups) || [];
-    const gran = v3State.staffMatrixGranularity;
-    const metric = v3State.staffMatrixMetric;
+  function renderStaffCompareChart(selectedStaff, chartWin, metric, scaleMode, dailyMapByEmp, hiddenSet) {
+    destroyChart('staffCompare');
+    const canvas = document.getElementById('v3-staff-compare-canvas');
+    if (!canvas || typeof Chart === 'undefined') return;
 
-    let timeKeys = [];
-    if (gran === 'month') {
-      timeKeys = ['2026-10', '2026-09', '2026-08', '2026-07', '2026-06', '2026-05'];
-    } else if (gran === 'quarter') {
-      timeKeys = ['2026-Q4', '2026-Q3', '2026-Q2', '2026-Q1', '2025-Q4'];
-    } else {
-      timeKeys = snap.win.days.slice(-10).reverse();
+    const days = chartWin.days || [];
+    const prevDays = chartWin.prevDays || [];
+    const labels = days.map(d => formatIsoToShortVN(d));
+    const isIndex100 = scaleMode === 'index100';
+
+    const getRawVal = (pt) => {
+      if (!pt) return 0;
+      if (metric === 'revenue') return pt.revenue !== null && pt.revenue !== undefined ? Number(pt.revenue) : 0;
+      if (metric === 'netSubs') return pt.netSubs !== null && pt.netSubs !== undefined ? Number(pt.netSubs) : 0;
+      return pt.views !== null && pt.views !== undefined ? Number(pt.views) : 0;
+    };
+
+    const normalizeSeries = (rawArr) => {
+      if (!isIndex100) return rawArr;
+      const firstNonZero = rawArr.find(v => v !== null && v !== undefined && Math.abs(Number(v)) > 0);
+      const base = firstNonZero !== undefined ? Math.abs(Number(firstNonZero)) : 1;
+      return rawArr.map(v => Number(((Number(v || 0) / base) * 100).toFixed(1)));
+    };
+
+    const datasets = [];
+
+    // 1..5 Employee lines (Fixed colors across all pages)
+    selectedStaff.forEach(st => {
+      const sMap = dailyMapByEmp.get(st.empId) || new Map();
+      const rawSeries = days.map(d => getRawVal(sMap.get(d)));
+      const dataSeries = normalizeSeries(rawSeries);
+      datasets.push({
+        _legendKey: st.empId,
+        _rawSeries: rawSeries,
+        _realDays: days,
+        label: `${st.empName} (${st.channelTitleSummary})`,
+        data: dataSeries,
+        hidden: hiddenSet.has(st.empId),
+        borderColor: st.color,
+        backgroundColor: st.color + '18',
+        borderWidth: 2.3,
+        pointRadius: days.length > 45 ? 0 : 2.2,
+        pointHoverRadius: 4.5,
+        tension: 0.28
+      });
+    });
+
+    // Bold "Tổng" line of the selected group (Item 13)
+    const totalRawSeries = days.map((_, idx) => {
+      const sumDay = selectedStaff.reduce((acc, st) => {
+        const sMap = dailyMapByEmp.get(st.empId);
+        const pt = sMap ? sMap.get(days[idx]) : null;
+        return acc + getRawVal(pt);
+      }, 0);
+      return metric === 'revenue' ? Number(sumDay.toFixed(2)) : sumDay;
+    });
+    const totalDataSeries = normalizeSeries(totalRawSeries);
+    datasets.push({
+      _legendKey: 'TOTAL',
+      _rawSeries: totalRawSeries,
+      _realDays: days,
+      label: `Tổng nhóm (${selectedStaff.length} NV)`,
+      data: totalDataSeries,
+      hidden: hiddenSet.has('TOTAL'),
+      borderColor: '#F8FAFC',
+      backgroundColor: 'transparent',
+      borderWidth: 3.4,
+      pointRadius: days.length > 45 ? 0 : 2.6,
+      pointHoverRadius: 5,
+      tension: 0.28,
+      order: 0
+    });
+
+    // Dashed previous-period reference line ONLY when exactly 1 staff is selected (Item 15)
+    if (selectedStaff.length === 1) {
+      const onlySt = selectedStaff[0];
+      const prevMap = new Map();
+      (onlySt.prev.dailySeries || []).forEach(pt => prevMap.set(pt.day, pt));
+      const prevRawSeries = days.map((_, idx) => {
+        const pd = prevDays[idx];
+        return pd ? getRawVal(prevMap.get(pd)) : null;
+      });
+      const prevDataSeries = normalizeSeries(prevRawSeries);
+      const prevRangeShort = chartWin.compareRangeShort || `${formatIsoToShortVN(chartWin.prevStart)}–${formatIsoToShortVN(chartWin.prevEnd)}`;
+      datasets.push({
+        _legendKey: 'PREV',
+        _rawSeries: prevRawSeries,
+        _realDays: prevDays,
+        label: `Kỳ trước (${prevRangeShort})`,
+        data: prevDataSeries,
+        hidden: hiddenSet.has('PREV'),
+        borderColor: '#94A3B8',
+        backgroundColor: 'transparent',
+        borderDash: [6, 4],
+        borderWidth: 2.0,
+        pointRadius: days.length > 45 ? 0 : 1.8,
+        pointHoverRadius: 4,
+        tension: 0.28
+      });
     }
 
-    // Build cell values per (channelId, tKey)
-    const matrixRows = snap.channelPairs.map(cp => {
-      const cells = timeKeys.map(tk => {
-        if (gran === 'day') {
-          const pt = cp.curr.dailyMap.get(tk);
-          if (!pt) return null;
-          if (metric === 'views') return pt.views;
-          if (metric === 'watchHours') return pt.watchHours;
-          if (metric === 'netSubs') return pt.netSubs;
-          if (metric === 'revenue') return pt.revenue;
-          return pt.views;
-        } else {
-          const r = rollups.find(x => x.entity_type === 'channel' && x.entity_id === cp.id && x.period_key === tk);
-          if (!r || !r.metrics) return null;
-          if (metric === 'views') return cp.curr.views !== null ? r.metrics.views : null;
-          if (metric === 'watchHours') return cp.curr.hasAnalytics ? r.metrics.estimatedHoursWatched : null;
-          if (metric === 'netSubs') return cp.curr.netSubs !== null ? r.metrics.netSubscribers : null;
-          if (metric === 'revenue') return cp.curr.hasMonetary ? r.metrics.estimatedRevenue : null;
-          return r.metrics.views;
-        }
-      });
-      const rowTotal = cells.some(v => v !== null)
-        ? cells.reduce((s, v) => s + (v || 0), 0)
-        : null;
-      return { cp, cells, rowTotal };
-    });
-
-    // Column min/max for column-normalized heatmap
-    const colStats = timeKeys.map((_, colIdx) => {
-      const vals = matrixRows.map(r => r.cells[colIdx]).filter(v => v !== null && v !== undefined);
-      if (!vals.length) return { min: 0, max: 0 };
-      return { min: Math.min(...vals), max: Math.max(...vals) };
-    });
-
-    function fmtCell(val) {
-      if (val === null || val === undefined) return '—';
+    const fmtActualVal = (val) => {
+      if (val === null || val === undefined || Number.isNaN(Number(val))) return '—';
       if (metric === 'revenue') return fmtMoney(val);
-      if (metric === 'watchHours') return fmtInt(val) + 'h';
-      return fmtInt(val);
-    }
-
-    body.innerHTML = `
-      <section class="v3-panel">
-        <div class="v3-panel-header">
-          <div>
-            <div class="v3-panel-title">
-              <i class="ri-grid-line" style="color:#38BDF8;"></i>
-              Ma trận đối soát 15 Nhân viên × Thời gian (Chuẩn hóa Heatmap theo từng cột kỳ)
-            </div>
-            <div class="v3-panel-subtitle">
-              Ô đậm nhất trong mỗi cột là người dẫn đầu kỳ đó; hàng cuối đối soát chính xác tổng 15 Nhân viên = Tổng công ty
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <div class="v3-preset-group">
-              <button type="button" class="v3-preset-btn ${gran === 'month' ? 'active' : ''}" data-mat-gran="month">Theo Tháng</button>
-              <button type="button" class="v3-preset-btn ${gran === 'quarter' ? 'active' : ''}" data-mat-gran="quarter">Theo Quý</button>
-              <button type="button" class="v3-preset-btn ${gran === 'day' ? 'active' : ''}" data-mat-gran="day">Theo Ngày (10 ngày)</button>
-            </div>
-            <select id="v3-mat-metric-select" class="v3-select">
-              <option value="views" ${metric === 'views' ? 'selected' : ''}>Chỉ số: Lượt xem (Views)</option>
-              <option value="netSubs" ${metric === 'netSubs' ? 'selected' : ''}>Chỉ số: Sub ròng (Net Subs)</option>
-              <option value="watchHours" ${metric === 'watchHours' ? 'selected' : ''}>Chỉ số: Giờ xem [Analytics]</option>
-              <option value="revenue" ${metric === 'revenue' ? 'selected' : ''}>Chỉ số: Doanh thu [Analytics]</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="v3-table-wrap">
-          <table class="v3-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Nhân viên</th>
-                <th>Team</th>
-                <th>Kênh</th>
-                <th class="num">Tổng các cột</th>
-                ${timeKeys.map(tk => `
-                  <th class="num">
-                    ${esc(tk)}
-                    ${(tk === '2026-10' || tk === '2026-Q4') ? `<div style="font-size:9.5px;color:#F59E0B;">[Chưa trọn kỳ]</div>` : ''}
-                  </th>
-                `).join('')}
-              </tr>
-            </thead>
-            <tbody>
-              ${matrixRows.map((row, idx) => `
-                <tr>
-                  <td>${idx + 1}</td>
-                  <td><strong>${esc(row.cp.meta.employeeName)}</strong></td>
-                  <td>
-                    <span class="v3-team-dot" style="background:${row.cp.meta.teamColor};"></span>
-                    <span style="font-size:12px;">${esc(row.cp.meta.teamName)}</span>
-                  </td>
-                  <td>${esc(row.cp.meta.title)}</td>
-                  <td class="num"><strong>${fmtCell(row.rowTotal)}</strong></td>
-                  ${row.cells.map((val, cIdx) => {
-      const st = colStats[cIdx];
-      let bg = 'transparent';
-      if (val !== null && st.max > st.min) {
-        const ratio = (val - st.min) / (st.max - st.min);
-        const alpha = (0.04 + ratio * 0.22).toFixed(2);
-        bg = `rgba(56, 189, 248, ${alpha})`;
+      if (metric === 'netSubs') {
+        const n = Math.round(Number(val));
+        return n > 0 ? '+' + fmtInt(n) : fmtInt(n);
       }
-      const isMax = val !== null && val === st.max && st.max > st.min;
-      return `<td class="num" style="background:${bg};${isMax ? 'font-weight:800;color:#38BDF8;' : ''}">${fmtCell(val)}</td>`;
-    }).join('')}
-                </tr>
-              `).join('')}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="4">TỔNG CỘNG ĐỐI SOÁT (15 NHÂN VIÊN = TOÀN CÔNG TY)</td>
-                <td class="num">
-                  ${fmtCell(matrixRows.some(r => r.rowTotal !== null) ? matrixRows.reduce((s, r) => s + (r.rowTotal || 0), 0) : null)}
-                </td>
-                ${timeKeys.map((_, cIdx) => {
-      const vals = matrixRows.map(r => r.cells[cIdx]).filter(v => v !== null);
-      const colSum = vals.length ? vals.reduce((s, v) => s + v, 0) : null;
-      return `<td class="num">${fmtCell(colSum)}</td>`;
-    }).join('')}
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </section>
-    `;
+      return fmtInt(val);
+    };
 
-    body.querySelectorAll('[data-mat-gran]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        v3State.staffMatrixGranularity = btn.getAttribute('data-mat-gran');
-        renderStaffPage(snap);
-      });
-    });
-
-    document.getElementById('v3-mat-metric-select')?.addEventListener('change', e => {
-      v3State.staffMatrixMetric = e.target.value;
-      renderStaffPage(snap);
+    chartInstances['staffCompare'] = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: function (items) {
+                const idx = items && items[0] ? items[0].dataIndex : 0;
+                const dCurr = days[idx];
+                const dPrev = prevDays[idx];
+                if (selectedStaff.length === 1 && dPrev) {
+                  return `Ngày thứ ${idx + 1} của kỳ (${dCurr ? formatIsoToVN(dCurr) : '—'} vs Kỳ trước: ${formatIsoToVN(dPrev)})`;
+                }
+                return `Ngày ${dCurr ? formatIsoToVN(dCurr) : (idx + 1)}`;
+              },
+              label: function (ctx) {
+                const ds = ctx.dataset;
+                const idx = ctx.dataIndex;
+                const rawVal = ds._rawSeries ? ds._rawSeries[idx] : ctx.parsed.y;
+                const realIso = ds._realDays ? ds._realDays[idx] : days[idx];
+                const dateTag = realIso ? ` (${formatIsoToShortVN(realIso)})` : '';
+                if (isIndex100) {
+                  const idxVal = ctx.parsed.y !== null && ctx.parsed.y !== undefined
+                    ? Number(ctx.parsed.y).toFixed(1).replace('.', ',')
+                    : '—';
+                  return ` ${ds.label}${dateTag}: ${idxVal} điểm [Thực tế: ${fmtActualVal(rawVal)}]`;
+                }
+                return ` ${ds.label}${dateTag}: ${fmtActualVal(rawVal)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            afterBuildTicks: function (axis) {
+              const total = labels.length;
+              if (total <= 10) return;
+              const stepCount = 6;
+              const chosen = [];
+              for (let k = 0; k <= stepCount; k++) {
+                const idx = Math.round((k * (total - 1)) / stepCount);
+                if (!chosen.includes(idx)) chosen.push(idx);
+              }
+              axis.ticks = chosen.map(v => ({ value: v }));
+            },
+            ticks: {
+              color: '#94A3B8',
+              maxRotation: 0,
+              minRotation: 0,
+              autoSkip: false,
+              font: { size: 11 }
+            },
+            grid: { color: 'rgba(255,255,255,0.04)' }
+          },
+          y: {
+            beginAtZero: !isIndex100 && metric !== 'netSubs',
+            ticks: {
+              color: '#94A3B8',
+              precision: 0,
+              callback: function (val) {
+                if (isIndex100) {
+                  return new Intl.NumberFormat('vi-VN').format(Math.round(val));
+                }
+                if (metric === 'revenue') return fmtMoney(val);
+                return new Intl.NumberFormat('vi-VN').format(Math.round(val));
+              }
+            },
+            grid: { color: 'rgba(255,255,255,0.06)' }
+          }
+        }
+      }
     });
   }
 
@@ -5904,6 +6550,13 @@
         const cBtn = document.getElementById('v3-compare-picker-btn');
         if (cMenu) cMenu.classList.remove('open');
         if (cBtn) cBtn.setAttribute('aria-expanded', 'false');
+      }
+      if (v3State.staffPickerOpen && !e.target.closest('#v3-staff-multi-picker')) {
+        v3State.staffPickerOpen = false;
+        const sMenu = document.getElementById('v3-staff-picker-menu');
+        const sBtn = document.getElementById('v3-staff-picker-btn');
+        if (sMenu) sMenu.classList.remove('open');
+        if (sBtn) sBtn.setAttribute('aria-expanded', 'false');
       }
     });
     // Pre-render Guide page so #guide-... anchors exist in DOM at all times

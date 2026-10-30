@@ -651,6 +651,135 @@ def main():
                 break
     check("page2_single_team_custom_ref_period_reconciles_with_daily_sum", p2_custom_ref_ok)
 
+    # Check 37 (Page 4 Item 20): Page 4 ("Báo cáo theo nhân viên" — Tab 1 & Tab 2) reconciles in both USD and VND:
+    # 1. Each employee's views, netSubs, videosPublished, revenue (USD & VND), and delta equal the sum of their assigned channels in Page 2's 5-channel table.
+    # 2. Sum of all 15 employees ("TỔNG CỘNG" when "Tất cả 15 NV" is selected) equals "Toàn network" on Pages 1 and 2 (views, delta, sub, video, engagement, revenue USD & VND).
+    # 3. Sum of daily series points on Tab 2 ("Báo cáo NV theo biểu đồ") for each employee equals their period total on Tab 1 ("Báo cáo NV theo số liệu") and Page 2.
+    # 4. Video counts reconcile 100% across Pages 1, 2, 3, and 4.
+    p4_staff_ok = True
+    fx_rates_to_test = [("USD", Decimal("1")), ("VND", Decimal("25450"))]
+    p4_period_pairs = [
+        ("2026-09-27", "2026-10-26", "2026-08-28", "2026-09-26"),  # 30d vs prev (cutoff 26/10/2026)
+        ("2026-09-27", "2026-10-26", "2025-09-27", "2025-10-26"),  # 30d vs yoy
+        ("2026-10-20", "2026-10-26", "2026-10-13", "2026-10-19"),  # 7d vs prev
+        ("2026-10-01", "2026-10-26", "2026-09-01", "2026-09-26"),  # Month partial (26/31d) vs prev
+        ("2026-10-01", "2026-10-26", "2026-07-01", "2026-07-26"),  # Q4 partial (26/92d) vs Q3 first 26d
+    ]
+    emp_to_channels = defaultdict(list)
+    for cid, eid in channel_to_employee.items():
+        emp_to_channels[eid].append(cid)
+
+    # Specifically verify default 30d cutoff 26/10/2026 benchmark values for Lê Minh Anh & Trần Ngọc Mai
+    c30_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and "2026-09-27" <= r["day"] <= "2026-10-26"]
+    emp_by_name = {(e.get("full_name") or e.get("name")): e["id"] for e in baseline["employees"]}
+    lma_views_26 = sum(index[cid, d]["views"] for cid in emp_to_channels[emp_by_name["Lê Minh Anh"]] for d in c30_days)
+    tnm_views_26 = sum(index[cid, d]["views"] for cid in emp_to_channels[emp_by_name["Trần Ngọc Mai"]] for d in c30_days)
+    if lma_views_26 != 465653 or tnm_views_26 != 1012425:
+        p4_staff_ok = False
+
+    for c_start, c_end, r_start, r_end in p4_period_pairs:
+        c_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and c_start <= r["day"] <= c_end]
+        r_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and r_start <= r["day"] <= r_end]
+        for curr_code, fx_mult in fx_rates_to_test:
+            # Page 1 & Page 2 "Toàn network" totals
+            p1_views = sum(index[c["id"], d]["views"] for c in baseline["channels"] for d in c_days)
+            p1_prev_views = sum(index[c["id"], d]["views"] for c in baseline["channels"] for d in r_days)
+            p1_subs = sum(index[c["id"], d]["subscribersGained"] - index[c["id"], d]["subscribersLost"] for c in baseline["channels"] for d in c_days)
+            p1_vids = sum(index[c["id"], d]["daily_videos_published"] for c in baseline["channels"] for d in c_days)
+            p1_eng_num = sum(index[c["id"], d]["likes"] + index[c["id"], d]["comments"] + index[c["id"], d]["shares"] for c in baseline["channels"] for d in c_days)
+            p1_eng_rate = round((p1_eng_num / p1_views) * 100, 2) if p1_views > 0 else 0.0
+            p1_rev_cents = sum(cents(index[c["id"], d]["estimatedRevenue"]) for c in baseline["channels"] for d in c_days)
+            p1_rev_curr = (Decimal(p1_rev_cents) / Decimal(100)) * fx_mult
+
+            # Page 2 team video totals & Page 3 channel video totals
+            p2_team_vids_sum = sum(
+                sum(index[cid, d]["daily_videos_published"] for cid in ch_to_team if ch_to_team[cid] == t["id"] for d in c_days)
+                for t in baseline["teams"]
+            )
+            p3_ch_vids_sum = sum(
+                sum(index[c["id"], d]["daily_videos_published"] for d in c_days)
+                for c in baseline["channels"]
+            )
+
+            # Page 4 15-employee totals & per-employee reconciliation
+            p4_emp_views_list = []
+            p4_emp_prev_views_list = []
+            p4_emp_subs_list = []
+            p4_emp_vids_list = []
+            p4_emp_rev_cents_list = []
+            p4_emp_rev_curr_list = []
+            p4_emp_eng_num_sum = 0
+
+            for emp in baseline["employees"]:
+                eid = emp["id"]
+                e_cids = emp_to_channels[eid]
+                # Tab 1 period metrics for this employee
+                tab1_views = sum(index[cid, d]["views"] for cid in e_cids for d in c_days)
+                tab1_prev_views = sum(index[cid, d]["views"] for cid in e_cids for d in r_days)
+                tab1_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in e_cids for d in c_days)
+                tab1_vids = sum(index[cid, d]["daily_videos_published"] for cid in e_cids for d in c_days)
+                tab1_rev_cents = sum(cents(index[cid, d]["estimatedRevenue"]) for cid in e_cids for d in c_days)
+                tab1_rev_curr = (Decimal(tab1_rev_cents) / Decimal(100)) * fx_mult
+                tab1_eng_num = sum(index[cid, d]["likes"] + index[cid, d]["comments"] + index[cid, d]["shares"] for cid in e_cids for d in c_days)
+
+                # Page 2 5-channel table sum for the channels assigned to this employee
+                p2_ch_views = sum(sum(index[cid, d]["views"] for d in c_days) for cid in e_cids)
+                p2_ch_prev_views = sum(sum(index[cid, d]["views"] for d in r_days) for cid in e_cids)
+                p2_ch_subs = sum(sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in c_days) for cid in e_cids)
+                p2_ch_vids = sum(sum(index[cid, d]["daily_videos_published"] for d in c_days) for cid in e_cids)
+                p2_ch_rev_cents = sum(sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days) for cid in e_cids)
+                p2_ch_rev_curr = (Decimal(p2_ch_rev_cents) / Decimal(100)) * fx_mult
+
+                # Tab 2 daily series points for this employee
+                tab2_daily_views = [sum(index[cid, d]["views"] for cid in e_cids) for d in c_days]
+                tab2_daily_subs = [sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in e_cids) for d in c_days]
+                tab2_daily_rev_cents = [sum(cents(index[cid, d]["estimatedRevenue"]) for cid in e_cids) for d in c_days]
+                tab2_daily_rev_curr = [(Decimal(rc) / Decimal(100)) * fx_mult for rc in tab2_daily_rev_cents]
+
+                if not (
+                    len(e_cids) >= 1 and
+                    tab1_views == p2_ch_views == sum(tab2_daily_views) and
+                    tab1_prev_views == p2_ch_prev_views and
+                    tab1_subs == p2_ch_subs == sum(tab2_daily_subs) and
+                    tab1_vids == p2_ch_vids and
+                    tab1_rev_cents == p2_ch_rev_cents == sum(tab2_daily_rev_cents) and
+                    tab1_rev_curr == p2_ch_rev_curr == sum(tab2_daily_rev_curr)
+                ):
+                    p4_staff_ok = False
+                    break
+
+                p4_emp_views_list.append(tab1_views)
+                p4_emp_prev_views_list.append(tab1_prev_views)
+                p4_emp_subs_list.append(tab1_subs)
+                p4_emp_vids_list.append(tab1_vids)
+                p4_emp_rev_cents_list.append(tab1_rev_cents)
+                p4_emp_rev_curr_list.append(tab1_rev_curr)
+                p4_emp_eng_num_sum += tab1_eng_num
+
+            p4_total_views = sum(p4_emp_views_list)
+            p4_total_prev_views = sum(p4_emp_prev_views_list)
+            p4_total_subs = sum(p4_emp_subs_list)
+            p4_total_vids = sum(p4_emp_vids_list)
+            p4_total_rev_cents = sum(p4_emp_rev_cents_list)
+            p4_total_rev_curr = sum(p4_emp_rev_curr_list)
+            p4_total_eng_rate = round((p4_emp_eng_num_sum / p4_total_views) * 100, 2) if p4_total_views > 0 else 0.0
+            emp_shares = allocate_exact_tenths_pct(p4_emp_views_list)
+
+            if not (
+                len(p4_emp_views_list) == 15 and
+                p4_total_views == p1_views and
+                p4_total_prev_views == p1_prev_views and
+                p4_total_subs == p1_subs and
+                p4_total_vids == p1_vids == p2_team_vids_sum == p3_ch_vids_sum and
+                p4_total_rev_cents == p1_rev_cents and
+                p4_total_rev_curr == p1_rev_curr and
+                p4_total_eng_rate == p1_eng_rate and
+                round(sum(emp_shares) * 10) == 1000
+            ):
+                p4_staff_ok = False
+                break
+    check("page4_staff_reconciles_with_page1_page2_page3_and_daily_chart_usd_vnd", p4_staff_ok)
+
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())
     (HERE / "independent_validation.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -286,17 +286,17 @@
     getChannelState(channelId, scenarioId) {
       const sc = this.getScenario(scenarioId);
       if (!sc || !sc.channel_states) {
-        return { channel_id: channelId, analytics_status: 'demo_ready', monetary_status: 'demo_ready', analytics_available_end: '2026-10-28', monetary_available_end: '2026-10-28' };
+        return { channel_id: channelId, analytics_status: 'demo_ready', monetary_status: 'demo_ready', analytics_available_end: '2026-10-26', monetary_available_end: '2026-10-26' };
       }
-      return sc.channel_states.find(c => c.channel_id === channelId) || { channel_id: channelId, analytics_status: 'demo_ready', monetary_status: 'demo_ready', analytics_available_end: '2026-10-28', monetary_available_end: '2026-10-28' };
+      return sc.channel_states.find(c => c.channel_id === channelId) || { channel_id: channelId, analytics_status: 'demo_ready', monetary_status: 'demo_ready', analytics_available_end: '2026-10-26', monetary_available_end: '2026-10-26' };
     }
   };
 
   // Helper adapter to get effective channel report across both Live and Demo modes
   function getEffectiveChannelReport(channelId, startDate, endDate, currencyOrScenario) {
     if (!channelId) return null;
-    startDate = startDate || state.startDate || '2026-10-01';
-    endDate = endDate || state.endDate || '2026-10-28';
+    startDate = startDate || state.startDate || '2026-09-27';
+    endDate = endDate || state.endDate || '2026-10-26';
     const isScenarioArg = currencyOrScenario && currencyOrScenario !== 'USD' && currencyOrScenario !== 'VND';
     const currency = (!isScenarioArg && currencyOrScenario) ? currencyOrScenario : (state.currency || 'USD');
     const scenarioId = isScenarioArg ? currencyOrScenario : state.demoScenario;
@@ -319,7 +319,7 @@
       }
 
       const rawRows = DEMO_STORE.getDailyRows(channelId, startDate, endDate);
-      const monEnd = chState.monetary_available_end || '2026-10-28';
+      const monEnd = chState.monetary_available_end || '2026-10-26';
 
       // Check scenario metric overrides
       const scenario = DEMO_STORE.getScenario(scenarioId);
@@ -4174,12 +4174,12 @@ function switchView(viewId) {
       return;
     }
 
-    // Backward-compatible hash redirects for consolidated Staff page (3 tabs)
+    // Backward-compatible hash redirects for consolidated Staff page (2 tabs: ranking & compare)
     if (viewId === 'view-report-staff-chart') {
       state.staffActiveTab = 'compare';
       viewId = 'view-report-staff';
     } else if (viewId === 'view-report-staff-data') {
-      state.staffActiveTab = 'matrix';
+      state.staffActiveTab = 'ranking';
       viewId = 'view-report-staff';
     }
 
@@ -4265,7 +4265,13 @@ function switchView(viewId) {
     if (typeof window !== 'undefined' && window.__REPORT_V3__ && typeof window.__REPORT_V3__.onViewSwitch === 'function') {
       const handledByV3 = window.__REPORT_V3__.onViewSwitch(viewId);
       if (handledByV3) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo(0, 0);
+        const mc = document.querySelector('.main-content');
+        if (mc) mc.scrollTop = 0;
+        requestAnimationFrame(() => {
+          window.scrollTo(0, 0);
+          if (mc) mc.scrollTop = 0;
+        });
         return;
       }
     }
@@ -7136,9 +7142,9 @@ function switchView(viewId) {
 
     if (!DEMO_STORE.isLoaded) DEMO_STORE.init();
     if (state.viewMode === 'demo') {
-      state.startDate = '2026-10-01';
-      state.endDate = '2026-10-28';
-      state.periodDays = 28;
+      state.startDate = '2026-09-27';
+      state.endDate = '2026-10-26';
+      state.periodDays = 30;
       const demoBanner = document.getElementById('demo-mode-banner');
       if (demoBanner) demoBanner.style.display = 'flex';
       const btnLive = document.getElementById('btn-mode-live');

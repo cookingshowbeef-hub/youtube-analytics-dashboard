@@ -932,7 +932,6 @@
             <span style="color:var(--text-dim);font-size:11px;">→</span>
             <input type="date" id="v3-custom-end" class="v3-select v3-select-sm" value="${snap.win.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
             <button type="button" class="v3-btn primary v3-btn-sm" id="v3-btn-apply-custom">Áp dụng</button>
-            <span class="v3-day-count-tag" title="${esc(snap.win.label)}">${snap.win.dayCount} ngày · ${formatIsoToShortVN(snap.win.start)}–${formatIsoToShortVN(snap.win.end)}</span>
           </div>
         </div>
 
@@ -2883,25 +2882,25 @@
   // =========================================================================
   const TEAM_SHADES = {
     'TEAM-01': [
-      { bg: '#38BDF8', fg: '#090D16' },
-      { bg: '#0EA5E9', fg: '#090D16' },
       { bg: '#0284C7', fg: '#F8FAFC' },
-      { bg: '#0369A1', fg: '#F8FAFC' },
-      { bg: '#075985', fg: '#F8FAFC' }
+      { bg: '#0EA5E9', fg: '#090D16' },
+      { bg: '#38BDF8', fg: '#090D16' },
+      { bg: '#7DD3FC', fg: '#090D16' },
+      { bg: '#BAE6FD', fg: '#090D16' }
     ],
     'TEAM-02': [
-      { bg: '#F59E0B', fg: '#090D16' },
       { bg: '#D97706', fg: '#090D16' },
-      { bg: '#B45309', fg: '#F8FAFC' },
-      { bg: '#92400E', fg: '#F8FAFC' },
-      { bg: '#78350F', fg: '#F8FAFC' }
+      { bg: '#F59E0B', fg: '#090D16' },
+      { bg: '#FBBF24', fg: '#090D16' },
+      { bg: '#FCD34D', fg: '#090D16' },
+      { bg: '#FDE68A', fg: '#090D16' }
     ],
     'TEAM-03': [
-      { bg: '#EC4899', fg: '#090D16' },
       { bg: '#DB2777', fg: '#F8FAFC' },
-      { bg: '#BE185D', fg: '#F8FAFC' },
-      { bg: '#9D174D', fg: '#F8FAFC' },
-      { bg: '#831843', fg: '#F8FAFC' }
+      { bg: '#EC4899', fg: '#090D16' },
+      { bg: '#F472B6', fg: '#090D16' },
+      { bg: '#F9A8D4', fg: '#090D16' },
+      { bg: '#FBCFE8', fg: '#090D16' }
     ]
   };
 
@@ -2929,43 +2928,6 @@
       return (b.viewsGrowthPct ?? -999) - (a.viewsGrowthPct ?? -999);
     });
 
-    // Team-specific alerts: ONLY (>7 days without upload as of 26/10) OR (channel accounts for >40% of team views)
-    const selectedTeamViews = (selectedTeam && selectedTeam.curr && selectedTeam.curr.views) || 0;
-    const teamAlerts = [];
-    (selectedTeam ? selectedTeam.channels : []).forEach(cp => {
-      const slow = cp.daysSinceLastUpload > 7;
-      const sharePct = (selectedTeamViews > 0 && cp.curr.views !== null)
-        ? Number(((cp.curr.views / selectedTeamViews) * 100).toFixed(1))
-        : 0;
-      const highShare = sharePct > 40;
-      if (slow || highShare) {
-        teamAlerts.push({ cp, slow, highShare, sharePct });
-      }
-    });
-
-    // Build 30-day upload cadence strip data ending at snap.win.end (default 27/09–26/10) from daily_videos_published
-    const stripEndIso = snap.win.end || '2026-10-26';
-    const stripStartIso = shiftIsoDays(stripEndIso, -29);
-    const stripDays = listIsoDays(stripStartIso, stripEndIso);
-    const demo = core().DEMO_STORE;
-    const cadenceByTeam = sortedTeams.map(tp => {
-      const dayCounts = new Map();
-      stripDays.forEach(d => dayCounts.set(d, 0));
-      tp.channels.forEach(cp => {
-        const rows = (demo && demo.getDailyRows) ? demo.getDailyRows(cp.id, stripStartIso, stripEndIso) : [];
-        rows.forEach(r => {
-          if (r.day <= '2026-10-26' && dayCounts.has(r.day)) {
-            dayCounts.set(r.day, dayCounts.get(r.day) + Number(r.daily_videos_published || 0));
-          }
-        });
-      });
-      const cells = stripDays.map(d => ({ day: d, count: dayCounts.get(d) || 0 }));
-      const totalVids30d = cells.reduce((s, x) => s + x.count, 0);
-      const activeDays30d = cells.filter(x => x.count > 0).length;
-      const slowChannels = tp.channels.filter(c => c.daysSinceLastUpload > 7).length;
-      return { tp, cells, totalVids30d, activeDays30d, slowChannels };
-    });
-
     const chartTitleMap = {
       views: 'Lượt xem theo ngày',
       watchHours: 'Giờ xem theo ngày [Analytics]',
@@ -2974,7 +2936,7 @@
     const chartTitle = chartTitleMap[v3State.teamChartMetric] || 'Lượt xem theo ngày';
 
     root.innerHTML = `
-      <!-- 1. 3 TEAM CARDS (Sorted by views rank #1/#2/#3, equal height, nowrap labels, conclusion line) -->
+      <!-- 1. 3 TEAM CARDS (Sorted by views rank #1/#2/#3, equal height, only views+delta, netSubs, revenue, and conclusion) -->
       <div class="v3-grid-3 v3-team-cards-grid">
         ${sortedTeams.map((tp, idx) => {
           const rank = idx + 1;
@@ -2985,7 +2947,7 @@
             ? ((topCh.curr.views / tp.curr.views) * 100)
             : 0;
           return `
-            <div class="v3-panel clickable-row v3-team-card" data-select-team-card="${tp.id}" style="margin-bottom:0;border:2px solid ${isSelected ? tp.color : 'var(--border-subtle)'};background:${isSelected ? tp.color + '10' : 'var(--bg-card)'};">
+            <div class="v3-panel clickable-row v3-team-card" data-select-team-card="${tp.id}" style="margin-bottom:0;border:2px solid ${isSelected ? tp.color : 'var(--border-subtle)'};background:${isSelected ? tp.color + '12' : 'var(--bg-card)'};box-shadow:${isSelected ? '0 0 0 1px ' + tp.color + '40' : 'none'};">
               <div>
                 <div class="v3-team-card-top">
                   <div class="v3-team-card-name-wrap">
@@ -3003,8 +2965,6 @@
 
                 <div class="v3-team-card-metrics">
                   <div class="v3-team-card-metric-item">Sub ròng: <strong>${tp.curr.netSubs !== null ? (tp.curr.netSubs > 0 ? '+' + fmtInt(tp.curr.netSubs) : fmtInt(tp.curr.netSubs)) : '—'}</strong></div>
-                  <div class="v3-team-card-metric-item">Video đăng: <strong>${fmtInt(tp.curr.videosPublished)} video</strong></div>
-                  <div class="v3-team-card-metric-item">Tương tác: <strong>${tp.curr.engagementRate !== null ? fmtDec(tp.curr.engagementRate, 2) + '%' : '—'}</strong></div>
                   <div class="v3-team-card-metric-item">Doanh thu: <strong>${tp.curr.estimatedRevenue !== null ? fmtMoney(tp.curr.estimatedRevenue) : '—'}</strong></div>
                 </div>
               </div>
@@ -3018,31 +2978,30 @@
         }).join('')}
       </div>
 
-      <!-- 2. 3-TEAM TREND CHART -->
-      <section class="v3-panel">
-        <div class="v3-panel-header">
-          <div>
-            <div class="v3-panel-title">
-              <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
-              ${esc(chartTitle)}
+      <!-- 2. SIDE-BY-SIDE: 3-TEAM TREND CHART & STACKED MEMBER CONTRIBUTION BARS -->
+      <div class="v3-team-mid-grid">
+        <section class="v3-panel" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;">
+          <div class="v3-panel-header" style="margin-bottom:10px;">
+            <div>
+              <div class="v3-panel-title">
+                <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
+                ${esc(chartTitle)}
+              </div>
+            </div>
+            <div class="v3-preset-group">
+              <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'views' ? 'active' : ''}" data-tm-metric="views">Lượt xem</button>
+              <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'watchHours' ? 'active' : ''}" data-tm-metric="watchHours">Giờ xem [Analytics]</button>
+              <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'revenue' ? 'active' : ''}" data-tm-metric="revenue">Doanh thu [Analytics]</button>
             </div>
           </div>
-          <div class="v3-preset-group">
-            <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'views' ? 'active' : ''}" data-tm-metric="views">Lượt xem</button>
-            <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'watchHours' ? 'active' : ''}" data-tm-metric="watchHours">Giờ xem [Analytics]</button>
-            <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'revenue' ? 'active' : ''}" data-tm-metric="revenue">Doanh thu [Analytics]</button>
+          <div style="flex:1;min-height:245px;position:relative;">
+            <canvas id="v3-team-trend-canvas"></canvas>
           </div>
-        </div>
-        <div style="height: 280px; position: relative;">
-          <canvas id="v3-team-trend-canvas"></canvas>
-        </div>
-      </section>
+        </section>
 
-      <!-- 3. 100% STACKED MEMBER CONTRIBUTION BAR & 4. 30-DAY UPLOAD CADENCE STRIP -->
-      <div class="v3-grid-2">
         <section class="v3-panel" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;">
           <div>
-            <div class="v3-panel-header" style="margin-bottom:14px;">
+            <div class="v3-panel-header" style="margin-bottom:12px;">
               <div>
                 <div class="v3-panel-title">
                   <i class="ri-pie-chart-box-line" style="color:#38BDF8;"></i>
@@ -3050,14 +3009,14 @@
                 </div>
               </div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="display:flex;flex-direction:column;gap:14px;">
               ${sortedTeams.map(tp => {
                 const tViews = Math.max(1, tp.curr.views || 1);
                 const palette = TEAM_SHADES[tp.id] || TEAM_SHADES['TEAM-01'];
                 const chSorted = [...tp.channels].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
                 return `
                   <div>
-                    <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:6px;white-space:nowrap;">
+                    <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:5px;white-space:nowrap;">
                       <span><span class="v3-team-dot" style="background:${tp.color};"></span> ${esc(tp.name)}</span>
                       <span style="font-family:'JetBrains Mono',monospace;">${tp.curr.views !== null ? fmtInt(tp.curr.views) + ' views' : '—'}</span>
                     </div>
@@ -3082,64 +3041,10 @@
             </div>
           </div>
         </section>
-
-        <section class="v3-panel" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;">
-          <div>
-            <div class="v3-panel-header" style="margin-bottom:14px;">
-              <div>
-                <div class="v3-panel-title">
-                  <i class="ri-calendar-check-line" style="color:#F59E0B;"></i>
-                  Nhịp đăng video 30 ngày (${formatIsoToShortVN(stripStartIso)}–${formatIsoToShortVN(stripEndIso)})
-                </div>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:16px;">
-              ${cadenceByTeam.map(({ tp, cells, totalVids30d, activeDays30d }) => {
-                return `
-                  <div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;margin-bottom:6px;white-space:nowrap;">
-                      <span style="font-weight:700;"><span class="v3-team-dot" style="background:${tp.color};"></span> ${esc(tp.name)}</span>
-                      <span style="font-size:11.5px;color:var(--text-muted);">
-                        <strong style="color:var(--text-main);font-family:var(--font-mono);">${fmtInt(totalVids30d)} video</strong> · ${activeDays30d}/30 ngày có đăng
-                      </span>
-                    </div>
-                    <div class="v3-cadence-strip">
-                      ${cells.map(c => {
-                        const lit = c.count > 0;
-                        const high = c.count >= 2;
-                        const bg = !lit
-                          ? 'rgba(148, 163, 184, 0.09)'
-                          : (high ? tp.color : tp.color + '8C');
-                        const border = !lit
-                          ? 'rgba(148, 163, 184, 0.16)'
-                          : tp.color;
-                        const fg = high ? '#090D16' : '#F8FAFC';
-                        return `<div class="v3-cadence-cell ${lit ? 'lit' : ''}" style="background:${bg};border-color:${border};color:${fg};" title="${formatIsoToVN(c.day)}: ${c.count} video mới (${esc(tp.name)})">${lit ? c.count : ''}</div>`;
-                      }).join('')}
-                    </div>
-                    <div class="v3-cadence-axis">
-                      <span>${formatIsoToShortVN(stripDays[0])}</span>
-                      <span>${formatIsoToShortVN(stripDays[7])}</span>
-                      <span>${formatIsoToShortVN(stripDays[14])}</span>
-                      <span>${formatIsoToShortVN(stripDays[21])}</span>
-                      <span>${formatIsoToShortVN(stripDays[stripDays.length - 1])}</span>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </div>
-          <div class="v3-cadence-footer">
-            <span><span class="v3-cadence-dot dim"></span> 0 video</span>
-            <span><span class="v3-cadence-dot mid"></span> 1 video/ngày</span>
-            <span><span class="v3-cadence-dot bright"></span> ≥2 video/ngày</span>
-            <span style="margin-left:auto;color:var(--text-dim);">Nguồn: daily_videos_published cấp kênh</span>
-          </div>
-        </section>
       </div>
 
-      <!-- 5. 5-CHANNEL TABLE IN SELECTED TEAM & 6. TEAM ALERTS -->
-      <section class="v3-panel">
+      <!-- 3. 5-CHANNEL TABLE IN SELECTED TEAM -->
+      <section class="v3-panel" style="margin-bottom:0;">
         <div class="v3-panel-header">
           <div>
             <div class="v3-panel-title">
@@ -3179,6 +3084,7 @@
               ${teamChannelsSorted.map((cp, idx) => {
                 const topTag = sortMode === 'views' ? ' [Lớn nhất team]' : ' [Tăng nhanh nhất]';
                 const lowTag = sortMode === 'views' ? ' [Nhỏ nhất team]' : ' [Chậm nhất team]';
+                const isSlowUpload = cp.daysSinceLastUpload > 7;
                 return `
                   <tr class="clickable-row" data-goto-channel="${cp.id}">
                     <td style="white-space:nowrap;">
@@ -3192,7 +3098,12 @@
                     <td class="num" style="white-space:nowrap;">${fmtDeltaBadge(cp.curr.views, cp.prev.views)}</td>
                     <td class="num" style="white-space:nowrap;">${cp.curr.netSubs !== null ? (cp.curr.netSubs > 0 ? '+' + fmtInt(cp.curr.netSubs) : fmtInt(cp.curr.netSubs)) : '—'}</td>
                     <td class="num" style="white-space:nowrap;">${fmtInt(cp.curr.videosPublished)}</td>
-                    <td class="num" style="white-space:nowrap;font-family:var(--font-sans);"><span style="font-family:var(--font-mono);">${formatIsoToVN(cp.lastPublishedCutoff)}</span> <span style="color:var(--text-muted);font-size:11px;">(${cp.daysSinceLastUpload} ngày trước)</span></td>
+                    <td class="num" style="white-space:nowrap;font-family:var(--font-sans);">
+                      <span class="${isSlowUpload ? 'v3-slow-upload-pill' : ''}" title="${isSlowUpload ? 'Quá 7 ngày chưa đăng video mới' : 'Lịch đăng bình thường'}">
+                        <span style="font-family:var(--font-mono);">${formatIsoToVN(cp.lastPublishedCutoff)}</span>
+                        <span style="font-size:11px;${isSlowUpload ? '' : 'color:var(--text-muted);'}">(${cp.daysSinceLastUpload} ngày trước)</span>
+                      </span>
+                    </td>
                     <td class="num" style="white-space:nowrap;"><strong>${cp.curr.estimatedRevenue !== null ? fmtMoney(cp.curr.estimatedRevenue) : '—'}</strong></td>
                   </tr>
                 `;
@@ -3200,35 +3111,10 @@
             </tbody>
           </table>
         </div>
-
-        ${teamAlerts.length > 0 ? `
-          <div class="v3-team-alert-box">
-            <strong style="font-size:12.5px;display:block;margin-bottom:8px;">
-              <i class="ri-error-warning-line" style="color:#F59E0B;"></i> Cảnh báo vận hành của ${esc(selectedTeam.name)} (${teamAlerts.length} kênh):
-            </strong>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;">
-              ${teamAlerts.map(item => {
-                const reasons = [];
-                if (item.slow) {
-                  reasons.push(`Quá 7 ngày chưa đăng (${item.cp.daysSinceLastUpload} ngày · từ ${formatIsoToShortVN(item.cp.lastPublishedCutoff)})`);
-                }
-                if (item.highShare) {
-                  reasons.push(`Chiếm ${fmtDec(item.sharePct, 1)}% views của team (> 40%)`);
-                }
-                return `
-                  <span class="v3-scope-pill clickable-row" data-goto-channel="${item.cp.id}" style="border-color:rgba(245,158,11,0.4);">
-                    <strong>${esc(item.cp.meta.title)}</strong> (${esc(item.cp.meta.employeeName)}):
-                    <span style="color:#F59E0B;font-weight:700;">${esc(reasons.join(' · '))}</span>
-                  </span>
-                `;
-              }).join('')}
-            </div>
-          </div>
-        ` : ''}
       </section>
     `;
 
-    // Render 3-Team Line Chart (no legend, Y starts at 0, Vietnamese ticks, direct end-of-line label with full-period total)
+    // Render 3-Team Line Chart (no legend, Y starts at 0, Vietnamese ticks, direct end-of-line label "tên team · tổng kỳ X")
     destroyChart('teamTrend');
     const trendCanvas = document.getElementById('v3-team-trend-canvas');
     if (trendCanvas && typeof Chart !== 'undefined') {
@@ -3247,7 +3133,7 @@
         }
         return {
           label: tp.name,
-          endLabel: `${tp.name} · ${periodTotalStr}`,
+          endLabel: `${tp.name} · tổng kỳ ${periodTotalStr}`,
           data: series,
           borderColor: tp.color,
           backgroundColor: 'transparent',
@@ -3300,14 +3186,14 @@
             }
           }
           ctx.save();
-          ctx.font = '700 12px Inter, system-ui, sans-serif';
+          ctx.font = '700 11.5px Inter, system-ui, sans-serif';
           ctx.textBaseline = 'middle';
           items.forEach(it => {
             ctx.strokeStyle = it.color;
             ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(it.x + 3, it.rawY);
-            ctx.lineTo(chartArea.right + 8, it.y);
+            ctx.lineTo(chartArea.right + 7, it.y);
             ctx.stroke();
 
             ctx.fillStyle = it.color;
@@ -3316,7 +3202,7 @@
             ctx.fill();
 
             ctx.fillStyle = it.color;
-            ctx.fillText(it.text, chartArea.right + 12, it.y);
+            ctx.fillText(it.text, chartArea.right + 11, it.y);
           });
           ctx.restore();
         }
@@ -3329,13 +3215,13 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          layout: { padding: { right: 185, top: 14, bottom: 6 } },
+          layout: { padding: { right: 205, top: 14, bottom: 6 } },
           interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: { display: false }
           },
           scales: {
-            x: { ticks: { color: '#94A3B8', maxTicksLimit: 15 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+            x: { ticks: { color: '#94A3B8', maxTicksLimit: 12 }, grid: { color: 'rgba(255,255,255,0.04)' } },
             y: {
               beginAtZero: true,
               min: 0,

@@ -65,7 +65,7 @@
       "path": "channel_daily.json",
       "row_count": 9990,
       "bytes": 7307077,
-      "sha256": "756901465693bfefa53cc52842506c7db954a083ac77f47e8244f241c1afdc2f"
+      "sha256": "89173e149afdd09b57c39edfd915b348a2c1e3cfcdb732fca8c84ebeec62a63d"
     },
     {
       "path": "video_daily.json",
@@ -131,7 +131,7 @@
       "path": "channel_snapshot_daily.json",
       "row_count": 1350,
       "bytes": 663398,
-      "sha256": "aa6620e94bd5111d22dca4461553a182d3b6a51fbeea22c7d0ba5665d4d48b14"
+      "sha256": "f0694029c41221ea57d131e5934390bf40726ec3b974b57540ab17d55611a9f7"
     }
   ]
 }

@@ -213,9 +213,13 @@ def main():
     team_30d_vids = {t["id"]: sum(r["daily_videos_published"] for r in w30_rows if ch_to_team[r["channel_id"]] == t["id"]) for t in baseline["teams"]}
     team_30d_rev = {t["id"]: sum(cents(r["estimatedRevenue"]) for r in w30_rows if ch_to_team[r["channel_id"]] == t["id"]) for t in baseline["teams"]}
     emp_30d_views = {e["id"]: sum(r["views"] for r in w30_rows if channel_to_employee[r["channel_id"]] == e["id"]) for e in baseline["employees"]}
+    emp_30d_vids = {e["id"]: sum(r["daily_videos_published"] for r in w30_rows if channel_to_employee[r["channel_id"]] == e["id"]) for e in baseline["employees"]}
+    ch_30d_vids = {c["id"]: sum(r["daily_videos_published"] for r in w30_rows if r["channel_id"] == c["id"]) for c in baseline["channels"]}
     check("page1_page2_staff_30d_cutoff_26_10_reconcile_100_percent",
           sum(team_30d_views.values()) == sum(emp_30d_views.values()) == sys_30d_views and
-          sum(team_30d_vids.values()) == sys_30d_vids and
+          sum(team_30d_vids.values()) == sum(emp_30d_vids.values()) == sum(ch_30d_vids.values()) == sys_30d_vids == 113 and
+          team_30d_vids == {"TEAM-01": 40, "TEAM-02": 38, "TEAM-03": 35} and
+          all(sum(ch_30d_vids[cid] for cid in ch_30d_vids if ch_to_team[cid] == tid) == team_30d_vids[tid] for tid in team_30d_vids) and
           sum(team_30d_rev.values()) == sys_30d_rev)
 
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,

@@ -256,11 +256,11 @@ def main():
             v_pub = 1 if (is_sched_day and r_pub.random() < 0.78) else 0
             if ci == 0 and day == dt.date(2026, 10, 14):
                 v_pub = 0
-            if ci == 0 and day == dt.date(2026, 10, 16):
+            if ci == 0 and day in (dt.date(2026, 9, 28), dt.date(2026, 10, 2), dt.date(2026, 10, 16)):
                 v_pub = 1
             if ci == 0 and day > dt.date(2026, 10, 16):
                 v_pub = 0
-            if ci == 12 and day == dt.date(2026, 10, 15):
+            if ci == 12 and day in (dt.date(2026, 9, 29), dt.date(2026, 10, 4), dt.date(2026, 10, 15)):
                 v_pub = 1
             if ci == 12 and day > dt.date(2026, 10, 15):
                 v_pub = 0

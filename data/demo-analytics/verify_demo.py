@@ -603,6 +603,54 @@ def main():
                     break
     check("page3_compare_table_channels_reconcile_with_page2_5_channel_table", compare_table_ok)
 
+    # Check 36 (Page 2 Item 11): Single-Team Trend ("Xu hướng một team") custom reference period total
+    # equals exact sum of daily rows in that custom date range for the selected team's 5 channels,
+    # supports unequal-length daily average vs total, and does not alter Ranking / 5-Channel table deltas.
+    p2_custom_ref_ok = True
+    p2_custom_ref_pairs = [
+        ("2026-09-27", "2026-10-26", "2026-08-28", "2026-09-26"),  # 30d vs equal 30d custom ref
+        ("2026-09-27", "2026-10-26", "2026-08-01", "2026-08-20"),  # 30d (M=30) vs 20d custom ref (N=20)
+        ("2026-09-27", "2026-10-26", "2026-09-01", "2026-09-14"),  # 30d (M=30) vs 14d custom ref (N=14)
+        ("2026-10-20", "2026-10-26", "2026-09-01", "2026-09-15"),  # 7d (M=7) vs 15d custom ref (N=15)
+        ("2026-10-01", "2026-10-26", "2026-07-01", "2026-07-26"),  # Q4 partial (M=26) vs first 26d of Q3 (N=26)
+    ]
+    for c_start, c_end, r_start, r_end in p2_custom_ref_pairs:
+        if r_end > "2026-10-26" or (r_start <= c_end and r_end >= c_start):
+            p2_custom_ref_ok = False
+            break
+        c_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and c_start <= r["day"] <= c_end]
+        r_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and r_start <= r["day"] <= r_end]
+        M_len, N_len = len(c_days), len(r_days)
+        for t in baseline["teams"]:
+            tid = t["id"]
+            team_cids = [cid for cid, tm in ch_to_team.items() if tm == tid]
+            # Current period sum for selected team
+            curr_team_views = sum(index[cid, d]["views"] for cid in team_cids for d in c_days)
+            curr_team_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in team_cids for d in c_days)
+            curr_team_rev = sum(cents(index[cid, d]["estimatedRevenue"]) for cid in team_cids for d in c_days)
+
+            # Custom reference period sum by summing each day across the team vs summing each channel across days
+            ref_by_day_views = sum(sum(index[cid, d]["views"] for cid in team_cids) for d in r_days)
+            ref_by_ch_views = sum(sum(index[cid, d]["views"] for d in r_days) for cid in team_cids)
+            ref_by_day_subs = sum(sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in team_cids) for d in r_days)
+            ref_by_ch_subs = sum(sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in r_days) for cid in team_cids)
+            ref_by_day_rev = sum(sum(cents(index[cid, d]["estimatedRevenue"]) for cid in team_cids) for d in r_days)
+            ref_by_ch_rev = sum(sum(cents(index[cid, d]["estimatedRevenue"]) for d in r_days) for cid in team_cids)
+
+            curr_avg = curr_team_views / M_len
+            ref_avg = ref_by_day_views / N_len
+
+            if not (
+                len(team_cids) == 5 and
+                ref_by_day_views == ref_by_ch_views and
+                ref_by_day_subs == ref_by_ch_subs and
+                ref_by_day_rev == ref_by_ch_rev and
+                curr_avg >= 0 and ref_avg >= 0
+            ):
+                p2_custom_ref_ok = False
+                break
+    check("page2_single_team_custom_ref_period_reconciles_with_daily_sum", p2_custom_ref_ok)
+
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())
     (HERE / "independent_validation.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

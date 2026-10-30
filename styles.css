@@ -6418,6 +6418,359 @@ input:checked + .slider:before {
   position: relative;
 }
 
+.v3-chart-status-chip.is-error {
+  background: rgba(239, 68, 68, 0.16);
+  color: #EF4444;
+  border-color: rgba(239, 68, 68, 0.42);
+}
+
+/* =========================================================================
+   PAGE 3: BÁO CÁO THEO KÊNH (#view-report-channel)
+   ========================================================================= */
+.v3-ch-identity-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 960px) {
+  .v3-ch-identity-top {
+    flex-wrap: wrap;
+  }
+}
+
+.v3-ch-search-picker {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.v3-ch-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 11px;
+  border-radius: 7px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+
+.v3-ch-picker-btn:hover {
+  border-color: #38BDF8;
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.v3-ch-picker-btn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v3-ch-picker-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 380px;
+  max-width: 92vw;
+  background: #0F172A;
+  border: 1px solid var(--border-medium);
+  border-radius: 9px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.65);
+  z-index: 120;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.v3-ch-picker-menu.open {
+  display: flex;
+}
+
+.v3-ch-picker-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.v3-ch-picker-search-wrap i {
+  color: #38BDF8;
+  font-size: 14px;
+}
+
+.v3-ch-picker-search-wrap input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  font-size: 12.2px;
+}
+
+.v3-ch-picker-list {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+}
+
+.v3-ch-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.v3-ch-picker-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.v3-ch-picker-item.active {
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.v3-ch-picker-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.v3-ch-picker-item-main strong {
+  font-size: 12.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v3-ch-picker-item-sub {
+  font-size: 10.8px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Lifetime ("Toàn thời gian") Strip */
+.v3-ch-lifetime-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 11px;
+  padding: 7px 11px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border-subtle);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.v3-ch-lifetime-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.14);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.v3-ch-lifetime-items {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.8px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.v3-ch-lifetime-item strong {
+  color: var(--text-main);
+  font-family: var(--font-mono);
+}
+
+/* Dynamic Health Conclusion Bar ("Kênh này đang đi lên hay đi xuống?") */
+.v3-ch-health-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+  padding: 6px 11px;
+  border-radius: 7px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  font-size: 12px;
+  height: 30px;
+  min-height: 30px;
+  max-height: 30px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.v3-ch-health-q {
+  font-weight: 800;
+  color: #38BDF8;
+  flex-shrink: 0;
+}
+
+.v3-ch-health-text {
+  color: var(--text-main);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Page 3 Compact KPI Cards (No right-edge clipping, metric selector support) */
+.v3-ch-kpi-card {
+  padding: 11px 13px;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.v3-ch-kpi-card .v3-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.v3-ch-kpi-card .v3-kpi-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v3-kpi-chart-icon,
+.v3-kpi-info-icon {
+  font-size: 13px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.v3-ch-kpi-card .v3-kpi-value {
+  font-size: 20.5px;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v3-ch-kpi-card .v3-kpi-delta-row {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.v3-ch-kpi-card .v3-delta {
+  font-size: 11px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.v3-ch-kpi-card .v3-kpi-sub {
+  font-size: 10.1px;
+  letter-spacing: -0.25px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v3-ch-kpi-card.is-chart-selectable {
+  cursor: pointer;
+}
+
+.v3-ch-kpi-card.is-chart-selectable:hover {
+  border-color: rgba(56, 189, 248, 0.55);
+  background: rgba(56, 189, 248, 0.04);
+}
+
+.v3-ch-kpi-card.is-chart-active {
+  border-color: #38BDF8 !important;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.45), 0 6px 18px rgba(56, 189, 248, 0.12);
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.v3-ch-kpi-card.is-chart-active .v3-kpi-label,
+.v3-ch-kpi-card.is-chart-active .v3-kpi-chart-icon {
+  color: #38BDF8;
+}
+
+.v3-ch-kpi-card.is-chart-disabled {
+  cursor: default;
+}
+
+/* 1-Line Video Summary Below Channel Trend Chart */
+.v3-ch-video-summary-line {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-subtle);
+  font-size: 11.8px;
+  color: var(--text-muted);
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v3-ch-video-summary-line strong {
+  color: var(--text-main);
+}
+
+.v3-ch-video-summary-title {
+  max-width: 270px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+
 
 
 

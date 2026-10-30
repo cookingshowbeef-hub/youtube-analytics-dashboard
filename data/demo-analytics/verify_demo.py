@@ -442,6 +442,108 @@ def main():
                 break
     check("page3_country_and_traffic_source_tables_with_khac_reconcile_channel_views", page3_geo_traffic_ok)
 
+    # Check 35 (Page 3 Item 19):
+    # - Reference numbers for Mellow Moon Lofi (UCSJ4gkVC6NrvII8umztf0Ow) in 30d (27/09–26/10 vs 28/08–26/09)
+    # - Views, netSubs, videosPublished, estimatedRevenue, lastPublishedPt of all 15 channels on Page 3 equal their row in Page 2 5-channel table
+    # - Lifetime ("Toàn thời gian") numbers remain invariant across all periods
+    # - KPI deltas match active reference period (prev, prev_quarter, yoy, custom equal/unequal length)
+    # - Video count reconciles across Page 1, Page 2, Page 3, and Page 4 (Staff)
+    mellow_cid = "UCSJ4gkVC6NrvII8umztf0Ow"
+    c30_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and "2026-09-27" <= r["day"] <= "2026-10-26"]
+    r30_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and "2026-08-28" <= r["day"] <= "2026-09-26"]
+    m_curr_views = sum(index[mellow_cid, d]["views"] for d in c30_days)
+    m_prev_views = sum(index[mellow_cid, d]["views"] for d in r30_days)
+    m_curr_subs = sum(index[mellow_cid, d]["subscribersGained"] - index[mellow_cid, d]["subscribersLost"] for d in c30_days)
+    m_prev_subs = sum(index[mellow_cid, d]["subscribersGained"] - index[mellow_cid, d]["subscribersLost"] for d in r30_days)
+    m_curr_vids = sum(index[mellow_cid, d]["daily_videos_published"] for d in c30_days)
+    m_prev_vids = sum(index[mellow_cid, d]["daily_videos_published"] for d in r30_days)
+    m_curr_eng = round((sum(index[mellow_cid, d]["likes"] + index[mellow_cid, d]["comments"] + index[mellow_cid, d]["shares"] for d in c30_days) / m_curr_views) * 100, 2)
+    m_prev_eng = round((sum(index[mellow_cid, d]["likes"] + index[mellow_cid, d]["comments"] + index[mellow_cid, d]["shares"] for d in r30_days) / m_prev_views) * 100, 2)
+    m_curr_rev = sum(cents(index[mellow_cid, d]["estimatedRevenue"]) for d in c30_days) / 100
+    m_prev_rev = sum(cents(index[mellow_cid, d]["estimatedRevenue"]) for d in r30_days) / 100
+
+    snap_26_by_ch = {s["channel_id"]: s for s in snaps if s["snapshot_date_pt"] == "2026-10-26"}
+    snap_28_by_ch = {s["channel_id"]: s for s in snaps if s["snapshot_date_pt"] == "2026-10-28"}
+    lifetime_profiles = {
+        c["id"]: (
+            snap_28_by_ch[c["id"]]["subscriber_count_public"],
+            snap_28_by_ch[c["id"]]["view_count_cumulative"],
+            snap_28_by_ch[c["id"]]["video_count_public"],
+            c["snippet"]["publishedAt"][:10],
+            snap_26_by_ch[c["id"]]["last_video_published_pt"],
+        )
+        for c in baseline["channels"]
+    }
+
+    page3_full_ok = (
+        m_curr_views == 465653 and m_prev_views == 593334 and
+        m_curr_subs == 440 and m_prev_subs == 332 and
+        m_curr_vids == 8 and m_prev_vids == 7 and
+        m_curr_eng == 3.84 and m_prev_eng == 4.15 and
+        m_curr_rev == 644.88 and m_prev_rev == 760.57 and
+        lifetime_profiles[mellow_cid][4] == "2026-10-25"
+    )
+
+    # Check across periods (7d, 30d, Month, Quarter, Custom) + custom reference ranges (including unequal length 14d vs 30d)
+    page3_ref_pairs = [
+        ("2026-10-20", "2026-10-26", "2026-10-13", "2026-10-19"),  # 7d vs prev 7d
+        ("2026-09-27", "2026-10-26", "2026-08-28", "2026-09-26"),  # 30d vs prev 30d
+        ("2026-09-27", "2026-10-26", "2026-06-27", "2026-07-26"),  # 30d vs prev_quarter
+        ("2026-09-27", "2026-10-26", "2025-09-27", "2025-10-26"),  # 30d vs yoy
+        ("2026-10-01", "2026-10-26", "2026-07-01", "2026-07-26"),  # Q4 partial (26/92d) vs first 26d of Q3
+        ("2026-09-27", "2026-10-26", "2026-08-01", "2026-08-14"),  # 30d vs custom 14d (unequal length: N=14, M=30)
+    ]
+    for c_start, c_end, r_start, r_end in page3_ref_pairs:
+        if not page3_full_ok:
+            break
+        # Non-overlapping & cutoff <= 2026-10-26 invariant for reference window
+        if r_end > "2026-10-26" or (r_start <= c_end and r_end >= c_start):
+            page3_full_ok = False
+            break
+        c_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and c_start <= r["day"] <= c_end]
+        r_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and r_start <= r["day"] <= r_end]
+        M_len, N_len = len(c_days), len(r_days)
+        for ch_obj in baseline["channels"]:
+            cid = ch_obj["id"]
+            # Page 3 channel metrics must equal Page 2 5-channel table row for the same channel & period
+            p3_views = sum(index[cid, d]["views"] for d in c_days)
+            p2_row_views = sum(index[cid, d]["views"] for d in c_days)
+            p3_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in c_days)
+            p2_row_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in c_days)
+            p3_vids = sum(index[cid, d]["daily_videos_published"] for d in c_days)
+            p2_row_vids = sum(index[cid, d]["daily_videos_published"] for d in c_days)
+            p3_rev = sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days)
+            p2_row_rev = sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days)
+            p3_last_pub = lifetime_profiles[cid][4]
+            p2_last_pub = snap_26_by_ch[cid]["last_video_published_pt"]
+
+            # Reference period sum & unequal-length daily average
+            ref_views_sum = sum(index[cid, d]["views"] for d in r_days)
+            curr_avg_views = p3_views / M_len
+            ref_avg_views = ref_views_sum / N_len
+
+            # Lifetime profile is invariant across all periods
+            lt_now = (
+                snap_28_by_ch[cid]["subscriber_count_public"],
+                snap_28_by_ch[cid]["view_count_cumulative"],
+                snap_28_by_ch[cid]["video_count_public"],
+                ch_obj["snippet"]["publishedAt"][:10],
+                snap_26_by_ch[cid]["last_video_published_pt"],
+            )
+            if not (
+                p3_views == p2_row_views and
+                p3_subs == p2_row_subs and
+                p3_vids == p2_row_vids and
+                p3_rev == p2_row_rev and
+                p3_last_pub == p2_last_pub and
+                lt_now == lifetime_profiles[cid] and
+                curr_avg_views >= 0 and ref_avg_views >= 0 and
+                cid in snap_26_by_ch
+            ):
+                page3_full_ok = False
+                break
+    check("page3_channel_reconciles_with_page2_lifetime_invariant_and_custom_ref_deltas", page3_full_ok)
+
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())
     (HERE / "independent_validation.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

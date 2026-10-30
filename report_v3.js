@@ -59,7 +59,14 @@
     // Page 3 (Channel)
     channelMode: 'single',  // 'single' | 'compare'
     selectedChannelId: 'UCSJ4gkVC6NrvII8umztf0Ow',
-    channelChartMetric: 'views',
+    channelChartMetric: 'views', // 'views' | 'netSubs' | 'videosPublished' | 'revenue'
+    channelCompareMode: 'prev',  // 'prev' | 'prev_quarter' | 'yoy' | 'custom'
+    channelRefStartDate: '2026-08-28',
+    channelRefEndDate: '2026-09-26',
+    channelRefError: '',
+    channelUnequalMode: 'avg',   // 'avg' | 'total'
+    channelPickerOpen: false,
+    channelPickerQuery: '',
     deepAnalyticsOpen: false,
     compareChannelIds: ['UCJhjE7wbdYAae1G25m0tHAA', 'UCM9KEEuzacwVlkt9JfJad7g', 'UCSJ4gkVC6NrvII8umztf0Ow'],
     compareChannelMetric: 'views',
@@ -409,12 +416,33 @@
       const avatar = (ch.snippet && ch.snippet.thumbnails && ch.snippet.thumbnails.medium && ch.snippet.thumbnails.medium.url) ||
         (ch.snippet && ch.snippet.thumbnails && ch.snippet.thumbnails.default && ch.snippet.thumbnails.default.url) || '';
       const rawVids = ds.videosByChannel.get(ch.id) || [];
-      let lastPubIso = snapProfile ? snapProfile.last_video_published_pt : null;
+      let lastPubIso = null;
+      if (demo && demo.getDailyRows) {
+        const rowsUpToCutoff = demo.getDailyRows(ch.id, '2025-01-01', '2026-10-26');
+        for (let k = rowsUpToCutoff.length - 1; k >= 0; k--) {
+          if ((rowsUpToCutoff[k].daily_videos_published || 0) > 0) {
+            lastPubIso = rowsUpToCutoff[k].day;
+            break;
+          }
+        }
+      }
+      if (!lastPubIso && snapProfile && snapProfile.last_video_published_pt && snapProfile.last_video_published_pt <= '2026-10-26') {
+        lastPubIso = snapProfile.last_video_published_pt;
+      }
       if (!lastPubIso && rawVids.length) {
-        lastPubIso = rawVids.map(v => (v.published_at || '').slice(0, 10)).filter(Boolean).sort().slice(-1)[0];
+        lastPubIso = rawVids.map(v => (v.published_at || '').slice(0, 10)).filter(d => d && d <= '2026-10-26').sort().slice(-1)[0];
       }
       const demoSubs = snapProfile ? snapProfile.subscriber_count_public : ((ch.statistics && ch.statistics.subscriberCount) || 0);
       const subStep = snapProfile ? snapProfile.sub_rounding_step : 1000;
+      const lifetimeViews = (snapProfile && snapProfile.view_count_cumulative)
+        ? Number(snapProfile.view_count_cumulative)
+        : ((ch.statistics && Number(ch.statistics.viewCount)) || 0);
+      const lifetimeVideos = (snapProfile && snapProfile.video_count_public)
+        ? Number(snapProfile.video_count_public)
+        : ((ch.statistics && Number(ch.statistics.videoCount)) || 0);
+      const createdDatePt = (ch.snippet && ch.snippet.publishedAt)
+        ? String(ch.snippet.publishedAt).slice(0, 10)
+        : '2018-01-01';
       return {
         index: idx,
         id: ch.id,
@@ -428,6 +456,9 @@
         employeeName: emp ? emp.full_name : 'Chưa phân công',
         employeeEmail: emp ? emp.email : '',
         subscribers: demoSubs,
+        lifetimeViews,
+        lifetimeVideos,
+        createdDatePt,
         lifetimeSubscribersRaw: (ch.statistics && ch.statistics.subscriberCount) || 0,
         subRoundingStep: subStep,
         snapProfile,
@@ -884,11 +915,26 @@
     const headerEl = document.getElementById('v3-shared-report-header');
     if (!headerEl) return;
 
-    // Item 1: Hide "Kênh đang xem" picker on all company-level pages (Tổng quan, Team, Nhân viên, Dự án, Network, Hướng dẫn).
-    // Only show it on Theo kênh (#view-report-channel) or non-report pages.
+    // Item 1 & Page 3 Item 2: Hide topbar "Kênh đang xem" picker on all report pages (including view-report-channel)
+    // so Page 3 only has ONE channel selector inside the Channel Identity Block.
     const pickerWrap = document.getElementById('channel-picker-wrapper');
     if (pickerWrap) {
-      pickerWrap.style.display = (activeViewId === 'view-report-channel') ? 'block' : 'none';
+      pickerWrap.style.display = (activeViewId && activeViewId.startsWith('view-report-')) ? 'none' : 'block';
+    }
+    const modeSwitcher = document.getElementById('mode-switcher-container');
+    if (modeSwitcher) {
+      modeSwitcher.style.display = (activeViewId && activeViewId.startsWith('view-report-')) ? 'none' : 'flex';
+    }
+
+    // Sync topbar active channel title/avatar to selectedChannelId so no DOM node holds stale channel names
+    if (snap && snap.channelPairs) {
+      const activeCp = snap.channelPairs.find(c => c.id === v3State.selectedChannelId) || snap.channelPairs[0];
+      if (activeCp) {
+        const topTitle = document.getElementById('topbar-active-title');
+        if (topTitle) topTitle.textContent = activeCp.meta.title;
+        const topAvatar = document.getElementById('topbar-active-avatar');
+        if (topAvatar && activeCp.meta.avatar) topAvatar.src = activeCp.meta.avatar;
+      }
     }
 
     // Item 4: Remove duplicate USD button and redundant data-source badge from topbar
@@ -907,15 +953,10 @@
     }
     headerEl.style.display = 'flex';
 
-    // Determine active scope channels (Always "3 Team · 15 kênh" on company/team pages; 1..5 on channel page)
-    let scopeLabel = '3 Team · 15 kênh';
+    // Determine active scope channels (Always "3 Team · 15 kênh" on company/team pages; omit redundant channel label on Page 3)
+    const isCompactHeaderPage = (activeViewId === 'view-report-team' || activeViewId === 'view-report-channel');
+    let scopeLabel = activeViewId === 'view-report-channel' ? '' : '3 Team · 15 kênh';
     let scopeCurr = snap.systemCurr;
-    if (activeViewId === 'view-report-channel' && v3State.channelMode === 'single') {
-      const cp = snap.channelPairs.find(c => c.id === v3State.selectedChannelId) || snap.channelPairs[0];
-      if (cp) {
-        scopeLabel = `Kênh: ${cp.meta.title} (${cp.meta.teamName})`;
-      }
-    }
 
     // If YoY is selected but not all channels in scope have YoY history, auto-fallback to 'prev'
     if (v3State.compareMode === 'yoy' && !scopeCurr.allHaveYoY) {
@@ -958,13 +999,15 @@
         <div class="v3-scope-row-1">
           <div class="v3-scope-left">
             <span class="v3-scope-brand"><i class="ri-bar-chart-box-line" style="color:#38BDF8;"></i> BgMedia Analytics</span>
-            <span class="v3-scope-sep">·</span>
-            <span class="v3-scope-text"><strong>${esc(scopeLabel)}</strong></span>
+            ${scopeLabel ? `
+              <span class="v3-scope-sep">·</span>
+              <span class="v3-scope-text"><strong>${esc(scopeLabel)}</strong></span>
+            ` : ''}
             <span class="v3-scope-sep">·</span>
             <span class="v3-scope-text">${availText} ${helpBadge('guide-timezone', 'Múi giờ báo cáo chuẩn Pacific Time (PT), đồng bộ với YouTube Analytics (trễ 48–72h)')}</span>
           </div>
           <div class="v3-scope-right">
-            ${activeViewId === 'view-report-team' ? `
+            ${isCompactHeaderPage ? `
               <div class="v3-compact-period-bar" id="v3-compact-global-period">
                 <div class="v3-preset-group" role="group" aria-label="Bộ chọn kỳ chung">
                   <button type="button" class="v3-preset-btn ${v3State.preset === '7d' ? 'active' : ''}" data-v3-preset="7d">7 ngày</button>
@@ -1032,7 +1075,7 @@
         </div>
       </div>
 
-      ${activeViewId !== 'view-report-team' ? `
+      ${!isCompactHeaderPage ? `
         <div class="v3-time-filter-bar">
           <div class="v3-filter-left">
             <div class="v3-preset-group" role="group" aria-label="Bộ lọc thời gian duy nhất">
@@ -1088,14 +1131,20 @@
       btn.addEventListener('click', () => {
         const nextPreset = btn.getAttribute('data-v3-preset');
         v3State.preset = nextPreset;
+        v3State.channelRefError = '';
         if (nextPreset === '7d') {
           v3State.startDate = '2026-10-20';
           v3State.endDate = '2026-10-26';
+          if (v3State.channelCompareMode === 'prev_quarter') v3State.channelCompareMode = 'prev';
         } else if (nextPreset === '30d') {
           v3State.startDate = '2026-09-27';
           v3State.endDate = '2026-10-26';
+          if (v3State.channelCompareMode === 'prev_quarter') v3State.channelCompareMode = 'prev';
+        } else if (nextPreset === 'month') {
+          if (v3State.channelCompareMode === 'prev_quarter') v3State.channelCompareMode = 'prev';
         } else if (nextPreset === 'quarter') {
           v3State.teamSingleCompareMode = 'prev_quarter';
+          if (v3State.channelCompareMode === 'prev') v3State.channelCompareMode = 'prev_quarter';
         }
         refreshActiveView();
       });
@@ -1645,97 +1694,200 @@
 
   // =========================================================================
   // PAGE 3: BÁO CÁO THEO KÊNH (#view-report-channel)
-  // Question: "Kênh này đang đi lên hay đi xuống?" (Single Mode & 2-5 Compare Mode)
+  // Question: "Kênh này đang đi lên hay đi xuống?"
   // =========================================================================
+  function buildChannelRefWindow(win, cp, snap) {
+    const M = Math.max(1, win.dayCount);
+    const mode = v3State.channelCompareMode || 'prev';
+    let refStart = win.prevStart;
+    let refEnd = win.prevEnd;
+    let refModeName = 'Kỳ trước';
+
+    if (mode === 'prev_quarter') {
+      refStart = shiftIsoMonths(win.start, -3);
+      refEnd = shiftIsoDays(refStart, M - 1);
+      refModeName = 'Quý trước';
+    } else if (mode === 'yoy') {
+      refStart = shiftIsoYear(win.start, -1);
+      refEnd = shiftIsoDays(refStart, M - 1);
+      refModeName = 'Cùng kỳ năm ngoái';
+    } else if (mode === 'custom') {
+      let cs = v3State.channelRefStartDate || win.prevStart;
+      let ce = v3State.channelRefEndDate || win.prevEnd;
+      if (cs > '2026-10-26') cs = '2026-10-26';
+      if (ce > '2026-10-26') ce = '2026-10-26';
+      if (cs > ce) {
+        const tmp = cs; cs = ce; ce = tmp;
+      }
+      // Ensure custom reference does not overlap current window [win.start, win.end]
+      if (cs <= win.end && ce >= win.start) {
+        cs = win.prevStart;
+        ce = win.prevEnd;
+      }
+      v3State.channelRefStartDate = cs;
+      v3State.channelRefEndDate = ce;
+      refStart = cs;
+      refEnd = ce;
+      refModeName = 'Tùy chỉnh';
+    } else {
+      refEnd = shiftIsoDays(win.start, -1);
+      refStart = shiftIsoDays(refEnd, -(M - 1));
+      refModeName = 'Kỳ trước';
+    }
+
+    const refDays = listIsoDays(refStart, refEnd);
+    const N = Math.max(1, refDays.length);
+    const isUnequalLength = (N !== M);
+    const refMetrics = (mode === 'prev' && refStart === win.prevStart && refEnd === win.prevEnd)
+      ? cp.prev
+      : computeChannelWindowMetrics(cp.meta, refStart, refEnd, snap.scenarioId);
+
+    const sameYear = refStart.slice(0, 4) === win.start.slice(0, 4) && refEnd.slice(0, 4) === win.end.slice(0, 4);
+    const refRangeShort = sameYear
+      ? `${formatIsoToShortVN(refStart)}–${formatIsoToShortVN(refEnd)}`
+      : `${formatIsoToShortVN(refStart)}/${refStart.slice(2, 4)}–${formatIsoToShortVN(refEnd)}/${refEnd.slice(2, 4)}`;
+    const refRangeFullVN = `${formatIsoToVN(refStart)} – ${formatIsoToVN(refEnd)}`;
+
+    return {
+      mode,
+      refModeName,
+      refStart,
+      refEnd,
+      refDays,
+      refDayCount: N,
+      currDayCount: M,
+      isUnequalLength,
+      refRangeShort,
+      refRangeFullVN,
+      refMetrics
+    };
+  }
+
+  function buildChannelHealthConclusion(cp, win, refWin) {
+    const curr = cp.curr;
+    const ref = refWin.refMetrics;
+    const M = refWin.currDayCount;
+    const N = refWin.refDayCount;
+    const useAvg = refWin.isUnequalLength && v3State.channelUnequalMode === 'avg';
+
+    const cViews = curr.views !== null ? (useAvg ? curr.views / M : curr.views) : null;
+    const rViews = ref.views !== null ? (useAvg ? ref.views / N : ref.views) : null;
+    const viewsPct = (cViews !== null && rViews !== null && rViews > 0)
+      ? ((cViews - rViews) / rViews) * 100
+      : null;
+
+    const cSubs = curr.netSubs !== null ? (useAvg ? curr.netSubs / M : curr.netSubs) : null;
+    const rSubs = ref.netSubs !== null ? (useAvg ? ref.netSubs / N : ref.netSubs) : null;
+    const subsPct = (cSubs !== null && rSubs !== null && Math.abs(rSubs) > 0)
+      ? ((cSubs - rSubs) / Math.abs(rSubs)) * 100
+      : null;
+
+    // 10-day recent trajectory (compare last 5 days vs preceding 5 days within the window, or last half vs first half if < 10 days)
+    const days = win.days || [];
+    const recentSlice = days.slice(-10);
+    const half = Math.max(1, Math.floor(recentSlice.length / 2));
+    const firstHalfDays = recentSlice.slice(0, half);
+    const secondHalfDays = recentSlice.slice(-half);
+    const sumViewsForDays = (dList) => dList.reduce((s, d) => {
+      const pt = curr.dailyMap.get(d);
+      return s + (pt && pt.views ? pt.views : 0);
+    }, 0);
+    const vFirstHalf = sumViewsForDays(firstHalfDays);
+    const vSecondHalf = sumViewsForDays(secondHalfDays);
+    const recentPct = vFirstHalf > 0 ? ((vSecondHalf - vFirstHalf) / vFirstHalf) * 100 : 0;
+
+    const refLabelLower = refWin.refModeName.toLowerCase();
+    let part1 = '';
+    if (viewsPct !== null) {
+      const vDir = viewsPct >= 0 ? 'tăng' : 'giảm';
+      const vStr = `${Math.abs(viewsPct).toFixed(1).replace('.', ',')}%`;
+      if (subsPct !== null) {
+        const sDir = subsPct >= 0 ? 'tăng' : 'giảm';
+        const sStr = `${Math.abs(subsPct).toFixed(1).replace('.', ',')}%`;
+        const conj = (viewsPct >= 0 && subsPct >= 0) || (viewsPct < 0 && subsPct < 0) ? 'và' : 'nhưng';
+        part1 = `Views ${vDir} ${vStr} so với ${refLabelLower} ${conj} sub ròng ${sDir} ${sStr}`;
+      } else {
+        part1 = `Views ${vDir} ${vStr} so với ${refLabelLower}`;
+      }
+    } else {
+      part1 = `Đang theo dõi dữ liệu kênh trong kỳ (${formatIsoToShortVN(win.start)}–${formatIsoToShortVN(win.end)})`;
+    }
+
+    let part2 = '';
+    const windowTag = recentSlice.length >= 10 ? '10 ngày gần nhất' : `${recentSlice.length} ngày trong kỳ`;
+    if (Math.abs(recentPct) < 2.0) {
+      part2 = `${windowTag} giữ nhịp ổn định (${fmtPct(recentPct)})`;
+    } else if (recentPct > 0) {
+      part2 = `${windowTag} đang ${viewsPct !== null && viewsPct < 0 ? 'hồi phục' : 'đi lên'} (${fmtPct(recentPct)})`;
+    } else {
+      part2 = `${windowTag} đang chững lại (${fmtPct(recentPct)})`;
+    }
+
+    return `${part1}; ${part2}.`;
+  }
+
   function renderChannelPage(snap) {
     const root = document.getElementById('v3-channel-root');
     if (!root) return;
 
     const c = core();
     const demo = c.DEMO_STORE;
+    // Item 18: Always use single channel mode on Page 3; hide "Chế độ 2: So sánh 2–5 kênh đối đầu"
+    v3State.channelMode = 'single';
     const cp = snap.channelPairs.find(x => x.id === v3State.selectedChannelId) || snap.channelPairs[0];
     if (cp) v3State.selectedChannelId = cp.id;
 
-    root.innerHTML = `
-      <div class="v3-tab-bar">
-        <button type="button" class="v3-tab-btn ${v3State.channelMode === 'single' ? 'active' : ''}" data-ch-mode="single">
-          <i class="ri-tv-line"></i> Chế độ 1: Xem chi tiết 1 kênh
-        </button>
-        <button type="button" class="v3-tab-btn ${v3State.channelMode === 'compare' ? 'active' : ''}" data-ch-mode="compare">
-          <i class="ri-scales-3-line"></i> Chế độ 2: So sánh 2–5 kênh đối đầu
-        </button>
-      </div>
-      <div id="v3-channel-mode-body"></div>
-    `;
-
-    root.querySelectorAll('[data-ch-mode]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        v3State.channelMode = btn.getAttribute('data-ch-mode');
-        renderSharedHeader(snap, 'view-report-channel');
-        renderChannelPage(snap);
-      });
-    });
-
+    root.innerHTML = `<div id="v3-channel-mode-body"></div>`;
     const body = document.getElementById('v3-channel-mode-body');
-    if (v3State.channelMode === 'compare') {
-      renderChannelCompareMode(body, snap);
-    } else {
-      renderChannelSingleMode(body, snap, cp, demo);
-    }
+    renderChannelSingleMode(body, snap, cp, demo);
     bindHelpLinks(root);
   }
 
   function renderChannelSingleMode(body, snap, cp, demo) {
     const curr = cp.curr;
-    const prev = cp.prev;
     const meta = cp.meta;
+    const win = snap.win;
+    const currRangeFullVN = `${formatIsoToVN(win.start)} – ${formatIsoToVN(win.end)}`;
+    const currRangeShort = `${formatIsoToShortVN(win.start)}–${formatIsoToShortVN(win.end)}`;
 
-    // Fetch 10 sample videos for this channel from DEMO_STORE.videoSummaryMap + DATA_STORE
+    // Ensure valid chart metric ('views' | 'netSubs' | 'videosPublished' | 'revenue')
+    const validChartMetrics = ['views', 'netSubs', 'videosPublished', 'revenue'];
+    if (!validChartMetrics.includes(v3State.channelChartMetric)) {
+      v3State.channelChartMetric = 'views';
+    }
+
+    // Build reference window & metrics (Item 10 & Item 12)
+    const refWin = buildChannelRefWindow(win, cp, snap);
+    const ref = refWin.refMetrics;
+    const M = refWin.currDayCount;
+    const N = refWin.refDayCount;
+    const useAvg = refWin.isUnequalLength && v3State.channelUnequalMode === 'avg';
+
+    // Fetch 10 sample videos for this channel to compute the 1-line video summary below chart (Item 13)
     const rawVids = (core().DATA_STORE && core().DATA_STORE.getVideos(cp.id)) || [];
-    const periodType = snap.win.dayCount <= 7 ? 'metrics_7d' : (snap.win.dayCount <= 31 ? 'metrics_28d' : 'metrics');
-
+    const periodType = win.dayCount <= 7 ? 'metrics_7d' : (win.dayCount <= 28 ? 'metrics_28d' : 'metrics');
     const enrichedVideos = rawVids.map(v => {
       const vs = (demo && demo.getVideoSummary) ? demo.getVideoSummary(v.id) : null;
-      const pMetrics = vs ? (vs[periodType] || vs.metrics_28d || vs.metrics) : null;
+      const pMetrics = vs ? (vs[periodType] || vs.metrics || vs.metrics_28d) : null;
       const periodViews = (curr.hasAnalytics && pMetrics && pMetrics.views !== undefined)
         ? pMetrics.views
-        : (curr.views !== null && vs && vs.metrics_28d ? vs.metrics_28d.views : 0);
-      const periodHours = (curr.hasAnalytics && pMetrics && pMetrics.estimatedHoursWatched !== undefined)
-        ? pMetrics.estimatedHoursWatched
-        : null;
-      const periodRev = (curr.hasMonetary && pMetrics && pMetrics.estimatedRevenue !== undefined)
-        ? pMetrics.estimatedRevenue
-        : null;
+        : (curr.views !== null && vs && (vs.metrics || vs.metrics_28d) ? (vs.metrics || vs.metrics_28d).views : 0);
       return {
         ...v,
-        vs,
-        periodViews,
-        periodHours,
-        periodRev,
-        viewsFirst7d: vs ? vs.views_first_7d : null,
-        viewsFirst7dStatus: vs ? vs.views_first_7d_status : 'before_snapshot_start',
-        likesHidden: vs ? vs.likes_hidden : false,
-        commentsDisabled: vs ? vs.comments_disabled : false
+        periodViews
       };
     }).sort((a, b) => (b.periodViews || 0) - (a.periodViews || 0));
 
-    const sampleViewsSum = enrichedVideos.reduce((s, v) => s + (v.periodViews || 0), 0);
-    const otherContentViews = curr.views !== null ? Math.max(0, curr.views - sampleViewsSum) : null;
-    const sampleSharePct = (curr.views && curr.views > 0) ? ((sampleViewsSum / curr.views) * 100).toFixed(1) : '0.0';
-
-    // Channel MoM & QoQ rollups
-    const rollups = (demo && demo.periodRollups) || [];
-    const chRollupsMonth = ['2026-10', '2026-09', '2026-08', '2026-07']
-      .map(pk => rollups.find(r => r.entity_type === 'channel' && r.entity_id === cp.id && r.period_key === pk))
-      .filter(Boolean);
-    const chRollupsQuarter = ['2026-Q4', '2026-Q3', '2026-Q2', '2026-Q1']
-      .map(pk => rollups.find(r => r.entity_type === 'channel' && r.entity_id === cp.id && r.period_key === pk))
-      .filter(Boolean);
+    const top1Vid = enrichedVideos[0] || null;
+    const top1Views = top1Vid ? (top1Vid.periodViews || 0) : 0;
+    const top1SharePct = (curr.views && curr.views > 0) ? ((top1Views / curr.views) * 100) : 0;
+    const top3Views = enrichedVideos.slice(0, 3).reduce((s, v) => s + (v.periodViews || 0), 0);
+    const top3SharePct = (curr.views && curr.views > 0) ? ((top3Views / curr.views) * 100) : 0;
 
     // Breakdowns: Country (Vietnamese names + "Khác") & Traffic Sources ("Danh sách phát", "Người đăng ký", "Tìm kiếm YouTube", "Khác")
-    const bdKey = snap.win.dayCount <= 7
+    const bdKey = win.dayCount <= 7
       ? 'last_7_days'
-      : (snap.win.dayCount <= 28 ? 'last_28_days' : (snap.win.dayCount <= 31 ? 'last_30_days' : 'last_90_days'));
+      : (win.dayCount <= 28 ? 'last_28_days' : (win.dayCount <= 31 ? 'last_30_days' : 'last_90_days'));
     const breakdowns = (demo && demo.getChannelBreakdowns) ? demo.getChannelBreakdowns(cp.id, bdKey) : null;
 
     const totalChViews = curr.views !== null ? curr.views : 0;
@@ -1816,283 +1968,351 @@
     ];
     const trafficShares = allocateExactTenthsPct(trafficRows.map(r => r.views));
 
+    // KPI comparison values (supports both equal-length / Total mode and unequal-length Trung bình/ngày mode)
+    const cmpViewsCurr = curr.views !== null ? (useAvg ? curr.views / M : curr.views) : null;
+    const cmpViewsRef = ref.views !== null ? (useAvg ? ref.views / N : ref.views) : null;
+    const cmpSubsCurr = curr.netSubs !== null ? (useAvg ? curr.netSubs / M : curr.netSubs) : null;
+    const cmpSubsRef = ref.netSubs !== null ? (useAvg ? ref.netSubs / N : ref.netSubs) : null;
+    const cmpVidsCurr = curr.videosPublished !== null ? (useAvg ? curr.videosPublished / M : curr.videosPublished) : null;
+    const cmpVidsRef = ref.videosPublished !== null ? (useAvg ? ref.videosPublished / N : ref.videosPublished) : null;
+    const cmpRevCurr = curr.estimatedRevenue !== null ? (useAvg ? curr.estimatedRevenue / M : curr.estimatedRevenue) : null;
+    const cmpRevRef = ref.estimatedRevenue !== null ? (useAvg ? ref.estimatedRevenue / N : ref.estimatedRevenue) : null;
+
+    const viewsSubText = useAvg
+      ? `TB/ngày: ${cmpViewsRef !== null ? fmtInt(Math.round(cmpViewsRef)) : '—'} (${refWin.refRangeShort})`
+      : `So với ${ref.views !== null ? fmtInt(ref.views) : '—'} (${refWin.refRangeShort})`;
+    const subsRefFormatted = ref.netSubs !== null ? (ref.netSubs > 0 ? '+' + fmtInt(ref.netSubs) : fmtInt(ref.netSubs)) : '—';
+    const subsSubText = useAvg
+      ? `TB/ngày: ${cmpSubsRef !== null ? fmtDec(cmpSubsRef, 1) : '—'} (${refWin.refRangeShort})`
+      : `So với ${subsRefFormatted} (${refWin.refRangeShort})`;
+    const vidsSubText = useAvg
+      ? `TB/ngày: ${cmpVidsRef !== null ? fmtDec(cmpVidsRef, 2) : '—'} video (${refWin.refRangeShort})`
+      : `So với ${fmtInt(ref.videosPublished)} video (${refWin.refRangeShort})`;
+    const engSubText = `So với ${ref.engagementRate !== null ? fmtDec(ref.engagementRate, 2) + '%' : '—'} (${refWin.refRangeShort})`;
+    const revSubText = useAvg
+      ? `TB/ngày: ${cmpRevRef !== null ? fmtMoney(cmpRevRef) : '—'} (${refWin.refRangeShort})`
+      : `So với ${ref.estimatedRevenue !== null ? fmtMoney(ref.estimatedRevenue) : '—'} (${refWin.refRangeShort})`;
+
+    const avdStr = curr.avdSeconds !== null
+      ? `${Math.floor(curr.avdSeconds / 60)}p${String(Math.round(curr.avdSeconds % 60)).padStart(2, '0')}s`
+      : '—';
+    const viewsTooltip = `Nguồn: ${curr.hasAnalytics ? 'YouTube Analytics' : 'Snapshot công khai'} • Trung bình: ${curr.views !== null ? fmtInt(Math.round(curr.views / M)) : '—'} views/ngày`;
+    const subsTooltip = `Sub mới: +${fmtInt(curr.subsGained)} • Sub hủy: −${fmtInt(curr.subsLost)} • Bước làm tròn công khai: ${fmtInt(meta.subRoundingStep)}`;
+    const vidsTooltip = `Đăng gần nhất: ${formatIsoToVN(cp.lastPublishedCutoff)} (${cp.daysSinceLastUpload} ngày trước) • Nhịp đăng kỳ vọng: ${meta.expectedUploadCycleDays} ngày/video`;
+    const engTooltip = `Likes: ${fmtInt(curr.likes)} • Comments: ${fmtInt(curr.comments)}${curr.engagementIncludesShares ? ` • Shares: ${fmtInt(curr.shares)}` : ''} (Thẻ này không đổi biểu đồ theo ngày)`;
+    const revTooltip = `Giờ xem: ${curr.watchHours !== null ? fmtInt(curr.watchHours) + 'h' : '—'} • AVD: ${avdStr} • RPM: ${curr.proxyRpm !== null ? fmtMoney(curr.proxyRpm) : '—'}`;
+
+    const healthConclusion = buildChannelHealthConclusion(cp, win, refWin);
+
+    const metricTitleMap = {
+      views: 'Views',
+      netSubs: 'Sub ròng',
+      videosPublished: 'Video đăng',
+      revenue: 'Doanh thu'
+    };
+    const activeMetricTitle = metricTitleMap[v3State.channelChartMetric] || 'Views';
+
+    // Determine status chip in Chart Header Row 1 (always occupies space to prevent UI jump)
+    let statusChipVisible = false;
+    let statusChipText = 'Đối chứng cùng độ dài';
+    let statusChipIsError = false;
+    if (v3State.channelRefError) {
+      statusChipVisible = true;
+      statusChipText = v3State.channelRefError;
+      statusChipIsError = true;
+    } else if (refWin.isUnequalLength) {
+      statusChipVisible = true;
+      statusChipText = `Đối chứng ${N} ngày, kỳ này ${M} ngày`;
+    } else if (win.isPartialQuarter) {
+      statusChipVisible = true;
+      statusChipText = `Chưa trọn quý (${win.dayCount}/${win.quarterCalendarDays} ngày) · So với ${win.dayCount} ngày đầu`;
+    }
+
     body.innerHTML = `
-      <!-- 1. CHANNEL PROFILE HEADER -->
-      <section class="v3-panel" style="padding:14px 18px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <img src="${esc(meta.avatar)}" alt="${esc(meta.title)}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid ${meta.teamColor};" onerror="this.style.display='none'">
-            <div>
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <h2 style="font-size:18px;font-weight:800;color:var(--text-main);margin:0;">${esc(meta.title)}</h2>
-                <span style="font-size:12.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">${esc(meta.handle)}</span>
+      <!-- 1. KHỐI NHẬN DIỆN KÊNH + HÀNG TOÀN THỜI GIAN + KẾT LUẬN XU HƯỚNG -->
+      <section class="v3-panel" id="v3-channel-identity-panel" style="padding:14px 18px;">
+        <div class="v3-ch-identity-top">
+          <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+            <img src="${esc(meta.avatar)}" alt="${esc(meta.title)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid ${meta.teamColor};flex-shrink:0;" onerror="this.style.display='none'">
+            <div style="min-width:0;">
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:nowrap;white-space:nowrap;height:24px;">
+                <h2 style="font-size:17.5px;font-weight:800;color:var(--text-main);margin:0;white-space:nowrap;">${esc(meta.title)}</h2>
+                <span style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);white-space:nowrap;">${esc(meta.handle)}</span>
                 <span class="v3-badge" style="background:${meta.teamColor}22;color:${meta.teamColor};border:1px solid ${meta.teamColor}55;">
                   <span class="v3-team-dot" style="background:${meta.teamColor};"></span> ${esc(meta.teamName)}
                 </span>
                 <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}" id="v3-channel-oauth-status-badge">
                   ${curr.hasAnalytics ? '[Đã kết nối Analytics]' : 'Chưa cấp quyền Analytics'}
                 </span>
-                <span class="v3-badge muted" id="v3-channel-analytics-delay-note">
-                  Dữ liệu Analytics trễ 2–3 ngày
-                </span>
               </div>
-              <div style="font-size:12.5px;color:var(--text-muted);margin-top:4px;">
-                Người phụ trách (PIC): <strong style="color:var(--text-main);">${esc(meta.employeeName)}</strong> •
-                Lần đăng gần nhất: <strong>${formatIsoToVN(meta.lastPublishedPt)} (${cp.daysSinceLastUpload} ngày trước)</strong> •
-                Quy mô kênh: <strong>${fmtInt(meta.subscribers)} subscribers</strong> (bước làm tròn: ${fmtInt(meta.subRoundingStep)})
+              <div style="font-size:12.2px;color:var(--text-muted);margin-top:5px;height:22px;min-height:22px;max-height:22px;display:flex;align-items:center;white-space:nowrap;">
+                <span>Người phụ trách (PIC): <strong style="color:var(--text-main);" id="v3-channel-pic-name">${esc(meta.employeeName)}</strong></span>
+                <span style="margin:0 6px;color:var(--text-dim);">·</span>
+                <span>Kỳ đang xem: <strong style="color:var(--text-main);font-family:var(--font-mono);">${currRangeFullVN}</strong></span>
+                <span style="margin:0 6px;color:var(--text-dim);">·</span>
+                <span class="v3-badge muted" id="v3-channel-analytics-delay-note">Dữ liệu Analytics có độ trễ 2–3 ngày</span>
+                <span class="v3-badge partial" style="margin-left:6px;visibility:${win.isPartialQuarter ? 'visible' : 'hidden'};">Chưa trọn quý (${win.dayCount}/${win.quarterCalendarDays} ngày)</span>
               </div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <label for="v3-single-channel-select" style="font-size:12px;color:var(--text-muted);font-weight:600;">Đổi kênh:</label>
-            <select id="v3-single-channel-select" class="v3-select">
+
+          <!-- BỘ CHỌN KÊNH DUY NHẤT CÓ TÌM KIẾM (Không có nhãn "Đổi kênh") -->
+          <div class="v3-ch-search-picker" id="v3-channel-search-picker">
+            <button type="button" class="v3-ch-picker-btn" id="v3-channel-picker-btn" aria-haspopup="listbox" aria-expanded="${v3State.channelPickerOpen ? 'true' : 'false'}" title="Chọn hoặc tìm kiếm kênh YouTube">
+              <span class="v3-team-dot" style="background:${meta.teamColor};"></span>
+              <span class="v3-ch-picker-btn-text">
+                <strong>${esc(meta.title)}</strong>
+                <span style="color:var(--text-muted);font-weight:500;">· ${esc(meta.employeeName)} · ${esc(meta.teamName)}</span>
+              </span>
+              <i class="ri-search-eye-line" style="color:#38BDF8;font-size:14px;margin-left:4px;"></i>
+              <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:15px;"></i>
+            </button>
+            <div class="v3-ch-picker-menu ${v3State.channelPickerOpen ? 'open' : ''}" id="v3-channel-picker-menu" role="listbox">
+              <div class="v3-ch-picker-search-wrap">
+                <i class="ri-search-line"></i>
+                <input type="text" id="v3-channel-picker-search" placeholder="Tìm tên kênh, @handle, PIC, team..." value="${esc(v3State.channelPickerQuery)}" autocomplete="off" aria-label="Tìm kiếm kênh">
+              </div>
+              <div class="v3-ch-picker-list" id="v3-channel-picker-list">
+                ${snap.channelPairs.map(item => {
+                  const searchBlob = `${item.meta.title} ${item.meta.handle} ${item.meta.employeeName} ${item.meta.teamName}`.toLowerCase();
+                  const isSelected = item.id === cp.id;
+                  return `
+                    <button type="button" class="v3-ch-picker-item ${isSelected ? 'active' : ''}" data-pick-channel-id="${item.id}" data-search-text="${esc(searchBlob)}" role="option" aria-selected="${isSelected ? 'true' : 'false'}">
+                      <span class="v3-team-dot" style="background:${item.meta.teamColor};"></span>
+                      <span class="v3-ch-picker-item-main">
+                        <strong>${esc(item.meta.title)}</strong>
+                        <span class="v3-ch-picker-item-sub">${esc(item.meta.handle)} · PIC: ${esc(item.meta.employeeName)}</span>
+                      </span>
+                      <span class="v3-badge" style="background:${item.meta.teamColor}18;color:${item.meta.teamColor};border:1px solid ${item.meta.teamColor}44;font-size:10px;">${esc(item.meta.teamName)}</span>
+                    </button>
+                  `;
+                }).join('')}
+                <div id="v3-channel-picker-empty" style="display:none;padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">
+                  Không tìm thấy kênh phù hợp
+                </div>
+              </div>
+            </div>
+            <select id="v3-single-channel-select" style="display:none;" aria-hidden="true">
               ${snap.channelPairs.map(item => `
-                <option value="${item.id}" ${item.id === cp.id ? 'selected' : ''}>
-                  ${esc(item.meta.title)} — ${esc(item.meta.employeeName)} (${esc(item.meta.teamName)})
-                </option>
+                <option value="${item.id}" ${item.id === cp.id ? 'selected' : ''}>${esc(item.meta.title)}</option>
               `).join('')}
             </select>
           </div>
         </div>
-      </section>
 
-      <!-- 2. 5 CHANNEL KPIs -->
-      <section class="v3-kpi-grid">
-        <div class="v3-kpi-card">
-          <div class="v3-kpi-top">
-            <span class="v3-kpi-label">Lượt xem kênh (Views)</span>
-            <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'muted'}">${curr.hasAnalytics ? '[Analytics]' : '[Snapshot]'}</span>
-          </div>
-          <div class="v3-kpi-value">${curr.views !== null ? fmtInt(curr.views) : '—'}</div>
-          <div class="v3-kpi-delta-row">${fmtDeltaBadge(curr.views, prev.views)}</div>
-          <div class="v3-kpi-sub">Kỳ so sánh: ${prev.views !== null ? fmtInt(prev.views) : '—'} views</div>
-        </div>
-
-        <div class="v3-kpi-card">
-          <div class="v3-kpi-top">
-            <span class="v3-kpi-label">Sub ròng (Net Subs) ${helpBadge('guide-sub-rounding', 'YouTube làm tròn sub công khai còn 3 chữ số có nghĩa. Khi mức tăng nhỏ hơn bước làm tròn, chế độ Snapshot hiện —')}</span>
-            <span class="v3-badge muted">Bước: ${fmtInt(meta.subRoundingStep)}</span>
-          </div>
-          <div class="v3-kpi-value">${curr.netSubs !== null ? (curr.netSubs > 0 ? '+' + fmtInt(curr.netSubs) : fmtInt(curr.netSubs)) : '—'}</div>
-          <div class="v3-kpi-delta-row">
-            ${curr.netSubs !== null ? fmtDeltaBadge(curr.netSubs, prev.netSubs) : `<span class="v3-delta flat">— Nhỏ hơn bước ${fmtInt(meta.subRoundingStep)}</span>`}
-          </div>
-          <div class="v3-kpi-sub">Tổng sub hiện tại: <strong>${fmtInt(meta.subscribers)}</strong></div>
-        </div>
-
-        <div class="v3-kpi-card">
-          <div class="v3-kpi-top">
-            <span class="v3-kpi-label">Video đăng & Lịch đăng</span>
-            <span class="v3-badge ${cp.daysSinceLastUpload > v3State.alertUploadCycleDays ? 'warn' : 'ready'}">
-              ${cp.daysSinceLastUpload > v3State.alertUploadCycleDays ? '[Chậm lịch đăng]' : '[Đúng nhịp]'}
+        <!-- HÀNG "TOÀN THỜI GIAN" (Không đổi khi đổi bộ chọn kỳ) -->
+        <div class="v3-ch-lifetime-strip" id="v3-channel-lifetime-strip">
+          <span class="v3-ch-lifetime-tag" title="Số liệu tích lũy toàn thời gian của kênh, không thay đổi theo bộ chọn kỳ">
+            <i class="ri-history-line"></i> Toàn thời gian
+          </span>
+          <div class="v3-ch-lifetime-items">
+            <span class="v3-ch-lifetime-item">
+              Tổng sub hiện tại: <strong data-lifetime-subs="${meta.subscribers}">${fmtInt(meta.subscribers)}</strong>
+            </span>
+            <span class="v3-scope-sep">·</span>
+            <span class="v3-ch-lifetime-item">
+              Tổng views trọn đời: <strong data-lifetime-views="${meta.lifetimeViews}">${fmtInt(meta.lifetimeViews)}</strong>
+            </span>
+            <span class="v3-scope-sep">·</span>
+            <span class="v3-ch-lifetime-item">
+              Tổng số video: <strong data-lifetime-videos="${meta.lifetimeVideos}">${fmtInt(meta.lifetimeVideos)} video</strong>
+            </span>
+            <span class="v3-scope-sep">·</span>
+            <span class="v3-ch-lifetime-item">
+              Ngày tạo kênh: <strong data-lifetime-created="${meta.createdDatePt}">${formatIsoToVN(meta.createdDatePt)}</strong>
+            </span>
+            <span class="v3-scope-sep">·</span>
+            <span class="v3-ch-lifetime-item">
+              Ngày đăng gần nhất: <strong data-lifetime-last-pub="${cp.lastPublishedCutoff}">${formatIsoToVN(cp.lastPublishedCutoff)}</strong>
+              <span class="${cp.daysSinceLastUpload > 7 ? 'v3-slow-upload-pill' : ''}" style="font-size:11px;margin-left:3px;">(${cp.daysSinceLastUpload} ngày trước)</span>
             </span>
           </div>
-          <div class="v3-kpi-value">${fmtInt(curr.videosPublished)} video</div>
-          <div class="v3-kpi-delta-row">${fmtDeltaBadge(curr.videosPublished, prev.videosPublished)}</div>
-          <div class="v3-kpi-sub">Đăng gần nhất: <strong>${formatIsoToVN(meta.lastPublishedPt)}</strong> (${cp.daysSinceLastUpload} ngày trước)</div>
         </div>
 
-        <div class="v3-kpi-card">
-          <div class="v3-kpi-top">
-            <span class="v3-kpi-label">Tỷ lệ tương tác ${helpBadge('guide-engagement', 'Tỷ lệ tương tác trên tổng lượt xem trong kỳ')}</span>
-            <span class="v3-badge ${curr.engagementIncludesShares ? 'analytics' : 'muted'}">${curr.engagementIncludesShares ? 'Có Shares' : 'Likes+Comments'}</span>
+        <!-- DÒNG KẾT LUẬN TỰ ĐỘNG: "Kênh này đang đi lên hay đi xuống?" (Mục 9) -->
+        <div class="v3-ch-health-bar" id="v3-channel-health-bar">
+          <span class="v3-ch-health-q">Kênh này đang đi lên hay đi xuống?</span>
+          <span class="v3-ch-health-text" id="v3-channel-health-conclusion">${esc(healthConclusion)}</span>
+        </div>
+      </section>
+
+      <!-- 2. KHỐI 5 THẺ KPI TRONG KỲ (Kiêm bộ chọn chỉ số cho biểu đồ xu hướng · Mục 10 & 11) -->
+      <section class="v3-panel" id="v3-channel-kpi-panel" style="padding:12px 18px 14px 18px;">
+        <div class="v3-chart-a-header-row1" style="margin-bottom:10px;">
+          <div class="v3-panel-title" style="font-size:14.5px;white-space:nowrap;">
+            <i class="ri-dashboard-3-line" style="color:${meta.teamColor};"></i>
+            <span>Chỉ số kênh trong kỳ</span>
+            <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
           </div>
-          <div class="v3-kpi-value">${curr.engagementRate !== null ? curr.engagementRate.toFixed(2) + '%' : '—'}</div>
-          <div class="v3-kpi-delta-row">${fmtDeltaBadge(curr.engagementRate, prev.engagementRate, false, true)}</div>
-          <div class="v3-kpi-sub">Likes: ${fmtInt(curr.likes)} • Comments: ${fmtInt(curr.comments)}${curr.engagementIncludesShares ? ` • Shares: ${fmtInt(curr.shares)}` : ''}</div>
+          <div style="font-size:11.2px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            Nhấn thẻ <strong>Views / Sub ròng / Video đăng / Doanh thu</strong> để đổi biểu đồ · Rê chuột xem chi tiết
+          </div>
         </div>
 
-        <div class="v3-kpi-card">
-          <div class="v3-kpi-top">
-            <span class="v3-kpi-label">Doanh thu & Giờ xem ${helpBadge('guide-rpm', 'Doanh thu ước tính và Thời lượng xem trung bình (AVD) từ YouTube Analytics (dữ liệu Analytics trễ 2–3 ngày)')}</span>
-            <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}">${curr.hasAnalytics ? '[Analytics]' : 'Chưa cấp quyền Analytics'}</span>
+        <div class="v3-kpi-grid" id="v3-channel-kpi-grid" style="margin-bottom:0;">
+          <!-- Card 1: Views (Selectable) -->
+          <div class="v3-kpi-card v3-ch-kpi-card is-chart-selectable ${v3State.channelChartMetric === 'views' ? 'is-chart-active' : ''}"
+               data-ch-kpi-metric="views"
+               data-kpi-tooltip="${esc(viewsTooltip)}"
+               title="${esc(viewsTooltip)}"
+               role="button"
+               tabindex="0"
+               aria-pressed="${v3State.channelChartMetric === 'views' ? 'true' : 'false'}">
+            <div class="v3-kpi-top">
+              <span class="v3-kpi-label">Views</span>
+              <i class="ri-line-chart-line v3-kpi-chart-icon"></i>
+            </div>
+            <div class="v3-kpi-value" data-kpi-val="views">${curr.views !== null ? fmtInt(curr.views) : '—'}</div>
+            <div class="v3-kpi-delta-row" data-kpi-delta="views">${fmtDeltaBadge(cmpViewsCurr, cmpViewsRef)}</div>
+            <div class="v3-kpi-sub" data-kpi-sub="views">${esc(viewsSubText)}</div>
           </div>
-          <div class="v3-kpi-value">${curr.estimatedRevenue !== null ? fmtMoney(curr.estimatedRevenue) : (curr.hasAnalytics ? '—' : '<span style="font-size:14px;color:#FBBF24;">Chưa cấp quyền Analytics</span>')}</div>
-          <div class="v3-kpi-delta-row">${curr.estimatedRevenue !== null ? fmtDeltaBadge(curr.estimatedRevenue, prev.estimatedRevenue, true) : `<span class="v3-delta flat">Dữ liệu Analytics trễ 2–3 ngày</span>`}</div>
-          <div class="v3-kpi-sub">
-            Giờ xem: <strong>${curr.watchHours !== null ? fmtInt(curr.watchHours) + 'h' : '—'}</strong> •
-            AVD: <strong>${curr.avdSeconds !== null ? Math.floor(curr.avdSeconds / 60) + 'p' + String(Math.round(curr.avdSeconds % 60)).padStart(2, '0') + 's' : '—'}</strong> •
-            RPM: <strong>${curr.proxyRpm !== null ? '$' + curr.proxyRpm.toFixed(2) : '—'}</strong>
+
+          <!-- Card 2: Sub ròng (Selectable) -->
+          <div class="v3-kpi-card v3-ch-kpi-card is-chart-selectable ${v3State.channelChartMetric === 'netSubs' ? 'is-chart-active' : ''}"
+               data-ch-kpi-metric="netSubs"
+               data-kpi-tooltip="${esc(subsTooltip)}"
+               title="${esc(subsTooltip)}"
+               role="button"
+               tabindex="0"
+               aria-pressed="${v3State.channelChartMetric === 'netSubs' ? 'true' : 'false'}">
+            <div class="v3-kpi-top">
+              <span class="v3-kpi-label">Sub ròng</span>
+              <i class="ri-line-chart-line v3-kpi-chart-icon"></i>
+            </div>
+            <div class="v3-kpi-value" data-kpi-val="netSubs">${curr.netSubs !== null ? (curr.netSubs > 0 ? '+' + fmtInt(curr.netSubs) : fmtInt(curr.netSubs)) : '—'}</div>
+            <div class="v3-kpi-delta-row" data-kpi-delta="netSubs">
+              ${curr.netSubs !== null ? fmtDeltaBadge(cmpSubsCurr, cmpSubsRef) : `<span class="v3-delta flat">— Nhỏ hơn bước ${fmtInt(meta.subRoundingStep)}</span>`}
+            </div>
+            <div class="v3-kpi-sub" data-kpi-sub="netSubs">${esc(subsSubText)}</div>
+          </div>
+
+          <!-- Card 3: Video đăng (Selectable) -->
+          <div class="v3-kpi-card v3-ch-kpi-card is-chart-selectable ${v3State.channelChartMetric === 'videosPublished' ? 'is-chart-active' : ''}"
+               data-ch-kpi-metric="videosPublished"
+               data-kpi-tooltip="${esc(vidsTooltip)}"
+               title="${esc(vidsTooltip)}"
+               role="button"
+               tabindex="0"
+               aria-pressed="${v3State.channelChartMetric === 'videosPublished' ? 'true' : 'false'}">
+            <div class="v3-kpi-top">
+              <span class="v3-kpi-label">Video đăng</span>
+              <i class="ri-line-chart-line v3-kpi-chart-icon"></i>
+            </div>
+            <div class="v3-kpi-value" data-kpi-val="videosPublished">${fmtInt(curr.videosPublished)}</div>
+            <div class="v3-kpi-delta-row" data-kpi-delta="videosPublished">${fmtDeltaBadge(cmpVidsCurr, cmpVidsRef)}</div>
+            <div class="v3-kpi-sub" data-kpi-sub="videosPublished">${esc(vidsSubText)}</div>
+          </div>
+
+          <!-- Card 4: Tỷ lệ tương tác (NOT clickable for chart) -->
+          <div class="v3-kpi-card v3-ch-kpi-card is-chart-disabled"
+               data-ch-kpi-disabled="true"
+               data-kpi-tooltip="${esc(engTooltip)}"
+               title="${esc(engTooltip)}">
+            <div class="v3-kpi-top">
+              <span class="v3-kpi-label">Tỷ lệ tương tác</span>
+              <i class="ri-information-line v3-kpi-info-icon"></i>
+            </div>
+            <div class="v3-kpi-value" data-kpi-val="engagementRate">${curr.engagementRate !== null ? fmtDec(curr.engagementRate, 2) + '%' : '—'}</div>
+            <div class="v3-kpi-delta-row" data-kpi-delta="engagementRate">${fmtDeltaBadge(curr.engagementRate, ref.engagementRate, false, true)}</div>
+            <div class="v3-kpi-sub" data-kpi-sub="engagementRate">${esc(engSubText)}</div>
+          </div>
+
+          <!-- Card 5: Doanh thu (Selectable) -->
+          <div class="v3-kpi-card v3-ch-kpi-card is-chart-selectable ${v3State.channelChartMetric === 'revenue' ? 'is-chart-active' : ''}"
+               data-ch-kpi-metric="revenue"
+               data-kpi-tooltip="${esc(revTooltip)}"
+               title="${esc(revTooltip)}"
+               role="button"
+               tabindex="0"
+               aria-pressed="${v3State.channelChartMetric === 'revenue' ? 'true' : 'false'}">
+            <div class="v3-kpi-top">
+              <span class="v3-kpi-label">Doanh thu</span>
+              <i class="ri-line-chart-line v3-kpi-chart-icon"></i>
+            </div>
+            <div class="v3-kpi-value" data-kpi-val="revenue">${curr.estimatedRevenue !== null ? fmtMoney(curr.estimatedRevenue) : (curr.hasAnalytics ? '—' : '<span style="font-size:12px;color:#FBBF24;">Chưa cấp quyền Analytics</span>')}</div>
+            <div class="v3-kpi-delta-row" data-kpi-delta="revenue">${curr.estimatedRevenue !== null ? fmtDeltaBadge(cmpRevCurr, cmpRevRef, true) : `<span class="v3-delta flat" style="font-size:10px;padding:2px 5px;">Dữ liệu Analytics trễ 2–3 ngày</span>`}</div>
+            <div class="v3-kpi-sub" data-kpi-sub="revenue">${esc(revSubText)}</div>
           </div>
         </div>
       </section>
 
-      <!-- 3. CHANNEL TREND CHART (Current vs Previous) -->
-      <section class="v3-panel">
-        <div class="v3-panel-header">
-          <div>
-            <div class="v3-panel-title">
+      <!-- 3. KHỐI BIỂU ĐỒ XU HƯỚNG KÊNH + DÒNG TÓM TẮT VIDEO (Mục 12 & 13) -->
+      <section class="v3-panel" id="v3-channel-trend-panel" style="padding-bottom:12px;">
+        <div class="v3-chart-a-header" id="v3-channel-chart-header">
+          <div class="v3-chart-a-header-row1" id="v3-channel-chart-header-row1">
+            <div class="v3-panel-title" style="white-space:nowrap;">
               <i class="ri-line-chart-line" style="color:${meta.teamColor};"></i>
-              Biểu đồ xu hướng kênh: Kỳ này vs ${v3State.compareMode === 'yoy' ? 'Cùng kỳ năm ngoái' : 'Kỳ trước'}
+              <span id="v3-channel-chart-title">Xu hướng ${esc(activeMetricTitle)} theo ngày</span>
+              <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
             </div>
-            <div class="v3-panel-subtitle">Theo dõi biến động từng ngày của kênh ${esc(meta.title)}</div>
+            <span class="v3-chart-status-chip ${statusChipVisible ? 'is-visible' : 'is-hidden'} ${statusChipIsError ? 'is-error' : ''}" id="v3-channel-chart-status-chip">
+              <span class="v3-chart-status-chip-text">${esc(statusChipText)}</span>
+            </span>
           </div>
-          <div class="v3-preset-group">
-            <button type="button" class="v3-preset-btn ${v3State.channelChartMetric === 'views' ? 'active' : ''}" data-ch-metric="views">Lượt xem</button>
-            <button type="button" class="v3-preset-btn ${v3State.channelChartMetric === 'watchHours' ? 'active' : ''}" data-ch-metric="watchHours" ${!curr.hasAnalytics ? 'disabled' : ''}>Giờ xem [Analytics]</button>
-            <button type="button" class="v3-preset-btn ${v3State.channelChartMetric === 'revenue' ? 'active' : ''}" data-ch-metric="revenue" ${!curr.hasMonetary ? 'disabled' : ''}>Doanh thu [Analytics]</button>
+
+          <div class="v3-chart-a-header-row2" id="v3-channel-chart-header-row2">
+            <span style="font-size:11.5px;color:var(--text-muted);font-weight:700;flex-shrink:0;">So với:</span>
+            <div class="v3-preset-group" id="v3-channel-ref-mode-group" role="group" aria-label="Chọn kỳ đối chứng">
+              <button type="button" class="v3-preset-btn ${refWin.mode === 'prev' ? 'active' : ''}" data-ch-ref-mode="prev">Kỳ trước</button>
+              <button type="button" class="v3-preset-btn ${refWin.mode === 'prev_quarter' ? 'active' : ''}" data-ch-ref-mode="prev_quarter">Quý trước</button>
+              <button type="button" class="v3-preset-btn ${refWin.mode === 'yoy' ? 'active' : ''}" data-ch-ref-mode="yoy" ${!curr.hasYoYHistory ? 'disabled' : ''}>Cùng kỳ năm ngoái</button>
+              <button type="button" class="v3-preset-btn ${refWin.mode === 'custom' ? 'active' : ''}" data-ch-ref-mode="custom">Tùy chỉnh</button>
+            </div>
+
+            <div class="v3-chart-period-slot" id="v3-channel-ref-date-slot">
+              ${refWin.mode === 'custom' ? `
+                <div class="v3-chart-custom-dates" id="v3-ch-ref-custom-dates">
+                  <input type="date" id="v3-ch-ref-start" class="v3-select v3-select-sm v3-chart-date-input" value="${refWin.refStart}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày đối chứng">
+                  <span class="v3-chart-date-sep">→</span>
+                  <input type="date" id="v3-ch-ref-end" class="v3-select v3-select-sm v3-chart-date-input" value="${refWin.refEnd}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày đối chứng">
+                </div>
+              ` : `
+                <select id="v3-ch-ref-fixed-select" class="v3-select v3-select-sm v3-chart-slot-control" disabled aria-label="Khoảng ngày kỳ đối chứng">
+                  <option>${refWin.refRangeFullVN} (${refWin.refDayCount} ngày)</option>
+                </select>
+              `}
+            </div>
+
+            <div class="v3-preset-group" id="v3-ch-unequal-mode-group" style="visibility:${refWin.isUnequalLength ? 'visible' : 'hidden'};pointer-events:${refWin.isUnequalLength ? 'auto' : 'none'};" role="group" aria-label="Chế độ tính delta khi kỳ đối chứng khác số ngày">
+              <button type="button" class="v3-preset-btn ${v3State.channelUnequalMode === 'avg' ? 'active' : ''}" data-ch-unequal-mode="avg">Trung bình/ngày</button>
+              <button type="button" class="v3-preset-btn ${v3State.channelUnequalMode === 'total' ? 'active' : ''}" data-ch-unequal-mode="total">Tổng</button>
+            </div>
           </div>
         </div>
-        <div style="height: 270px; position: relative;">
+
+        <div class="v3-chart-a-canvas-wrap" id="v3-channel-chart-canvas-wrap" style="height:225px;min-height:225px;max-height:225px;">
           <canvas id="v3-channel-single-canvas"></canvas>
         </div>
-      </section>
 
-      <!-- 4. TOP VIDEOS IN PERIOD + VIEWS FIRST 7 DAYS -->
-      <section class="v3-panel">
-        <div class="v3-panel-header">
-          <div>
-            <div class="v3-panel-title">
-              <i class="ri-video-line" style="color:#38BDF8;"></i>
-              Top Video mẫu trong kỳ & Views 7 ngày đầu (So sánh công bằng) ${helpBadge('guide-views-7d', 'Views 7 ngày đầu được chốt tại ngày thứ 7 sau ngày đăng (published_date_pt + 6 ngày). Video đăng trước khi hệ thống lưu snapshot hoặc chưa đủ 7 ngày sẽ hiển thị —')}
-            </div>
-            <div class="v3-panel-subtitle">
-              10 video mẫu chiếm <strong>${sampleSharePct}%</strong> tổng views kỳ của kênh (${fmtInt(sampleViewsSum)} / ${fmtInt(curr.views)} views); phần còn lại thuộc danh mục video cũ (Nội dung khác: ${fmtInt(otherContentViews)} views).
-            </div>
-          </div>
-        </div>
-        <div class="v3-table-wrap">
-          <table class="v3-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Tiêu đề Video</th>
-                <th>Ngày đăng</th>
-                <th class="num">Thời lượng</th>
-                <th class="num">Views kỳ</th>
-                <th class="num">Views 7 ngày đầu ${helpBadge('guide-views-7d', 'Chỉ hiện số khi video có đủ 7 ngày snapshot kể từ lúc đăng')}</th>
-                <th class="num">Giờ xem</th>
-                <th class="num">Doanh thu</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${enrichedVideos.map((v, idx) => {
-      let first7dHtml = '—';
-      if (v.viewsFirst7d !== null && v.viewsFirst7d !== undefined) {
-        first7dHtml = `<strong>${fmtInt(v.viewsFirst7d)}</strong> <span class="v3-badge ready">[Đủ 7 ngày]</span>`;
-      } else if (v.viewsFirst7dStatus === 'pending_7d') {
-        first7dHtml = `<span style="color:var(--text-muted);">—</span> <span class="v3-badge partial">[Chưa đủ 7 ngày]</span>`;
-      } else if (v.viewsFirst7dStatus === 'before_snapshot_start') {
-        first7dHtml = `<span style="color:var(--text-muted);">—</span> <span class="v3-badge muted" title="Video đăng trước ngày bắt đầu lưu snapshot 31/07/2026">[Trước mốc lịch sử]</span>`;
-      } else {
-        first7dHtml = `<span style="color:var(--text-muted);">—</span> <span class="v3-badge muted">[Live / 0s]</span>`;
-      }
-      const flags = [];
-      if (v.likesHidden) flags.push(`<span class="v3-badge warn">[Ẩn like]</span>`);
-      if (v.commentsDisabled) flags.push(`<span class="v3-badge warn">[Tắt bình luận]</span>`);
-      return `
-                  <tr>
-                    <td>${idx + 1}</td>
-                    <td>
-                      <div style="font-weight:700;color:var(--text-main);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(v.title)}">
-                        ${esc(v.title)}
-                      </div>
-                      <div style="font-size:10.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">ID: ${esc(v.id)} ${flags.join(' ')}</div>
-                    </td>
-                    <td>${formatIsoToVN(v.publishedAt)}</td>
-                    <td class="num">${esc(v.duration)}</td>
-                    <td class="num"><strong>${curr.views !== null ? fmtInt(v.periodViews) : '—'}</strong></td>
-                    <td class="num">${first7dHtml}</td>
-                    <td class="num">${v.periodHours !== null ? fmtInt(v.periodHours) + 'h' : '—'}</td>
-                    <td class="num">${v.periodRev !== null ? fmtMoney(v.periodRev) : '—'}</td>
-                  </tr>
-                `;
-    }).join('')}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="4">
-                  Tổng 10 video mẫu (${sampleSharePct}% kênh) + Nội dung khác (${fmtInt(otherContentViews)} views = ${(100 - Number(sampleSharePct)).toFixed(1)}% kênh)
-                </td>
-                <td class="num">${curr.views !== null ? fmtInt(curr.views) : '—'}</td>
-                <td class="num">—</td>
-                <td class="num">${curr.watchHours !== null ? fmtInt(curr.watchHours) + 'h' : '—'}</td>
-                <td class="num">${curr.estimatedRevenue !== null ? fmtMoney(curr.estimatedRevenue) : '—'}</td>
-              </tr>
-            </tfoot>
-          </table>
+        <!-- MỘT DÒNG TÓM TẮT VIDEO NGAY DƯỚI BIỂU ĐỒ (Mục 13) -->
+        <div class="v3-ch-video-summary-line" id="v3-channel-video-summary-line" title="${top1Vid ? esc(top1Vid.title) : ''}">
+          ${top1Vid && curr.views ? `
+            <span>Video lớn nhất trong kỳ:</span>
+            <strong class="v3-ch-video-summary-title">${esc(top1Vid.title)}</strong>
+            <span>(<strong>${fmtInt(top1Views)}</strong> views · <strong>${fmtDec(top1SharePct, 1)}%</strong> views kênh)</span>
+            <span class="v3-scope-sep">·</span>
+            <span>Top 3 video đóng góp <strong>${fmtInt(top3Views)}</strong> views (<strong>${fmtDec(top3SharePct, 1)}%</strong> tổng views kênh).</span>
+          ` : `
+            Chưa có dữ liệu phân rã video trong kỳ đang chọn.
+          `}
         </div>
       </section>
 
-      <!-- 5. CHANNEL MoM & QoQ TABLES -->
-      <div class="v3-grid-2">
-        <section class="v3-panel" style="margin-bottom:0;">
-          <div class="v3-panel-header" style="margin-bottom:10px;">
-            <div class="v3-panel-title"><i class="ri-calendar-line" style="color:#38BDF8;"></i> Bảng Tháng với Tháng (MoM) của kênh</div>
-            <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}">${curr.hasAnalytics ? '[Analytics]' : 'Chưa cấp quyền Analytics'}</span>
-          </div>
-          <div class="v3-table-wrap">
-            <table class="v3-table">
-              <thead>
-                <tr>
-                  <th>Tháng</th>
-                  <th class="num">Views</th>
-                  <th class="num">Sub ròng</th>
-                  <th class="num">Giờ xem</th>
-                  <th class="num">Doanh thu</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${chRollupsMonth.map(r => `
-                  <tr>
-                    <td><strong>${esc(r.period_key)}</strong> ${!r.is_complete_period ? `<span class="v3-badge partial">[Chưa trọn kỳ]</span>` : ''}</td>
-                    <td class="num">${fmtInt(r.metrics.views)}</td>
-                    <td class="num">${r.metrics.netSubscribers > 0 ? '+' + fmtInt(r.metrics.netSubscribers) : fmtInt(r.metrics.netSubscribers)}</td>
-                    <td class="num">${curr.hasAnalytics ? fmtInt(r.metrics.estimatedHoursWatched) + 'h' : '—'}</td>
-                    <td class="num">${curr.hasMonetary ? fmtMoney(r.metrics.estimatedRevenue) : '—'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="v3-panel" style="margin-bottom:0;">
-          <div class="v3-panel-header" style="margin-bottom:10px;">
-            <div class="v3-panel-title"><i class="ri-calendar-todo-line" style="color:#F59E0B;"></i> Bảng Quý với Quý (QoQ) của kênh</div>
-            <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}">${curr.hasAnalytics ? '[Analytics]' : 'Chưa cấp quyền Analytics'}</span>
-          </div>
-          <div class="v3-table-wrap">
-            <table class="v3-table">
-              <thead>
-                <tr>
-                  <th>Quý</th>
-                  <th class="num">Views</th>
-                  <th class="num">Sub ròng</th>
-                  <th class="num">Giờ xem</th>
-                  <th class="num">Doanh thu</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${chRollupsQuarter.map(r => `
-                  <tr>
-                    <td><strong>${esc(r.period_key)}</strong> ${!r.is_complete_period ? `<span class="v3-badge partial">[Chưa trọn quý]</span>` : ''}</td>
-                    <td class="num">${fmtInt(r.metrics.views)}</td>
-                    <td class="num">${r.metrics.netSubscribers > 0 ? '+' + fmtInt(r.metrics.netSubscribers) : fmtInt(r.metrics.netSubscribers)}</td>
-                    <td class="num">${curr.hasAnalytics ? fmtInt(r.metrics.estimatedHoursWatched) + 'h' : '—'}</td>
-                    <td class="num">${curr.hasMonetary ? fmtMoney(r.metrics.estimatedRevenue) : '—'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
-
-      <!-- 6. COLLAPSIBLE COUNTRY & TRAFFIC SOURCE SECTION ("Quốc gia và nguồn truy cập") -->
+      <!-- 4. KHỐI GẬP MẶC ĐỊNH: "QUỐC GIA VÀ NGUỒN TRUY CẬP" (Mục 14) -->
       <section class="v3-panel" id="v3-channel-geo-traffic-panel" style="margin-bottom:0;" data-collapsed="${v3State.deepAnalyticsOpen ? 'false' : 'true'}">
-        <div class="v3-panel-header" style="margin-bottom:${v3State.deepAnalyticsOpen ? '14px' : '0'};">
-          <div>
-            <div class="v3-panel-title" id="v3-channel-geo-traffic-title">
+        <div class="v3-panel-header" style="margin-bottom:${v3State.deepAnalyticsOpen ? '14px' : '0'};flex-wrap:nowrap;">
+          <div style="min-width:0;">
+            <div class="v3-panel-title" id="v3-channel-geo-traffic-title" style="white-space:nowrap;">
               <i class="ri-compass-3-line" style="color:#38BDF8;"></i>
-              Quốc gia và nguồn truy cập
+              <span>Quốc gia và nguồn truy cập</span>
+              <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
               <span class="v3-badge ${curr.hasAnalytics ? 'analytics' : 'warn'}">${curr.hasAnalytics ? '[Analytics]' : 'Chưa cấp quyền Analytics'}</span>
             </div>
             <div class="v3-panel-subtitle">
-              Phân rã lượt xem và giờ xem theo Quốc gia và Nguồn truy cập từ YouTube Analytics API v2 · Dữ liệu Analytics trễ 2–3 ngày
+              Phân rã lượt xem và giờ xem theo Quốc gia và Nguồn truy cập từ YouTube Analytics API v2 · Dữ liệu Analytics có độ trễ 2–3 ngày
             </div>
           </div>
-          <button type="button" class="v3-btn" id="v3-btn-toggle-deep-analytics">
+          <button type="button" class="v3-btn" id="v3-btn-toggle-deep-analytics" style="flex-shrink:0;">
             ${v3State.deepAnalyticsOpen ? 'Thu gọn ▲' : 'Mở Quốc gia và nguồn truy cập ▼'}
           </button>
         </div>
@@ -2103,13 +2323,13 @@
               <div style="font-size:14px;font-weight:700;color:#FBBF24;margin-bottom:6px;">Chưa cấp quyền Analytics</div>
               <div>
                 Kênh <strong>${esc(meta.title)}</strong> chưa kết nối OAuth YouTube Analytics API v2.
-                Vui lòng cấp quyền OAuth để xem bảng Quốc gia và Nguồn truy cập (ghi chú: dữ liệu Analytics trễ 2–3 ngày).
+                Vui lòng cấp quyền OAuth để xem bảng Quốc gia và Nguồn truy cập (ghi chú: dữ liệu Analytics có độ trễ 2–3 ngày).
               </div>
             </div>
           ` : `
             <div class="v3-grid-2" style="margin-bottom:0;" id="v3-channel-geo-traffic-grid">
               <div>
-                <strong style="font-size:13px;display:block;margin-bottom:8px;">Bảng Quốc gia</strong>
+                <strong style="font-size:13px;display:block;margin-bottom:8px;">Bảng Quốc gia (${currRangeShort})</strong>
                 <div class="v3-table-wrap">
                   <table class="v3-table" id="v3-channel-country-table">
                     <thead>
@@ -2146,7 +2366,7 @@
               </div>
 
               <div>
-                <strong style="font-size:13px;display:block;margin-bottom:8px;">Bảng Nguồn truy cập</strong>
+                <strong style="font-size:13px;display:block;margin-bottom:8px;">Bảng Nguồn truy cập (${currRangeShort})</strong>
                 <div class="v3-table-wrap">
                   <table class="v3-table" id="v3-channel-traffic-table">
                     <thead>
@@ -2184,27 +2404,154 @@
       </section>
     `;
 
-    // Render Single Channel Trend Chart
-    renderSingleChannelChart(cp, snap);
+    // Render Single Channel Trend Chart (Current vs Active Reference Period)
+    renderSingleChannelChart(cp, snap, refWin);
 
-    // Bind Single Channel Events
+    // Bind Single Searchable Channel Picker Events
+    const pickerBtn = document.getElementById('v3-channel-picker-btn');
+    const pickerMenu = document.getElementById('v3-channel-picker-menu');
+    const pickerSearch = document.getElementById('v3-channel-picker-search');
+    const pickerEmpty = document.getElementById('v3-channel-picker-empty');
+
+    const filterPickerList = (q) => {
+      const norm = String(q || '').trim().toLowerCase();
+      let visibleCount = 0;
+      body.querySelectorAll('.v3-ch-picker-item').forEach(item => {
+        const blob = item.getAttribute('data-search-text') || '';
+        const match = !norm || blob.includes(norm);
+        item.style.display = match ? 'flex' : 'none';
+        if (match) visibleCount++;
+      });
+      if (pickerEmpty) {
+        pickerEmpty.style.display = visibleCount === 0 ? 'block' : 'none';
+      }
+    };
+
+    if (pickerSearch) {
+      filterPickerList(v3State.channelPickerQuery);
+      pickerSearch.addEventListener('input', (e) => {
+        v3State.channelPickerQuery = e.target.value;
+        filterPickerList(v3State.channelPickerQuery);
+      });
+      pickerSearch.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    if (pickerBtn && pickerMenu) {
+      pickerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        v3State.channelPickerOpen = !v3State.channelPickerOpen;
+        pickerMenu.classList.toggle('open', v3State.channelPickerOpen);
+        pickerBtn.setAttribute('aria-expanded', v3State.channelPickerOpen ? 'true' : 'false');
+        if (v3State.channelPickerOpen && pickerSearch) {
+          setTimeout(() => pickerSearch.focus(), 10);
+        }
+      });
+    }
+
+    body.querySelectorAll('[data-pick-channel-id]').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const nextId = item.getAttribute('data-pick-channel-id');
+        v3State.selectedChannelId = nextId;
+        v3State.channelPickerOpen = false;
+        v3State.channelPickerQuery = '';
+        renderSharedHeader(snap, 'view-report-channel');
+        renderChannelPage(snap);
+      });
+    });
+
     const chSel = document.getElementById('v3-single-channel-select');
     if (chSel) {
       chSel.addEventListener('change', () => {
         v3State.selectedChannelId = chSel.value;
+        v3State.channelPickerOpen = false;
         renderSharedHeader(snap, 'view-report-channel');
         renderChannelPage(snap);
       });
     }
 
-    body.querySelectorAll('[data-ch-metric]').forEach(btn => {
+    // Bind KPI Card Metric Selection (Item 11)
+    body.querySelectorAll('[data-ch-kpi-metric]').forEach(card => {
+      const activateMetric = () => {
+        const nextMetric = card.getAttribute('data-ch-kpi-metric');
+        if (!nextMetric || v3State.channelChartMetric === nextMetric) return;
+        v3State.channelChartMetric = nextMetric;
+        renderChannelPage(snap);
+      };
+      card.addEventListener('click', activateMetric);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          activateMetric();
+        }
+      });
+    });
+
+    // Bind Reference Period Mode ("So với: Kỳ trước / Quý trước / Cùng kỳ năm ngoái / Tùy chỉnh")
+    body.querySelectorAll('[data-ch-ref-mode]').forEach(btn => {
       btn.addEventListener('click', () => {
         if (btn.disabled) return;
-        v3State.channelChartMetric = btn.getAttribute('data-ch-metric');
+        const nextMode = btn.getAttribute('data-ch-ref-mode');
+        v3State.channelCompareMode = nextMode;
+        v3State.channelRefError = '';
+        if (nextMode === 'custom') {
+          // Initialize custom reference dates to non-overlapping previous window if needed
+          if (!v3State.channelRefStartDate || !v3State.channelRefEndDate ||
+              (v3State.channelRefStartDate <= win.end && v3State.channelRefEndDate >= win.start)) {
+            v3State.channelRefStartDate = win.prevStart;
+            v3State.channelRefEndDate = win.prevEnd;
+          }
+        }
         renderChannelPage(snap);
       });
     });
 
+    // Bind Custom Reference Date Inputs with Validation (no date > 2026-10-26, no overlap with active window)
+    const applyCustomRefDates = () => {
+      const sInput = document.getElementById('v3-ch-ref-start');
+      const eInput = document.getElementById('v3-ch-ref-end');
+      if (!sInput || !eInput) return;
+      let s = sInput.value;
+      let e = eInput.value;
+      if (!s || !e) return;
+
+      if (s > '2026-10-26' || e > '2026-10-26') {
+        v3State.channelRefError = 'Không được vượt quá ngày 26/10/2026';
+        if (s > '2026-10-26') s = '2026-10-26';
+        if (e > '2026-10-26') e = '2026-10-26';
+        sInput.value = s;
+        eInput.value = e;
+        renderChannelPage(snap);
+        return;
+      }
+      if (s > e) {
+        v3State.channelRefError = 'Ngày bắt đầu đối chứng phải ≤ ngày kết thúc';
+        renderChannelPage(snap);
+        return;
+      }
+      if (s <= win.end && e >= win.start) {
+        v3State.channelRefError = `Không được trùng kỳ đang xem (${formatIsoToShortVN(win.start)}–${formatIsoToShortVN(win.end)})`;
+        renderChannelPage(snap);
+        return;
+      }
+      v3State.channelRefError = '';
+      v3State.channelCompareMode = 'custom';
+      v3State.channelRefStartDate = s;
+      v3State.channelRefEndDate = e;
+      renderChannelPage(snap);
+    };
+    document.getElementById('v3-ch-ref-start')?.addEventListener('change', applyCustomRefDates);
+    document.getElementById('v3-ch-ref-end')?.addEventListener('change', applyCustomRefDates);
+
+    // Bind Unequal-Length Mode Toggle ("Trung bình/ngày" | "Tổng")
+    body.querySelectorAll('[data-ch-unequal-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        v3State.channelUnequalMode = btn.getAttribute('data-ch-unequal-mode') || 'avg';
+        renderChannelPage(snap);
+      });
+    });
+
+    // Bind Collapsible Country & Traffic Source Section
     const btnDeep = document.getElementById('v3-btn-toggle-deep-analytics');
     if (btnDeep) {
       btnDeep.addEventListener('click', () => {
@@ -2214,25 +2561,50 @@
     }
   }
 
-  function renderSingleChannelChart(cp, snap) {
+  function renderSingleChannelChart(cp, snap, refWin) {
     destroyChart('channelSingle');
     const canvas = document.getElementById('v3-channel-single-canvas');
     if (!canvas || typeof Chart === 'undefined') return;
 
-    const metric = v3State.channelChartMetric;
-    const days = snap.win.days;
-    const prevDays = snap.win.prevDays;
+    const metric = v3State.channelChartMetric || 'views';
+    const currDays = snap.win.days || [];
+    const refDays = (refWin && refWin.refDays) ? refWin.refDays : (snap.win.prevDays || []);
+    const maxLen = Math.max(currDays.length, refDays.length, 1);
 
-    const labels = days.map(d => d.slice(8, 10) + '/' + d.slice(5, 7));
-    const currData = days.map(d => {
+    const labels = Array.from({ length: maxLen }, (_, idx) => {
+      const d = currDays[idx];
+      return d ? formatIsoToShortVN(d) : `Ngày ${idx + 1}`;
+    });
+
+    const currData = Array.from({ length: maxLen }, (_, idx) => {
+      const d = currDays[idx];
+      if (!d) return null;
       const pt = cp.curr.dailyMap.get(d);
-      return pt ? pt[metric] : null;
+      return pt && pt[metric] !== undefined ? pt[metric] : null;
     });
-    const prevData = days.map((_, idx) => {
-      const pd = prevDays[idx];
-      const pt = pd ? cp.prev.dailyMap.get(pd) : null;
-      return pt ? pt[metric] : null;
+
+    const refMap = (refWin && refWin.refMetrics && refWin.refMetrics.dailyMap) ? refWin.refMetrics.dailyMap : cp.prev.dailyMap;
+    const prevData = Array.from({ length: maxLen }, (_, idx) => {
+      const pd = refDays[idx];
+      if (!pd || !refMap) return null;
+      const pt = refMap.get(pd);
+      return pt && pt[metric] !== undefined ? pt[metric] : null;
     });
+
+    const fmtChartMetricVal = (val) => {
+      if (val === null || val === undefined || Number.isNaN(Number(val))) return '—';
+      if (metric === 'revenue') return fmtMoney(val);
+      if (metric === 'netSubs') {
+        const n = Math.round(Number(val));
+        return n > 0 ? `+${fmtInt(n)}` : fmtInt(n);
+      }
+      if (metric === 'videosPublished') return `${fmtInt(val)} video`;
+      return fmtInt(val);
+    };
+
+    const currRangeShort = `${formatIsoToShortVN(snap.win.start)}–${formatIsoToShortVN(snap.win.end)}`;
+    const refModeName = refWin ? refWin.refModeName : 'Kỳ trước';
+    const refRangeShort = refWin ? refWin.refRangeShort : snap.win.compareRangeShort;
 
     chartInstances['channelSingle'] = new Chart(canvas.getContext('2d'), {
       type: 'line',
@@ -2240,35 +2612,106 @@
         labels,
         datasets: [
           {
-            label: `${cp.meta.title} (Kỳ này)`,
+            label: `Kỳ này (${currRangeShort})`,
             data: currData,
             borderColor: cp.meta.teamColor,
-            backgroundColor: cp.meta.teamColor + '22',
-            borderWidth: 2.5,
-            pointRadius: 2.5,
+            backgroundColor: cp.meta.teamColor + '1F',
+            borderWidth: 2.6,
+            pointRadius: 2.3,
             tension: 0.3,
             fill: true
           },
           {
-            label: v3State.compareMode === 'yoy' ? 'Cùng kỳ năm ngoái' : 'Kỳ trước',
+            label: `${refModeName} (${refRangeShort})`,
             data: prevData,
             borderColor: '#94A3B8',
-            borderDash: [5, 4],
-            borderWidth: 1.8,
-            pointRadius: 2,
+            borderDash: [6, 4],
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            pointRadius: 1.8,
             tension: 0.3,
             fill: false
           }
         ]
       },
       options: {
+        animation: false,
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 4, bottom: 0 } },
         interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { labels: { color: '#CBD5E1' } } },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            align: 'end',
+            labels: {
+              color: '#CBD5E1',
+              boxWidth: 24,
+              boxHeight: 2,
+              font: { size: 11.5, weight: '600' }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              title: function (items) {
+                const idx = items && items[0] ? items[0].dataIndex : 0;
+                const dCurr = currDays[idx];
+                const dRef = refDays[idx];
+                return `Ngày thứ ${idx + 1} của kỳ (${dCurr ? formatIsoToVN(dCurr) : '—'} vs ${dRef ? formatIsoToVN(dRef) : '—'})`;
+              },
+              label: function (ctx) {
+                const idx = ctx.dataIndex;
+                const isCurr = ctx.datasetIndex === 0;
+                const realIso = isCurr ? currDays[idx] : refDays[idx];
+                const prefix = isCurr ? 'Kỳ này' : refModeName;
+                return ` ${prefix} (${realIso ? formatIsoToVN(realIso) : '—'}): ${fmtChartMetricVal(ctx.parsed.y)}`;
+              }
+            }
+          }
+        },
         scales: {
-          x: { ticks: { color: '#94A3B8', maxTicksLimit: 14 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-          y: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+          x: {
+            title: {
+              display: true,
+              text: 'Ngày thứ N của kỳ',
+              color: '#94A3B8',
+              font: { size: 11, weight: '600' },
+              padding: { top: 2, bottom: 0 }
+            },
+            afterBuildTicks: function (axis) {
+              const total = labels.length;
+              if (total <= 7) return;
+              const stepCount = 5;
+              const chosen = [];
+              for (let k = 0; k <= stepCount; k++) {
+                const idx = Math.round((k * (total - 1)) / stepCount);
+                if (!chosen.includes(idx)) chosen.push(idx);
+              }
+              axis.ticks = chosen.map(v => ({ value: v }));
+            },
+            ticks: {
+              color: '#94A3B8',
+              maxRotation: 0,
+              minRotation: 0,
+              autoSkip: false,
+              font: { size: 11 }
+            },
+            grid: { color: 'rgba(255,255,255,0.04)' }
+          },
+          y: {
+            beginAtZero: metric !== 'netSubs',
+            min: metric !== 'netSubs' ? 0 : undefined,
+            ticks: {
+              color: '#94A3B8',
+              precision: 0,
+              callback: function (val) {
+                if (metric === 'revenue') return fmtMoney(val);
+                return new Intl.NumberFormat('vi-VN').format(Math.round(val));
+              }
+            },
+            grid: { color: 'rgba(255,255,255,0.06)' }
+          }
         }
       }
     });
@@ -4656,6 +5099,15 @@
 
   function init() {
     syncNetworkMenuVisibility();
+    document.addEventListener('click', (e) => {
+      if (v3State.channelPickerOpen && !e.target.closest('#v3-channel-search-picker')) {
+        v3State.channelPickerOpen = false;
+        const menu = document.getElementById('v3-channel-picker-menu');
+        const btn = document.getElementById('v3-channel-picker-btn');
+        if (menu) menu.classList.remove('open');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      }
+    });
     // Pre-render Guide page so #guide-... anchors exist in DOM at all times
     renderGuidePage();
     refreshActiveView();

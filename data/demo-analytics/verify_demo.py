@@ -271,6 +271,79 @@ def main():
                 break
     check("page2_table_b_single_team_reconciles_with_table_a_and_team_cards", table_b_reconcile_ok)
 
+    # Check 32: Page 2 "Toàn network" row equals sum of 3 teams and Page 1 ("Tổng quan"), and channel shares in each team sum to exact 100.0%
+    def allocate_exact_tenths_pct(values):
+        total = sum(max(0, v) for v in values)
+        if total <= 0:
+            return [0.0 for _ in values]
+        raw_tenths = [(max(0, v) / total) * 1000.0 for v in values]
+        floored = [int(x) for x in raw_tenths]
+        remainder = 1000 - sum(floored)
+        order = sorted(range(len(values)), key=lambda idx: (-(raw_tenths[idx] - floored[idx]), -values[idx], idx))
+        for k in range(remainder):
+            floored[order[k]] += 1
+        return [t / 10.0 for t in floored]
+
+    toan_network_and_share_ok = True
+    for c_start, c_end, r_start, r_end in test_windows:
+        c_days = [r["day"] for r in daily if r["channel_id"] == baseline["channels"][0]["id"] and c_start <= r["day"] <= c_end]
+        r_days = [r["day"] for r in daily if r["channel_id"] == baseline["channels"][0]["id"] and r_start <= r["day"] <= r_end]
+        # Page 1 system totals
+        p1_curr_views = sum(index[c["id"], d]["views"] for c in baseline["channels"] for d in c_days)
+        p1_prev_views = sum(index[c["id"], d]["views"] for c in baseline["channels"] for d in r_days)
+        p1_curr_subs = sum(index[c["id"], d]["subscribersGained"] - index[c["id"], d]["subscribersLost"] for c in baseline["channels"] for d in c_days)
+        p1_curr_rev = sum(cents(index[c["id"], d]["estimatedRevenue"]) for c in baseline["channels"] for d in c_days)
+        p1_curr_vids = sum(index[c["id"], d]["daily_videos_published"] for c in baseline["channels"] for d in c_days)
+        p1_daily_views = [sum(index[c["id"], d]["views"] for c in baseline["channels"]) for d in c_days]
+
+        # Page 2 3-team ranking rows & "Toàn network" row
+        team_views_list = []
+        team_prev_views_list = []
+        team_subs_list = []
+        team_rev_list = []
+        team_vids_list = []
+        team_ch_counts = []
+        team_daily_views_lists = []
+        for t in baseline["teams"]:
+            tid = t["id"]
+            team_cids = [cid for cid, tm in ch_to_team.items() if tm == tid]
+            t_views = sum(index[cid, d]["views"] for cid in team_cids for d in c_days)
+            t_prev_views = sum(index[cid, d]["views"] for cid in team_cids for d in r_days)
+            t_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in team_cids for d in c_days)
+            t_rev = sum(cents(index[cid, d]["estimatedRevenue"]) for cid in team_cids for d in c_days)
+            t_vids = sum(index[cid, d]["daily_videos_published"] for cid in team_cids for d in c_days)
+            t_daily = [sum(index[cid, d]["views"] for cid in team_cids) for d in c_days]
+            team_views_list.append(t_views)
+            team_prev_views_list.append(t_prev_views)
+            team_subs_list.append(t_subs)
+            team_rev_list.append(t_rev)
+            team_vids_list.append(t_vids)
+            team_ch_counts.append(len(team_cids))
+            team_daily_views_lists.append(t_daily)
+
+            # Channel shares within this team must sum to exact 100.0% (1000 tenths)
+            ch_views_in_team = [sum(index[cid, d]["views"] for d in c_days) for cid in team_cids]
+            ch_shares = allocate_exact_tenths_pct(ch_views_in_team)
+            if sum(ch_views_in_team) != t_views or round(sum(ch_shares) * 10) != 1000:
+                toan_network_and_share_ok = False
+                break
+
+        team_net_shares = allocate_exact_tenths_pct(team_views_list)
+        if not (
+            toan_network_and_share_ok and
+            sum(team_views_list) == p1_curr_views and
+            sum(team_prev_views_list) == p1_prev_views and
+            sum(team_subs_list) == p1_curr_subs and
+            sum(team_rev_list) == p1_curr_rev and
+            sum(team_vids_list) == p1_curr_vids and
+            sum(team_ch_counts) == len(baseline["channels"]) == 15 and
+            round(sum(team_net_shares) * 10) == 1000 and
+            [sum(col) for col in zip(*team_daily_views_lists)] == p1_daily_views
+        ):
+            toan_network_and_share_ok = False
+            break
+    check("page2_toan_network_row_and_channel_share_100_percent", toan_network_and_share_ok)
+
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())
     (HERE / "independent_validation.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

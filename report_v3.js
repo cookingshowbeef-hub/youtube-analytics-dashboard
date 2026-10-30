@@ -44,6 +44,8 @@
     alertShowAllPerm: false,
     // Page 2 (Team)
     selectedTeamId: 'TEAM-01',
+    teamRankSortField: 'views', // 'views' | 'growth' | 'netSubs' | 'revenue' | 'channels'
+    teamRankSortAsc: false,
     teamChartMetric: 'views',
     teamSingleMetric: 'views', // 'views' | 'netSubs' | 'revenue'
     teamTableSort: 'growth', // 'growth' | 'views'
@@ -2929,15 +2931,101 @@
   // =========================================================================
   // PAGE 2: BÁO CÁO THEO TEAM (#view-report-team)
   // =========================================================================
+  function allocateExactTenthsPct(values) {
+    const nums = values.map(v => Math.max(0, Number(v) || 0));
+    const total = nums.reduce((s, v) => s + v, 0);
+    if (total <= 0 || !nums.length) return nums.map(() => 0);
+    const exactTenths = nums.map(v => (v / total) * 1000);
+    const floored = exactTenths.map(x => Math.floor(x + 1e-9));
+    const remainderTenths = 1000 - floored.reduce((s, x) => s + x, 0);
+    const order = exactTenths
+      .map((x, i) => ({ i, rem: x - floored[i], val: nums[i] }))
+      .sort((a, b) => (b.rem - a.rem) || (b.val - a.val) || (a.i - b.i));
+    for (let k = 0; k < remainderTenths && k < order.length; k++) {
+      floored[order[k].i] += 1;
+    }
+    return floored.map(t => t / 10);
+  }
+
+  function buildSparklineSvg(dailySeries, metricKey, color, width = 108, height = 26) {
+    const vals = (dailySeries || [])
+      .map(d => (d && d[metricKey] !== null && d[metricKey] !== undefined ? Number(d[metricKey]) : null))
+      .filter(v => v !== null && !Number.isNaN(v));
+    if (vals.length < 2) {
+      return `<span style="color:var(--text-dim);font-size:11px;">—</span>`;
+    }
+    const minV = Math.min(...vals);
+    const maxV = Math.max(...vals);
+    const range = maxV - minV > 0 ? (maxV - minV) : 1;
+    const padX = 4;
+    const padY = 4;
+    const innerW = width - padX * 2;
+    const innerH = height - padY * 2;
+    const pts = vals.map((v, idx) => {
+      const x = padX + (idx / (vals.length - 1)) * innerW;
+      const y = padY + innerH - ((v - minV) / range) * innerH;
+      return [Number(x.toFixed(1)), Number(y.toFixed(1))];
+    });
+    const polyPoints = pts.map(p => `${p[0]},${p[1]}`).join(' ');
+    const areaPoints = `${pts[0][0]},${height - 2} ${polyPoints} ${pts[pts.length - 1][0]},${height - 2}`;
+    const lastPt = pts[pts.length - 1];
+    return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="v3-sparkline-svg" aria-hidden="true"><polygon points="${areaPoints}" fill="${color}" fill-opacity="0.14"></polygon><polyline points="${polyPoints}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline><circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="2.5" fill="${color}"></circle></svg>`;
+  }
+
   function renderTeamPage(snap) {
     const root = document.getElementById('v3-team-root');
     if (!root) return;
     const legacySection = document.getElementById('v3-legacy-team-section');
     if (legacySection) legacySection.style.display = 'none';
 
-    const sortedTeams = [...snap.teamPairs].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
-    const selectedTeam = sortedTeams.find(t => t.id === v3State.selectedTeamId) || sortedTeams[0];
+    const sortedTeamsByViews = [...snap.teamPairs].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
+    const selectedTeam = sortedTeamsByViews.find(t => t.id === v3State.selectedTeamId) || sortedTeamsByViews[0];
     if (selectedTeam) v3State.selectedTeamId = selectedTeam.id;
+
+    // Exact 100.0% network share allocation across the 3 teams
+    const teamNetShares = allocateExactTenthsPct(sortedTeamsByViews.map(t => t.curr.views || 0));
+    const teamNetShareMap = new Map();
+    sortedTeamsByViews.forEach((t, i) => teamNetShareMap.set(t.id, teamNetShares[i]));
+
+    // Fastest growing and steepest declining team badges ("Tăng nhanh nhất / Giảm mạnh nhất")
+    const teamsWithGrowth = snap.teamPairs.filter(tp => tp.viewsGrowthPct !== null && tp.viewsGrowthPct !== undefined);
+    let fastestTeamId = null;
+    let slowestTeamId = null;
+    if (teamsWithGrowth.length >= 2) {
+      const byGrowth = [...teamsWithGrowth].sort((a, b) => (b.viewsGrowthPct ?? -999) - (a.viewsGrowthPct ?? -999));
+      if (byGrowth[0].viewsGrowthPct !== byGrowth[byGrowth.length - 1].viewsGrowthPct) {
+        fastestTeamId = byGrowth[0].id;
+        slowestTeamId = byGrowth[byGrowth.length - 1].id;
+      }
+    }
+
+    // Sortable Team Ranking Table rows
+    const rankSortField = v3State.teamRankSortField || 'views';
+    const rankSortAsc = !!v3State.teamRankSortAsc;
+    const getTeamSortVal = (tp, f) => {
+      if (f === 'growth') return tp.viewsGrowthPct ?? -9999;
+      if (f === 'netSubs') return tp.curr.netSubs ?? -999999;
+      if (f === 'revenue') return tp.curr.estimatedRevenue ?? -1;
+      if (f === 'channels') return tp.curr.totalChannels ?? 0;
+      return tp.curr.views ?? -1;
+    };
+    const rankedTeams = [...snap.teamPairs].sort((a, b) => {
+      const va = getTeamSortVal(a, rankSortField);
+      const vb = getTeamSortVal(b, rankSortField);
+      return rankSortAsc ? (va - vb) : (vb - va);
+    });
+
+    function teamRankHeader(field, labelHtml, isNum = true, extraClass = '') {
+      const active = rankSortField === field;
+      const arrow = active ? (rankSortAsc ? ' ▲' : ' ▼') : '';
+      return `<th class="${isNum ? 'num' : ''} ${extraClass}" data-team-rank-sort="${field}" style="cursor:pointer;user-select:none;${active ? 'color:#38BDF8;' : ''}">${labelHtml}${arrow}</th>`;
+    }
+
+    // Exact 100.0% share within the selected team's 5 channels
+    const selectedTeamChannelsRaw = [...(selectedTeam ? selectedTeam.channels : [])].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
+    const channelShareTenths = allocateExactTenthsPct(selectedTeamChannelsRaw.map(cp => cp.curr.views || 0));
+    const channelShareMap = new Map();
+    selectedTeamChannelsRaw.forEach((cp, idx) => channelShareMap.set(cp.id, channelShareTenths[idx]));
 
     const sortMode = v3State.teamTableSort || 'growth';
     const teamChannelsSorted = [...(selectedTeam ? selectedTeam.channels : [])].sort((a, b) => {
@@ -2991,51 +3079,99 @@
       : ((v3State.compareMode === 'prev_quarter' || v3State.preset === 'quarter') ? 'prev_quarter' : 'prev');
 
     const currRangeShort = `${formatIsoToShortVN(snap.win.start)}–${formatIsoToShortVN(snap.win.end)}`;
+    const sysCurr = snap.systemCurr;
+    const sysPrev = snap.systemPrev;
 
     root.innerHTML = `
-      <!-- 1. 3 TEAM CARDS (Sorted by views rank #1/#2/#3, equal height, only views+delta, netSubs, revenue, and conclusion) -->
-      <div class="v3-grid-3 v3-team-cards-grid">
-        ${sortedTeams.map((tp, idx) => {
-          const rank = idx + 1;
-          const isSelected = tp.id === selectedTeam.id;
-          const chByViews = [...tp.channels].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
-          const topCh = chByViews[0];
-          const topSharePct = (tp.curr.views && tp.curr.views > 0 && topCh && topCh.curr.views !== null)
-            ? ((topCh.curr.views / tp.curr.views) * 100)
-            : 0;
-          return `
-            <div class="v3-panel clickable-row v3-team-card" data-select-team-card="${tp.id}" style="margin-bottom:0;border:2px solid ${isSelected ? tp.color : 'var(--border-subtle)'};background:${isSelected ? tp.color + '12' : 'var(--bg-card)'};box-shadow:${isSelected ? '0 0 0 1px ' + tp.color + '40' : 'none'};">
-              <div>
-                <div class="v3-team-card-top">
-                  <div class="v3-team-card-name-wrap">
-                    <span class="v3-rank-pill ${rank === 1 ? 'top1' : ''}">#${rank}</span>
-                    <span class="v3-team-dot" style="width:11px;height:11px;background:${tp.color};flex-shrink:0;"></span>
-                    <strong class="v3-team-card-title">${esc(tp.name)}</strong>
+      <!-- 1. TEAM RANKING TABLE (Replaces 3 team cards; sortable columns, sparkline, fixed "Toàn network" footer, no selection state) -->
+      <section class="v3-panel" id="v3-team-ranking-panel">
+        <div class="v3-panel-header" style="margin-bottom:10px;">
+          <div class="v3-panel-title">
+            <i class="ri-trophy-line" style="color:#38BDF8;"></i>
+            Bảng xếp hạng 3 Team
+          </div>
+          <span style="font-size:11.5px;color:var(--text-muted);">Nhấn vào tiêu đề cột để sắp xếp · Dòng “Toàn network” cố định ở cuối</span>
+        </div>
+        <div class="v3-table-wrap">
+          <table class="v3-table" id="v3-team-ranking-table">
+            <thead>
+              <tr>
+                <th>Hạng</th>
+                <th>Team sản xuất</th>
+                ${teamRankHeader('views', 'Views & % Views Network', false, 'v3-bar-cell')}
+                ${teamRankHeader('growth', `<div>So với ${esc(snap.win.compareModeName)}</div><div class="v3-th-sub">(${esc(snap.win.compareRangeShort)})</div>`)}
+                ${teamRankHeader('netSubs', 'Sub ròng')}
+                ${teamRankHeader('revenue', 'Doanh thu')}
+                ${teamRankHeader('channels', 'Số kênh')}
+                <th class="num" style="text-align:right;">Sparkline theo ngày</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rankedTeams.map((tp, idx) => {
+                const netShare = teamNetShareMap.get(tp.id) ?? tp.shareOfCompanyViews;
+                let growthTagHtml = '';
+                if (tp.id === fastestTeamId) {
+                  growthTagHtml = `<span class="v3-badge highest">Tăng nhanh nhất</span>`;
+                } else if (tp.id === slowestTeamId) {
+                  growthTagHtml = `<span class="v3-badge lowest">Giảm mạnh nhất</span>`;
+                }
+                return `
+                  <tr data-team-rank-row="${tp.id}">
+                    <td style="white-space:nowrap;">
+                      <span class="v3-rank-pill ${idx === 0 ? 'top1' : ''}">#${idx + 1}</span>
+                    </td>
+                    <td style="white-space:nowrap;">
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="v3-team-dot" style="width:10px;height:10px;background:${tp.color};flex-shrink:0;"></span>
+                        <strong>${esc(tp.name)}</strong>
+                        ${growthTagHtml}
+                      </div>
+                    </td>
+                    <td class="v3-bar-cell" style="min-width:210px;">
+                      <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:12px;">
+                        <strong>${tp.curr.views !== null ? fmtInt(tp.curr.views) : '—'}</strong>
+                        <span style="color:var(--text-muted);" data-team-net-share="${netShare.toFixed(1)}">${fmtDec(netShare, 1)}%</span>
+                      </div>
+                      <div class="v3-bar-track">
+                        <div class="v3-bar-fill" style="width:${Math.min(100, netShare)}%;background:${tp.color};"></div>
+                      </div>
+                    </td>
+                    <td class="num" style="white-space:nowrap;">${fmtDeltaBadge(tp.curr.views, tp.prev.views)}</td>
+                    <td class="num" style="white-space:nowrap;">${tp.curr.netSubs !== null ? (tp.curr.netSubs > 0 ? '+' + fmtInt(tp.curr.netSubs) : fmtInt(tp.curr.netSubs)) : '—'}</td>
+                    <td class="num" style="white-space:nowrap;"><strong>${tp.curr.estimatedRevenue !== null ? fmtMoney(tp.curr.estimatedRevenue) : '—'}</strong></td>
+                    <td class="num" style="white-space:nowrap;">${tp.curr.totalChannels} kênh</td>
+                    <td class="num" style="text-align:right;white-space:nowrap;">
+                      ${buildSparklineSvg(tp.curr.dailySeries, 'views', tp.color)}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+            <tfoot>
+              <tr id="v3-team-ranking-network-row" data-network-views="${sysCurr.views ?? ''}" data-network-subs="${sysCurr.netSubs ?? ''}" data-network-rev="${sysCurr.estimatedRevenue ?? ''}" data-network-channels="${sysCurr.totalChannels ?? 15}">
+                <td style="white-space:nowrap;"><span class="v3-rank-pill">Σ</span></td>
+                <td style="white-space:nowrap;"><strong>Toàn network</strong></td>
+                <td class="v3-bar-cell">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:12px;">
+                    <strong>${sysCurr.views !== null ? fmtInt(sysCurr.views) : '—'}</strong>
+                    <span style="color:var(--text-main);font-weight:800;">100,0%</span>
                   </div>
-                  <div class="v3-team-card-badges">
-                    <span class="v3-badge muted" style="white-space:nowrap;">${fmtDec(tp.shareOfCompanyViews, 1)}% views</span>
+                  <div class="v3-bar-track">
+                    <div class="v3-bar-fill" style="width:100%;background:#38BDF8;"></div>
                   </div>
-                </div>
-
-                <div class="v3-kpi-value" style="margin-bottom:6px;white-space:nowrap;">${tp.curr.views !== null ? fmtInt(tp.curr.views) + ' views' : '—'}</div>
-                <div class="v3-team-card-delta-wrap">
-                  ${fmtDeltaBadge(tp.curr.views, tp.prev.views)}
-                  <span class="v3-compare-ref-tag">${esc(snap.win.compareShortTag)}</span>
-                </div>
-
-                <div class="v3-team-card-metrics">
-                  <div class="v3-team-card-metric-item">Sub ròng: <strong>${tp.curr.netSubs !== null ? (tp.curr.netSubs > 0 ? '+' + fmtInt(tp.curr.netSubs) : fmtInt(tp.curr.netSubs)) : '—'}</strong></div>
-                  <div class="v3-team-card-metric-item">Doanh thu: <strong>${tp.curr.estimatedRevenue !== null ? fmtMoney(tp.curr.estimatedRevenue) : '—'}</strong></div>
-                </div>
-              </div>
-
-              <div class="v3-team-card-conclusion" title="Kênh lớn nhất: ${esc(topCh ? topCh.meta.title : '—')} (${fmtDec(topSharePct, 1)}% views của team)">
-                <span>Kênh lớn nhất chiếm <strong>${fmtDec(topSharePct, 1)}%</strong> views (${esc(topCh ? topCh.meta.title : '—')})</span>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
+                </td>
+                <td class="num" style="white-space:nowrap;">${fmtDeltaBadge(sysCurr.views, sysPrev.views)}</td>
+                <td class="num" style="white-space:nowrap;"><strong>${sysCurr.netSubs !== null ? (sysCurr.netSubs > 0 ? '+' + fmtInt(sysCurr.netSubs) : fmtInt(sysCurr.netSubs)) : '—'}</strong></td>
+                <td class="num" style="white-space:nowrap;"><strong>${sysCurr.estimatedRevenue !== null ? fmtMoney(sysCurr.estimatedRevenue) : '—'}</strong></td>
+                <td class="num" style="white-space:nowrap;"><strong>${sysCurr.totalChannels} kênh</strong></td>
+                <td class="num" style="text-align:right;white-space:nowrap;">
+                  ${buildSparklineSvg(sysCurr.dailySeries, 'views', '#38BDF8')}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
 
       <!-- 2. TABLE/CHART A: FULL-WIDTH 3-TEAM TREND CHART -->
       <section class="v3-panel" id="v3-team-chart-a-panel">
@@ -3064,19 +3200,11 @@
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <div class="v3-panel-title" style="white-space:nowrap;">
               <i class="ri-focus-2-line" style="color:${selectedTeam.color};"></i>
-              Xu hướng một team
-            </div>
-            <div class="v3-single-team-chips" role="tablist" aria-label="Chọn 1 team để xem xu hướng">
-              ${sortedTeams.map(tp => {
-                const active = tp.id === selectedTeam.id;
-                return `
-                  <button type="button" class="v3-single-team-chip ${active ? 'active' : ''}" data-select-team-card="${tp.id}"
-                    style="${active ? `border-color:${tp.color};background:${tp.color}1F;color:var(--text-main);box-shadow:0 0 0 1px ${tp.color}40;` : ''}">
-                    <span class="v3-team-dot" style="background:${tp.color};"></span>
-                    <span>${esc(tp.name)}</span>
-                  </button>
-                `;
-              }).join('')}
+              Xu hướng một team:
+              <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:6px;border:1px solid ${selectedTeam.color};background:${selectedTeam.color}1A;font-size:12.5px;">
+                <span class="v3-team-dot" style="background:${selectedTeam.color};"></span>
+                <span>${esc(selectedTeam.name)}</span>
+              </span>
             </div>
             ${snap.win.isPartialQuarter ? `<span class="v3-badge partial">Chưa trọn quý · So với ${snap.win.dayCount} ngày đầu của quý đối chứng</span>` : ''}
           </div>
@@ -3130,19 +3258,33 @@
         </div>
       </section>
 
-      <!-- 4. 5-CHANNEL TABLE IN SELECTED TEAM -->
+      <!-- 4. SINGLE TEAM SELECTOR + 5-CHANNEL TABLE IN SELECTED TEAM -->
       <section class="v3-panel" style="margin-bottom:0;" id="v3-team-channel-table-panel">
-        <div class="v3-panel-header">
-          <div>
-            <div class="v3-panel-title">
-              <span class="v3-team-dot" style="width:11px;height:11px;background:${selectedTeam.color};"></span>
-              Bảng 5 kênh thuộc ${esc(selectedTeam.name)}
-            </div>
-            ${selectedTeam.leader && selectedTeam.leader !== 'Trưởng nhóm' ? `
-              <div class="v3-panel-subtitle">
-                Trưởng nhóm: <strong>${esc(selectedTeam.leader)}</strong> · Nhấn vào thẻ team hoặc chip phía trên để chuyển đổi giữa 3 team
+        <div class="v3-panel-header" style="gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div>
+              <div class="v3-panel-title">
+                <span class="v3-team-dot" style="width:11px;height:11px;background:${selectedTeam.color};"></span>
+                Bảng 5 kênh thuộc ${esc(selectedTeam.name)}
               </div>
-            ` : ''}
+              ${selectedTeam.leader && selectedTeam.leader !== 'Trưởng nhóm' ? `
+                <div class="v3-panel-subtitle">
+                  Trưởng nhóm: <strong>${esc(selectedTeam.leader)}</strong>
+                </div>
+              ` : ''}
+            </div>
+            <div class="v3-single-team-chips" id="v3-channel-table-team-selector" role="tablist" aria-label="Bộ chọn team duy nhất cho bảng 5 kênh">
+              ${sortedTeamsByViews.map(tp => {
+                const active = tp.id === selectedTeam.id;
+                return `
+                  <button type="button" class="v3-single-team-chip ${active ? 'active' : ''}" data-select-team-card="${tp.id}"
+                    style="${active ? `border-color:${tp.color};background:${tp.color}1F;color:var(--text-main);box-shadow:0 0 0 1px ${tp.color}40;` : ''}">
+                    <span class="v3-team-dot" style="background:${tp.color};"></span>
+                    <span>${esc(tp.name)}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span style="font-size:12px;color:var(--text-muted);font-weight:600;">Sắp xếp:</span>
@@ -3153,13 +3295,17 @@
           </div>
         </div>
         <div class="v3-table-wrap">
-          <table class="v3-table">
+          <table class="v3-table" id="v3-team-5channel-table">
             <thead>
               <tr>
                 <th>Hạng</th>
                 <th>Kênh YouTube</th>
                 <th>Nhân viên (PIC)</th>
                 <th class="num">Views kỳ này</th>
+                <th class="num" style="min-width:78px;">
+                  <div>Tỷ trọng</div>
+                  <div class="v3-th-sub">trong team</div>
+                </th>
                 <th class="num">
                   <div>So với ${esc(snap.win.compareModeName)}</div>
                   <div class="v3-th-sub">(${esc(snap.win.compareRangeShort)})</div>
@@ -3172,26 +3318,41 @@
             </thead>
             <tbody>
               ${teamChannelsSorted.map((cp, idx) => {
-                const topTag = sortMode === 'views' ? ' [Lớn nhất team]' : ' [Tăng nhanh nhất]';
-                const lowTag = sortMode === 'views' ? ' [Nhỏ nhất team]' : ' [Chậm nhất team]';
+                const topTag = sortMode === 'views' ? 'Lớn nhất' : 'Tăng nhanh nhất';
+                const lowTag = sortMode === 'views' ? 'Nhỏ nhất' : 'Chậm nhất';
+                const tagHtml = idx === 0
+                  ? `<span class="v3-badge highest">${topTag}</span>`
+                  : (idx === teamChannelsSorted.length - 1 ? `<span class="v3-badge lowest">${lowTag}</span>` : '');
                 const isSlowUpload = cp.daysSinceLastUpload > 7;
+                const chShare = channelShareMap.get(cp.id) ?? 0;
                 return `
                   <tr class="clickable-row" data-goto-channel="${cp.id}">
                     <td style="white-space:nowrap;">
-                      <span class="v3-badge ${idx === 0 ? 'highest' : (idx === teamChannelsSorted.length - 1 ? 'lowest' : 'muted')}">
-                        #${idx + 1}${idx === 0 ? topTag : (idx === teamChannelsSorted.length - 1 ? lowTag : '')}
-                      </span>
+                      <span class="v3-rank-pill ${idx === 0 ? 'top1' : ''}">#${idx + 1}</span>
                     </td>
-                    <td style="white-space:nowrap;"><strong>${esc(cp.meta.title)}</strong></td>
-                    <td style="white-space:nowrap;">${esc(cp.meta.employeeName)} (${esc(cp.meta.employeeId)})</td>
+                    <td style="white-space:nowrap;">
+                      <div style="display:inline-flex;align-items:center;gap:6px;">
+                        <strong>${esc(cp.meta.title)}</strong>
+                        ${tagHtml}
+                      </div>
+                    </td>
+                    <td style="white-space:nowrap;" title="${esc(cp.meta.employeeName)} (${esc(cp.meta.employeeId)})">${esc(cp.meta.employeeName)}</td>
                     <td class="num" style="white-space:nowrap;"><strong>${cp.curr.views !== null ? fmtInt(cp.curr.views) : '—'}</strong></td>
+                    <td class="v3-bar-cell" style="min-width:78px;" data-channel-team-share="${chShare.toFixed(1)}">
+                      <div style="display:flex;justify-content:flex-end;font-family:var(--font-mono);font-size:11.5px;font-weight:700;">
+                        <span>${fmtDec(chShare, 1)}%</span>
+                      </div>
+                      <div class="v3-bar-track">
+                        <div class="v3-bar-fill" style="width:${Math.min(100, chShare)}%;background:${selectedTeam.color};"></div>
+                      </div>
+                    </td>
                     <td class="num" style="white-space:nowrap;">${fmtDeltaBadge(cp.curr.views, cp.prev.views)}</td>
                     <td class="num" style="white-space:nowrap;">${cp.curr.netSubs !== null ? (cp.curr.netSubs > 0 ? '+' + fmtInt(cp.curr.netSubs) : fmtInt(cp.curr.netSubs)) : '—'}</td>
                     <td class="num" style="white-space:nowrap;">${fmtInt(cp.curr.videosPublished)}</td>
                     <td class="num" style="white-space:nowrap;font-family:var(--font-sans);">
                       <span class="${isSlowUpload ? 'v3-slow-upload-pill' : ''}" title="${isSlowUpload ? 'Quá 7 ngày chưa đăng video mới' : 'Lịch đăng bình thường'}">
                         <span style="font-family:var(--font-mono);">${formatIsoToVN(cp.lastPublishedCutoff)}</span>
-                        <span style="font-size:11px;${isSlowUpload ? '' : 'color:var(--text-muted);'}">(${cp.daysSinceLastUpload} ngày trước)</span>
+                        <span style="font-size:10.5px;${isSlowUpload ? '' : 'color:var(--text-muted);'}">(${cp.daysSinceLastUpload} ngày)</span>
                       </span>
                     </td>
                     <td class="num" style="white-space:nowrap;"><strong>${cp.curr.estimatedRevenue !== null ? fmtMoney(cp.curr.estimatedRevenue) : '—'}</strong></td>
@@ -3199,6 +3360,18 @@
                 `;
               }).join('')}
             </tbody>
+            <tfoot>
+              <tr id="v3-team-5channel-total-row">
+                <td colspan="3"><strong>Tổng cộng ${esc(selectedTeam.name)} (5 kênh)</strong></td>
+                <td class="num" style="white-space:nowrap;"><strong>${selectedTeam.curr.views !== null ? fmtInt(selectedTeam.curr.views) : '—'}</strong></td>
+                <td class="num" style="white-space:nowrap;" data-channel-team-share-total="100.0"><strong>100,0%</strong></td>
+                <td class="num" style="white-space:nowrap;">${fmtDeltaBadge(selectedTeam.curr.views, selectedTeam.prev.views)}</td>
+                <td class="num" style="white-space:nowrap;"><strong>${selectedTeam.curr.netSubs !== null ? (selectedTeam.curr.netSubs > 0 ? '+' + fmtInt(selectedTeam.curr.netSubs) : fmtInt(selectedTeam.curr.netSubs)) : '—'}</strong></td>
+                <td class="num" style="white-space:nowrap;"><strong>${fmtInt(selectedTeam.curr.videosPublished)}</strong></td>
+                <td class="num" style="white-space:nowrap;">—</td>
+                <td class="num" style="white-space:nowrap;"><strong>${selectedTeam.curr.estimatedRevenue !== null ? fmtMoney(selectedTeam.curr.estimatedRevenue) : '—'}</strong></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </section>
@@ -3211,7 +3384,7 @@
       const metric = v3State.teamChartMetric;
       const days = snap.win.days;
       const labels = days.map(d => d.slice(8, 10) + '/' + d.slice(5, 7));
-      const datasets = sortedTeams.map(tp => {
+      const datasets = sortedTeamsByViews.map(tp => {
         const series = (tp.curr.dailySeries || []).map(d => d[metric]);
         let periodTotalStr = '—';
         if (metric === 'views' && tp.curr.views !== null) {
@@ -3476,6 +3649,19 @@
     }
 
     destroyChart('teamCadence');
+
+    root.querySelectorAll('[data-team-rank-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const field = th.getAttribute('data-team-rank-sort');
+        if (v3State.teamRankSortField === field) {
+          v3State.teamRankSortAsc = !v3State.teamRankSortAsc;
+        } else {
+          v3State.teamRankSortField = field;
+          v3State.teamRankSortAsc = false;
+        }
+        renderTeamPage(snap);
+      });
+    });
 
     root.querySelectorAll('[data-select-team-card]').forEach(card => {
       card.addEventListener('click', () => {

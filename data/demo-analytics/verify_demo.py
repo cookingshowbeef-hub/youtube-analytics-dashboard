@@ -222,6 +222,55 @@ def main():
           all(sum(ch_30d_vids[cid] for cid in ch_30d_vids if ch_to_team[cid] == tid) == team_30d_vids[tid] for tid in team_30d_vids) and
           sum(team_30d_rev.values()) == sys_30d_rev)
 
+    # Check 31: Page 2 Table B ("Xu hướng một team") total equals Table A ("Lượt xem theo ngày" 3 team) and Team Card across periods & reference modes
+    test_windows = [
+        # (curr_start, curr_end, ref_start, ref_end)
+        ("2026-09-27", "2026-10-26", "2026-08-28", "2026-09-26"),  # 30d vs prev
+        ("2026-09-27", "2026-10-26", "2026-06-27", "2026-07-26"),  # 30d vs prev_quarter
+        ("2026-09-27", "2026-10-26", "2025-09-27", "2025-10-26"),  # 30d vs yoy
+        ("2026-10-01", "2026-10-26", "2026-07-01", "2026-07-26"),  # Q4 partial (26d) vs first 26d of Q3
+        ("2026-10-01", "2026-10-26", "2025-10-01", "2025-10-26"),  # Q4 partial (26d) vs first 26d of Q4 2025
+        ("2026-07-01", "2026-09-30", "2026-04-01", "2026-07-01"),  # Q3 full (92d) vs prev_quarter (92d)
+    ]
+    table_b_reconcile_ok = True
+    for c_start, c_end, r_start, r_end in test_windows:
+        c_days = [r["day"] for r in daily if r["channel_id"] == baseline["channels"][0]["id"] and c_start <= r["day"] <= c_end]
+        r_days = [r["day"] for r in daily if r["channel_id"] == baseline["channels"][0]["id"] and r_start <= r["day"] <= r_end]
+        if len(c_days) != len(r_days) or len(c_days) == 0:
+            table_b_reconcile_ok = False
+            break
+        for t in baseline["teams"]:
+            tid = t["id"]
+            team_cids = [cid for cid, tm in ch_to_team.items() if tm == tid]
+            # Team Card & 5-Channel Table totals
+            card_curr_views = sum(index[cid, d]["views"] for cid in team_cids for d in c_days)
+            card_prev_views = sum(index[cid, d]["views"] for cid in team_cids for d in r_days)
+            card_curr_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in team_cids for d in c_days)
+            card_prev_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in team_cids for d in r_days)
+            card_curr_rev = sum(cents(index[cid, d]["estimatedRevenue"]) for cid in team_cids for d in c_days)
+            card_prev_rev = sum(cents(index[cid, d]["estimatedRevenue"]) for cid in team_cids for d in r_days)
+            # Table A daily series for this team
+            table_a_daily_views = [sum(index[cid, d]["views"] for cid in team_cids) for d in c_days]
+            table_a_daily_rev = [sum(cents(index[cid, d]["estimatedRevenue"]) for cid in team_cids) for d in c_days]
+            # Table B ("Xu hướng một team") day-by-day series (day 1..N)
+            table_b_curr_views = sum(sum(index[cid, d]["views"] for cid in team_cids) for d in c_days)
+            table_b_prev_views = sum(sum(index[cid, d]["views"] for cid in team_cids) for d in r_days)
+            table_b_curr_subs = sum(sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in team_cids) for d in c_days)
+            table_b_prev_subs = sum(sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in team_cids) for d in r_days)
+            table_b_curr_rev = sum(sum(cents(index[cid, d]["estimatedRevenue"]) for cid in team_cids) for d in c_days)
+            table_b_prev_rev = sum(sum(cents(index[cid, d]["estimatedRevenue"]) for cid in team_cids) for d in r_days)
+            if not (
+                table_b_curr_views == sum(table_a_daily_views) == card_curr_views and
+                table_b_prev_views == card_prev_views and
+                table_b_curr_subs == card_curr_subs and
+                table_b_prev_subs == card_prev_subs and
+                table_b_curr_rev == sum(table_a_daily_rev) == card_curr_rev and
+                table_b_prev_rev == card_prev_rev
+            ):
+                table_b_reconcile_ok = False
+                break
+    check("page2_table_b_single_team_reconciles_with_table_a_and_team_cards", table_b_reconcile_ok)
+
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())
     (HERE / "independent_validation.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

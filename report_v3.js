@@ -36,6 +36,7 @@
     endDate: '2026-10-26',
     compareMode: 'prev',    // 'prev' | 'yoy'
     overviewMetric: 'views',// 'views' | 'revenue' | 'watchHours' | 'netSubs'
+    overviewPeriodTab: 'mom', // 'mom' | 'qoq'
     alertDropThreshold: Number(localStorage.getItem('bgmedia_alert_drop_pct')) || -10,
     alertUploadCycleDays: Number(localStorage.getItem('bgmedia_alert_upload_days')) || 7,
     alertShowAllDrops: false,
@@ -107,13 +108,19 @@
     return sign + new Intl.NumberFormat('vi-VN', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Math.abs(num));
   }
 
-  function fmtCompact(n) {
+  function fmtCompact(n, keepTwoDecimalsForMillions = false) {
     if (n === null || n === undefined || Number.isNaN(Number(n))) return '—';
     const num = Number(n);
     const abs = Math.abs(num);
     const sign = num < 0 ? '−' : '';
-    if (abs >= 1e9) return sign + (abs / 1e9).toFixed(2).replace(/\.00$/, '').replace('.', ',') + 'B';
-    if (abs >= 1e6) return sign + (abs / 1e6).toFixed(2).replace(/\.00$/, '').replace('.', ',') + 'M';
+    if (abs >= 1e9) {
+      const s = (abs / 1e9).toFixed(2);
+      return sign + (keepTwoDecimalsForMillions ? s : s.replace(/\.00$/, '')).replace('.', ',') + 'B';
+    }
+    if (abs >= 1e6) {
+      const s = (abs / 1e6).toFixed(2);
+      return sign + (keepTwoDecimalsForMillions ? s : s.replace(/\.00$/, '')).replace('.', ',') + 'M';
+    }
     if (abs >= 1e3) return sign + (abs / 1e3).toFixed(1).replace(/\.0$/, '').replace('.', ',') + 'K';
     return fmtInt(num);
   }
@@ -162,7 +169,7 @@
     if (isCurrency) {
       diffText = `${sign}${fmtMoney(absDiff)}`;
     } else if (isPercentPoint) {
-      diffText = `${sign}${absDiff.toFixed(2).replace('.', ',')} đ.%`;
+      diffText = `${sign}${absDiff.toFixed(2).replace('.', ',')} điểm %`;
     } else {
       diffText = `${sign}${fmtCompact(absDiff)}`;
     }
@@ -190,6 +197,13 @@
     const parts = String(isoStr).slice(0, 10).split('-');
     if (parts.length !== 3) return isoStr;
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  function formatIsoToShortVN(isoStr) {
+    if (!isoStr) return '—';
+    const parts = String(isoStr).slice(0, 10).split('-');
+    if (parts.length !== 3) return isoStr;
+    return `${parts[2]}/${parts[1]}`;
   }
 
   function shiftIsoDays(isoStr, deltaDays) {
@@ -362,9 +376,12 @@
       return sum;
     }, 0);
 
-    // Item 3: Negative delta anomaly views in snapshot profile
+    // Item 3: Negative delta anomaly views strictly within the active period [startIso, endIso]
     const snapAnomalies = (channelMeta.snapProfile && Array.isArray(channelMeta.snapProfile.negative_anomalies))
-      ? channelMeta.snapProfile.negative_anomalies
+      ? channelMeta.snapProfile.negative_anomalies.filter(a => {
+          const d = (a.snapshot_date_pt || '').slice(0, 10);
+          return d >= startIso && d <= endIso;
+        })
       : [];
     const negativeAnomalyViews = snapAnomalies.reduce((sum, a) => sum + Number(a.raw_daily_views_delta || 0), 0);
 
@@ -911,7 +928,7 @@
             <span style="color:var(--text-dim);font-size:11px;">→</span>
             <input type="date" id="v3-custom-end" class="v3-select v3-select-sm" value="${snap.win.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
             <button type="button" class="v3-btn primary v3-btn-sm" id="v3-btn-apply-custom">Áp dụng</button>
-            <span class="v3-day-count-tag" title="${esc(snap.win.label)}">${snap.win.dayCount} ngày</span>
+            <span class="v3-day-count-tag" title="${esc(snap.win.label)}">${snap.win.dayCount} ngày · ${formatIsoToShortVN(snap.win.start)}–${formatIsoToShortVN(snap.win.end)}</span>
           </div>
         </div>
 
@@ -1122,7 +1139,7 @@
             </span>
           </div>
           <div class="v3-kpi-sub">
-            Tổng danh mục: <strong>${fmtCompact(curr.subscribersTotal)}</strong> sub công khai
+            Tổng danh mục: <strong>${fmtCompact(curr.subscribersTotal, true)}</strong> sub công khai
           </div>
         </div>
       `;
@@ -1130,20 +1147,20 @@
 
     const subNote = curr.allSubBelowStep
       ? `Chưa vượt bước làm tròn 3 chữ số có nghĩa`
-      : `Tổng danh mục: ${fmtCompact(curr.subscribersTotal)} sub`;
+      : `Tổng danh mục: ${fmtCompact(curr.subscribersTotal, true)} sub`;
 
     const engFormulaLabel = curr.engagementIncludesShares
       ? `(Likes + Comments + Shares) / Views [Analytics]`
       : `(Likes + Comments) / Views [Snapshot công khai]`;
 
-    // Item 3: Negative delta anomaly note under Views KPI card
+    // Item 3: Negative delta anomaly note under Views KPI card (only when an anomaly falls inside snap.win.start..snap.win.end)
     const anomalyNoteHtml = curr.negativeAnomalyViews < 0
-      ? `<div class="v3-kpi-anomaly-note" title="Đã loại trừ biến động âm từ đợt kiểm toán/ẩn video ngày 19/08/2026 trên kênh Chillhop Music (xem Mục 6 trang Hướng dẫn)">
+      ? `<div class="v3-kpi-anomaly-note" title="Đã loại trừ biến động âm trong kỳ đang xem (${formatIsoToVN(snap.win.start)} – ${formatIsoToVN(snap.win.end)})">
            <i class="ri-information-line"></i> Đã loại điều chỉnh −${fmtInt(Math.abs(curr.negativeAnomalyViews))} views
          </div>`
       : '';
 
-    // Item 15: Company MoM & QoQ with Δ% (BQ/ngày) for fair comparison on incomplete periods (26/31 days in 2026-10, 26/92 days in 2026-Q4)
+    // Item 15: Company MoM & QoQ combined into 1 tabbed panel
     const momRaw = [
       computeSystemPeriodRow(snap.channelsMeta, snap.scenarioId, '2026-10', '2026-10-01', '2026-10-26', 31, false),
       computeSystemPeriodRow(snap.channelsMeta, snap.scenarioId, '2026-09', '2026-09-01', '2026-09-30', 30, true),
@@ -1159,7 +1176,7 @@
     });
 
     const qoqRaw = [
-      computeSystemPeriodRow(snap.channelsMeta, snap.scenarioId, '2026-Q4', '2026-10-01', '2026-10-26', 92, false),
+      computeSystemPeriodRow(snap.channelsMeta, snap.scenarioId, '2026-Q4 (Q4 đến nay)', '2026-10-01', '2026-10-26', 92, false),
       computeSystemPeriodRow(snap.channelsMeta, snap.scenarioId, '2026-Q3', '2026-07-01', '2026-09-30', 92, true),
       computeSystemPeriodRow(snap.channelsMeta, snap.scenarioId, '2026-Q2', '2026-04-01', '2026-06-30', 91, true),
       computeSystemPeriodRow(snap.channelsMeta, snap.scenarioId, '2026-Q1', '2026-01-01', '2026-03-31', 90, true)
@@ -1171,6 +1188,12 @@
         : null;
       return { ...row, deltaDailyPct };
     });
+
+    const activePeriodRows = v3State.overviewPeriodTab === 'qoq' ? qoqRows : momRows;
+    const activePeriodColLabel = v3State.overviewPeriodTab === 'qoq' ? 'Kỳ Quý' : 'Kỳ Tháng';
+    const activePeriodNote = v3State.overviewPeriodTab === 'qoq'
+      ? '[Q4 đến nay: 26/92 ngày · Δ% tính theo BQ/ngày]'
+      : '[2026-10: 26/31 ngày · Δ% tính theo BQ/ngày]';
 
     // Team Ranking sorted by views descending
     const sortedTeams = [...snap.teamPairs].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
@@ -1236,14 +1259,9 @@
       <!-- 2. 1 COMPANY TREND CHART (Current vs Previous / YoY) -->
       <section class="v3-panel">
         <div class="v3-panel-header">
-          <div>
-            <div class="v3-panel-title">
-              <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
-              Xu hướng toàn công ty: Kỳ này đối chiếu ${v3State.compareMode === 'yoy' ? 'Cùng kỳ năm ngoái (YoY)' : 'Kỳ liền trước'}
-            </div>
-            <div class="v3-panel-subtitle">
-              Đường nét liền: <strong>${esc(snap.win.label)}</strong> • Đường nét đứt: <strong>${esc(snap.win.compareLabel)}</strong>
-            </div>
+          <div class="v3-panel-title" style="flex-wrap:wrap;gap:6px;">
+            <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
+            <span>Xu hướng toàn công ty (${formatIsoToShortVN(snap.win.start)}–${formatIsoToShortVN(snap.win.end)} vs ${v3State.compareMode === 'yoy' ? 'cùng kỳ năm ngoái' : 'kỳ liền trước'} ${formatIsoToShortVN(snap.win.prevStart)}–${formatIsoToShortVN(snap.win.prevEnd)})</span>
           </div>
           <div class="v3-preset-group">
             <button type="button" class="v3-preset-btn ${v3State.overviewMetric === 'views' ? 'active' : ''}" data-ov-metric="views">Lượt xem</button>
@@ -1252,107 +1270,66 @@
             <button type="button" class="v3-preset-btn ${v3State.overviewMetric === 'revenue' ? 'active' : ''}" data-ov-metric="revenue" ${curr.monetaryCount === 0 ? 'disabled' : ''}>Doanh thu</button>
           </div>
         </div>
-        <div style="height: 290px; position: relative;">
+        <div style="height: 280px; position: relative;">
           <canvas id="v3-overview-trend-canvas"></canvas>
         </div>
       </section>
 
-      <!-- 3. COMPACT COMPANY-LEVEL MoM & QoQ STRIP -->
-      <div class="v3-grid-2">
-        <section class="v3-panel" style="margin-bottom:0;">
-          <div class="v3-panel-header" style="margin-bottom:10px;">
+      <!-- 3. COMBINED TABBED MoM & QoQ PANEL -->
+      <section class="v3-panel">
+        <div class="v3-panel-header" style="margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <div class="v3-panel-title">
               <i class="ri-calendar-check-line" style="color:#38BDF8;"></i>
-              Đối chiếu Tháng với Tháng (MoM · Cấp công ty)
+              Đối chiếu theo kỳ (Cấp công ty)
             </div>
-            <span class="v3-badge partial">[2026-10: 26/31 ngày · Δ% tính theo BQ/ngày]</span>
+            <span class="v3-badge partial">${esc(activePeriodNote)}</span>
           </div>
-          <div class="v3-table-wrap">
-            <table class="v3-table v3-table-compact">
-              <thead>
+          <div class="v3-preset-group" role="tablist" aria-label="Chọn bảng đối chiếu Tháng hoặc Quý">
+            <button type="button" class="v3-preset-btn ${v3State.overviewPeriodTab === 'mom' ? 'active' : ''}" data-ov-period-tab="mom">Theo tháng (MoM)</button>
+            <button type="button" class="v3-preset-btn ${v3State.overviewPeriodTab === 'qoq' ? 'active' : ''}" data-ov-period-tab="qoq">Theo quý (QoQ)</button>
+          </div>
+        </div>
+        <div class="v3-table-wrap">
+          <table class="v3-table">
+            <thead>
+              <tr>
+                <th>${esc(activePeriodColLabel)}</th>
+                <th class="num">Lượt xem</th>
+                <th class="num" title="So sánh bình quân lượt xem/ngày với kỳ liền trước để công bằng khi kỳ hiện tại chưa đủ ngày">Δ% (BQ/ngày)</th>
+                <th class="num">Bình quân / ngày</th>
+                <th class="num">Sub ròng</th>
+                <th class="num">Giờ xem</th>
+                <th class="num">Doanh thu</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${activePeriodRows.map(r => `
                 <tr>
-                  <th>Kỳ Tháng</th>
-                  <th class="num">Lượt xem</th>
-                  <th class="num" title="So sánh bình quân lượt xem/ngày với tháng liền trước để công bằng khi tháng hiện tại chưa đủ ngày">Δ% BQ/ngày</th>
-                  <th class="num">Sub ròng</th>
-                  <th class="num">Giờ xem</th>
-                  <th class="num">Doanh thu</th>
+                  <td style="white-space:nowrap;">
+                    <strong>${esc(r.periodKey)}</strong>
+                    ${!r.isComplete ? `<span class="v3-badge partial">[${r.coveredDays}/${r.totalCalendarDays} ngày]</span>` : `<span class="v3-badge ready">[${r.coveredDays} ngày]</span>`}
+                  </td>
+                  <td class="num"><strong>${r.views !== null ? fmtInt(r.views) : '—'}</strong></td>
+                  <td class="num">${fmtPctBadge(r.deltaDailyPct)}</td>
+                  <td class="num">${r.avgDailyViews !== null ? fmtInt(r.avgDailyViews) + ' / ngày' : '—'}</td>
+                  <td class="num">${r.netSubs !== null ? (r.netSubs > 0 ? '+' + fmtInt(r.netSubs) : fmtInt(r.netSubs)) : '—'}</td>
+                  <td class="num">${curr.analyticsCount > 0 && r.watchHours !== null ? fmtInt(r.watchHours) + 'h' : '—'}</td>
+                  <td class="num">${curr.monetaryCount > 0 && r.estimatedRevenue !== null ? fmtMoney(r.estimatedRevenue) : '—'}</td>
                 </tr>
-              </thead>
-              <tbody>
-                ${momRows.map(r => `
-                  <tr>
-                    <td style="white-space:nowrap;">
-                      <strong>${esc(r.periodKey)}</strong>
-                      ${!r.isComplete ? `<span class="v3-badge partial" style="padding:1px 5px;font-size:10px;">${r.coveredDays}/${r.totalCalendarDays}d</span>` : `<span class="v3-badge ready" style="padding:1px 5px;font-size:10px;">${r.coveredDays}d</span>`}
-                    </td>
-                    <td class="num">${r.views !== null ? fmtInt(r.views) : '—'}</td>
-                    <td class="num">${fmtPctBadge(r.deltaDailyPct)}</td>
-                    <td class="num">${r.netSubs !== null ? (r.netSubs > 0 ? '+' + fmtInt(r.netSubs) : fmtInt(r.netSubs)) : '—'}</td>
-                    <td class="num">${curr.analyticsCount > 0 && r.watchHours !== null ? fmtInt(r.watchHours) + 'h' : '—'}</td>
-                    <td class="num">${curr.monetaryCount > 0 && r.estimatedRevenue !== null ? fmtMoney(r.estimatedRevenue) : '—'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="v3-panel" style="margin-bottom:0;">
-          <div class="v3-panel-header" style="margin-bottom:10px;">
-            <div class="v3-panel-title">
-              <i class="ri-bar-chart-grouped-line" style="color:#F59E0B;"></i>
-              Đối chiếu Quý với Quý (QoQ · Cấp công ty)
-            </div>
-            <span class="v3-badge partial">[2026-Q4: 26/92 ngày · Δ% tính theo BQ/ngày]</span>
-          </div>
-          <div class="v3-table-wrap">
-            <table class="v3-table v3-table-compact">
-              <thead>
-                <tr>
-                  <th>Kỳ Quý</th>
-                  <th class="num">Lượt xem</th>
-                  <th class="num" title="So sánh bình quân lượt xem/ngày với quý liền trước để công bằng khi quý hiện tại chưa đủ ngày">Δ% BQ/ngày</th>
-                  <th class="num">Sub ròng</th>
-                  <th class="num">Giờ xem</th>
-                  <th class="num">Doanh thu</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${qoqRows.map(r => `
-                  <tr>
-                    <td style="white-space:nowrap;">
-                      <strong>${esc(r.periodKey)}</strong>
-                      ${!r.isComplete ? `<span class="v3-badge partial" style="padding:1px 5px;font-size:10px;">${r.coveredDays}/${r.totalCalendarDays}d</span>` : `<span class="v3-badge ready" style="padding:1px 5px;font-size:10px;">${r.coveredDays}d</span>`}
-                    </td>
-                    <td class="num">${r.views !== null ? fmtInt(r.views) : '—'}</td>
-                    <td class="num">${fmtPctBadge(r.deltaDailyPct)}</td>
-                    <td class="num">${r.netSubs !== null ? (r.netSubs > 0 ? '+' + fmtInt(r.netSubs) : fmtInt(r.netSubs)) : '—'}</td>
-                    <td class="num">${curr.analyticsCount > 0 && r.watchHours !== null ? fmtInt(r.watchHours) + 'h' : '—'}</td>
-                    <td class="num">${curr.monetaryCount > 0 && r.estimatedRevenue !== null ? fmtMoney(r.estimatedRevenue) : '—'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <!-- 4. 3-TEAM RANKING TABLE -->
       <section class="v3-panel" style="margin-bottom:0;">
         <div class="v3-panel-header">
-          <div>
-            <div class="v3-panel-title">
-              <i class="ri-team-line" style="color:#38BDF8;"></i>
-              Xếp hạng 3 Team sản xuất trong kỳ
-            </div>
-            <div class="v3-panel-subtitle">
-              Mỗi team giữ một màu cố định xuyên suốt mọi báo cáo (Sky #38BDF8 · Amber #F59E0B · Magenta #EC4899) — tách biệt hoàn toàn với màu tăng/giảm
-            </div>
+          <div class="v3-panel-title">
+            <i class="ri-team-line" style="color:#38BDF8;"></i>
+            Xếp hạng 3 Team sản xuất trong kỳ
           </div>
-          <a href="#view-report-team" class="v3-btn" id="v3-btn-goto-team-page">
-            Xem chi tiết Báo cáo theo Team <i class="ri-arrow-right-line"></i>
-          </a>
         </div>
         <div class="v3-table-wrap">
           <table class="v3-table">
@@ -1435,6 +1412,13 @@
       });
     });
 
+    root.querySelectorAll('[data-ov-period-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        v3State.overviewPeriodTab = btn.getAttribute('data-ov-period-tab');
+        renderOverviewPage(snap);
+      });
+    });
+
     root.querySelectorAll('[data-goto-team]').forEach(el => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1459,20 +1443,13 @@
     const currData = currSeries.map(d => d[metric]);
     const prevData = currSeries.map((_, idx) => (prevSeries[idx] ? prevSeries[idx][metric] : null));
 
-    const metricLabelMap = {
-      views: 'Lượt xem (Views)',
-      watchHours: 'Giờ xem [Analytics]',
-      netSubs: 'Sub ròng (Net Subs)',
-      revenue: 'Doanh thu ước tính (USD)'
-    };
-
     chartInstances['overviewTrend'] = new Chart(canvas.getContext('2d'), {
       type: 'line',
       data: {
         labels,
         datasets: [
           {
-            label: `Kỳ này (${metricLabelMap[metric]})`,
+            label: 'Kỳ này',
             data: currData,
             borderColor: '#38BDF8',
             backgroundColor: 'rgba(56, 189, 248, 0.12)',
@@ -1482,7 +1459,7 @@
             fill: true
           },
           {
-            label: v3State.compareMode === 'yoy' ? 'Cùng kỳ năm ngoái (YoY)' : 'Kỳ liền trước',
+            label: v3State.compareMode === 'yoy' ? 'Cùng kỳ năm ngoái' : 'Kỳ liền trước',
             data: prevData,
             borderColor: '#94A3B8',
             backgroundColor: 'transparent',
@@ -1499,11 +1476,30 @@
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { labels: { color: '#CBD5E1', font: { size: 12, weight: '600' } } }
+          legend: { labels: { color: '#CBD5E1', font: { size: 12, weight: '600' } } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const val = ctx.parsed.y;
+                if (val === null || val === undefined) return `${ctx.dataset.label}: —`;
+                if (metric === 'revenue') return `${ctx.dataset.label}: ${fmtMoney(val)}`;
+                if (metric === 'watchHours') return `${ctx.dataset.label}: ${fmtInt(val)}h`;
+                return `${ctx.dataset.label}: ${fmtInt(val)}`;
+              }
+            }
+          }
         },
         scales: {
           x: { ticks: { color: '#94A3B8', maxTicksLimit: 14 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-          y: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+          y: {
+            beginAtZero: true,
+            min: 0,
+            ticks: {
+              color: '#94A3B8',
+              callback: (v) => metric === 'revenue' ? fmtMoney(v) : fmtInt(v)
+            },
+            grid: { color: 'rgba(255,255,255,0.06)' }
+          }
         }
       }
     });

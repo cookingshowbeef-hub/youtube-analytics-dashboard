@@ -5367,9 +5367,9 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  padding: 6px 12px;
+  flex-wrap: nowrap;
+  gap: 6px;
+  padding: 6px 10px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -5379,24 +5379,37 @@ input:checked + .slider:before {
 .v3-filter-right {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 8px;
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+
+.v3-time-filter-bar .v3-preset-btn {
+  padding: 4px 8px;
+  font-size: 11.8px;
+  white-space: nowrap;
 }
 
 .v3-date-inputs-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+}
+
+.v3-date-inputs-wrap input[type="date"] {
+  width: 112px;
+  padding: 3px 5px !important;
+  font-size: 11.3px !important;
 }
 
 .v3-day-count-tag {
   font-size: 11px;
-  font-weight: 700;
-  font-family: 'JetBrains Mono', monospace;
-  color: #38BDF8;
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.28);
-  padding: 2px 7px;
+  font-weight: 500;
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  text-transform: none;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 6px;
   border-radius: 4px;
   white-space: nowrap;
 }

@@ -5462,12 +5462,13 @@ input:checked + .slider:before {
   transition: all 0.15s ease;
 }
 
-.v3-preset-btn:hover:not(:disabled) {
+.v3-preset-btn:not(.active):hover:not(:disabled) {
   color: var(--text-main);
   background: rgba(255, 255, 255, 0.05);
 }
 
-.v3-preset-btn.active {
+.v3-preset-btn.active,
+.v3-preset-btn.active:hover {
   background: #38BDF8;
   color: #0B0F19;
   font-weight: 700;
@@ -6254,6 +6255,169 @@ input:checked + .slider:before {
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* Fixed 2-Row Header & Fixed-Width Period Controls for "Lượt xem theo ngày" (#v3-team-chart-a-panel) */
+.v3-chart-a-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.v3-chart-a-header-row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 28px;
+  min-height: 28px;
+  max-height: 28px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.v3-chart-a-header-row2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  min-height: 28px;
+  max-height: 28px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.v3-chart-a-header .v3-preset-group {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+.v3-chart-a-header .v3-preset-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.v3-chart-period-slot {
+  width: 248px;
+  min-width: 248px;
+  max-width: 248px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.v3-chart-slot-control {
+  width: 100%;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  padding: 2px 8px;
+  font-size: 11.2px;
+  box-sizing: border-box;
+}
+
+.v3-chart-slot-control:disabled {
+  opacity: 0.82;
+  cursor: default;
+}
+
+.v3-chart-custom-dates {
+  width: 100%;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  box-sizing: border-box;
+}
+
+.v3-chart-date-input {
+  width: 116px;
+  min-width: 116px;
+  max-width: 116px;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  padding: 2px 5px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  box-sizing: border-box;
+}
+
+.v3-chart-date-sep {
+  color: var(--text-dim);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.v3-chart-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  padding: 0 8px;
+  border-radius: 5px;
+  background: rgba(245, 158, 11, 0.14);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.v3-chart-status-chip.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.v3-chart-status-chip.is-visible {
+  visibility: visible;
+}
+
+.v3-chart-status-chip-close {
+  background: transparent;
+  border: none;
+  color: #FBBF24;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+}
+
+.v3-chart-status-chip-close:hover {
+  background: rgba(245, 158, 11, 0.25);
+  color: #FEF3C7;
+}
+
+.v3-chart-a-canvas-wrap {
+  height: 205px;
+  min-height: 205px;
+  max-height: 205px;
+  position: relative;
+}
+
 
 
 

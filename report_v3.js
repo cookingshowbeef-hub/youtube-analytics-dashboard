@@ -2884,23 +2884,23 @@
     'TEAM-01': [
       { bg: '#0284C7', fg: '#F8FAFC' },
       { bg: '#0EA5E9', fg: '#090D16' },
-      { bg: '#38BDF8', fg: '#090D16' },
-      { bg: '#7DD3FC', fg: '#090D16' },
-      { bg: '#BAE6FD', fg: '#090D16' }
+      { bg: '#29B6F6', fg: '#090D16' },
+      { bg: '#4FC3F7', fg: '#090D16' },
+      { bg: '#67E8F9', fg: '#090D16' }
     ],
     'TEAM-02': [
       { bg: '#D97706', fg: '#090D16' },
+      { bg: '#EA8A08', fg: '#090D16' },
       { bg: '#F59E0B', fg: '#090D16' },
       { bg: '#FBBF24', fg: '#090D16' },
-      { bg: '#FCD34D', fg: '#090D16' },
-      { bg: '#FDE68A', fg: '#090D16' }
+      { bg: '#FCD34D', fg: '#090D16' }
     ],
     'TEAM-03': [
-      { bg: '#DB2777', fg: '#F8FAFC' },
+      { bg: '#C2185B', fg: '#F8FAFC' },
+      { bg: '#D81B60', fg: '#F8FAFC' },
       { bg: '#EC4899', fg: '#090D16' },
-      { bg: '#F472B6', fg: '#090D16' },
-      { bg: '#F9A8D4', fg: '#090D16' },
-      { bg: '#FBCFE8', fg: '#090D16' }
+      { bg: '#F06292', fg: '#090D16' },
+      { bg: '#F48FB1', fg: '#090D16' }
     ]
   };
 
@@ -2970,7 +2970,6 @@
               </div>
 
               <div class="v3-team-card-conclusion" title="Kênh lớn nhất: ${esc(topCh ? topCh.meta.title : '—')} (${fmtDec(topSharePct, 1)}% views của team)">
-                <i class="ri-bar-chart-grouped-line" style="color:${tp.color};"></i>
                 <span>Kênh lớn nhất chiếm <strong>${fmtDec(topSharePct, 1)}%</strong> views (${esc(topCh ? topCh.meta.title : '—')})</span>
               </div>
             </div>
@@ -3024,7 +3023,9 @@
                       ${chSorted.map((cp, cIdx) => {
                         const pct = tp.curr.views ? ((cp.curr.views || 0) / tViews) * 100 : 20;
                         const shade = palette[cIdx % palette.length];
-                        const shortLabel = pct >= 10 ? `${esc(shortEmployeeName(cp.meta.employeeName))} ${Math.round(pct)}%` : '';
+                        const shortLabel = pct >= 20
+                          ? `${esc(shortEmployeeName(cp.meta.employeeName))} ${Math.round(pct)}%`
+                          : (pct >= 7 ? `${Math.round(pct)}%` : '');
                         return `<div class="v3-contrib-seg" style="width:${pct.toFixed(2)}%;background:${shade.bg};color:${shade.fg};" title="${esc(cp.meta.employeeName)} (${esc(cp.meta.title)}): ${fmtInt(cp.curr.views)} views (${fmtDec(pct, 1)}%)">${shortLabel}</div>`;
                       }).join('')}
                     </div>
@@ -3169,14 +3170,15 @@
             });
           });
           if (!items.length) return;
-          items.sort((a, b) => a.y - b.y);
-          const minGap = 18;
+          items.sort((a, b) => a.rawY - b.rawY);
+          const minGap = 22;
+          const minTop = chartArea.top + 10;
+          const maxBottom = chartArea.bottom - 10;
           for (let i = 1; i < items.length; i++) {
             if (items[i].y - items[i - 1].y < minGap) {
               items[i].y = items[i - 1].y + minGap;
             }
           }
-          const maxBottom = chartArea.bottom - 6;
           if (items[items.length - 1].y > maxBottom) {
             items[items.length - 1].y = maxBottom;
             for (let i = items.length - 2; i >= 0; i--) {
@@ -3185,15 +3187,24 @@
               }
             }
           }
+          if (items[0].y < minTop) {
+            items[0].y = minTop;
+            for (let i = 1; i < items.length; i++) {
+              if (items[i].y - items[i - 1].y < minGap) {
+                items[i].y = items[i - 1].y + minGap;
+              }
+            }
+          }
           ctx.save();
           ctx.font = '700 11.5px Inter, system-ui, sans-serif';
           ctx.textBaseline = 'middle';
           items.forEach(it => {
             ctx.strokeStyle = it.color;
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 1.4;
             ctx.beginPath();
             ctx.moveTo(it.x + 3, it.rawY);
-            ctx.lineTo(chartArea.right + 7, it.y);
+            ctx.lineTo(chartArea.right + 5, it.y);
+            ctx.lineTo(chartArea.right + 10, it.y);
             ctx.stroke();
 
             ctx.fillStyle = it.color;
@@ -3202,7 +3213,7 @@
             ctx.fill();
 
             ctx.fillStyle = it.color;
-            ctx.fillText(it.text, chartArea.right + 11, it.y);
+            ctx.fillText(it.text, chartArea.right + 13, it.y);
           });
           ctx.restore();
         }
@@ -3221,7 +3232,27 @@
             legend: { display: false }
           },
           scales: {
-            x: { ticks: { color: '#94A3B8', maxTicksLimit: 12 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+            x: {
+              afterBuildTicks: function (axis) {
+                const total = labels.length;
+                if (total <= 7) return;
+                const stepCount = 5; // 6 ticks total: 0, 20%, 40%, 60%, 80%, last (26/10)
+                const chosen = [];
+                for (let k = 0; k <= stepCount; k++) {
+                  const idx = Math.round((k * (total - 1)) / stepCount);
+                  if (!chosen.includes(idx)) chosen.push(idx);
+                }
+                axis.ticks = chosen.map(v => ({ value: v }));
+              },
+              ticks: {
+                color: '#94A3B8',
+                maxRotation: 0,
+                minRotation: 0,
+                autoSkip: false,
+                font: { size: 11 }
+              },
+              grid: { color: 'rgba(255,255,255,0.04)' }
+            },
             y: {
               beginAtZero: true,
               min: 0,

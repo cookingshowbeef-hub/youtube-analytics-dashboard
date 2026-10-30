@@ -6056,17 +6056,19 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 800;
   letter-spacing: -0.15px;
   overflow: hidden;
   white-space: nowrap;
   padding: 0 3px;
-  border-right: 1.5px solid #090D16;
+  border-right: 1.5px solid #0B0F19;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.25);
 }
 
 .v3-contrib-seg:last-child {
   border-right: none;
+  box-shadow: none;
 }
 
 .v3-contrib-legend {

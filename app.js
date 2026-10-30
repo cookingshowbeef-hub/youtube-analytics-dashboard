@@ -4219,7 +4219,7 @@ function switchView(viewId) {
     if (bcGroup && bcActive) {
       const bcMap = {
         'view-report-overview': ['Báo cáo', 'Tổng quan'],
-        'view-report-team': ['Báo cáo', 'Theo Team'],
+        'view-report-team': ['Báo cáo', 'Theo team'],
         'view-report-channel': ['Báo cáo', 'Theo kênh'],
         'view-report-staff': ['Báo cáo', 'Theo nhân viên'],
         'view-report-staff-chart': ['Báo cáo', 'Theo nhân viên'],
@@ -4246,7 +4246,7 @@ function switchView(viewId) {
         'view-report-staff': 'Báo cáo theo nhân viên',
         'view-report-staff-chart': 'Báo cáo theo nhân viên',
         'view-report-staff-data': 'Báo cáo theo nhân viên',
-        'view-report-team': 'Báo cáo theo Team',
+        'view-report-team': 'Báo cáo theo team',
         'view-report-project': 'Báo cáo theo dự án',
         'view-report-network': 'Báo cáo theo Network (MCN)',
         'view-report-guide': 'Hướng dẫn & Từ điển chỉ số',

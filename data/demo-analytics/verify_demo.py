@@ -191,6 +191,33 @@ def main():
           all("daily_videos_published" in s for s in snaps) and
           vids_30d_cur > 50 and vids_30d_prev > 50)
 
+    forbidden_real_brands = [
+        "lofi girl", "chillhop", "jazz hop", "cafe music", "80s groove machine",
+        "theprimethanatos", "newretrowave", "80s guy", "electronic gems",
+        "mrsuicidesheep", "chill nation", "college music", "alexrainbird", "wavemusic"
+    ]
+    all_titles_handles = " ".join(
+        f"{c['snippet']['title']} {c.get('requested_handle', '')} {c['snippet'].get('customUrl', '')}"
+        for c in baseline["channels"]
+    ).lower()
+    check("all_15_channels_use_fictional_names_and_teams_have_leaders",
+          not any(b in all_titles_handles for b in forbidden_real_brands) and
+          all(bool(t.get("leader", "").strip()) for t in baseline["teams"]))
+
+    w30_rows = [r for r in daily if "2026-09-27" <= r["day"] <= "2026-10-26"]
+    ch_to_team = {cid: employee_to_team[emp_id] for cid, emp_id in channel_to_employee.items()}
+    sys_30d_views = sum(r["views"] for r in w30_rows)
+    sys_30d_vids = sum(r["daily_videos_published"] for r in w30_rows)
+    sys_30d_rev = sum(cents(r["estimatedRevenue"]) for r in w30_rows)
+    team_30d_views = {t["id"]: sum(r["views"] for r in w30_rows if ch_to_team[r["channel_id"]] == t["id"]) for t in baseline["teams"]}
+    team_30d_vids = {t["id"]: sum(r["daily_videos_published"] for r in w30_rows if ch_to_team[r["channel_id"]] == t["id"]) for t in baseline["teams"]}
+    team_30d_rev = {t["id"]: sum(cents(r["estimatedRevenue"]) for r in w30_rows if ch_to_team[r["channel_id"]] == t["id"]) for t in baseline["teams"]}
+    emp_30d_views = {e["id"]: sum(r["views"] for r in w30_rows if channel_to_employee[r["channel_id"]] == e["id"]) for e in baseline["employees"]}
+    check("page1_page2_staff_30d_cutoff_26_10_reconcile_100_percent",
+          sum(team_30d_views.values()) == sum(emp_30d_views.values()) == sys_30d_views and
+          sum(team_30d_vids.values()) == sys_30d_vids and
+          sum(team_30d_rev.values()) == sys_30d_rev)
+
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())
     (HERE / "independent_validation.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

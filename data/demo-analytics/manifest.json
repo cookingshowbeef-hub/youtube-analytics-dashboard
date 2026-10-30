@@ -41,7 +41,7 @@
   },
   "source_public_snapshot": {
     "path": "../mock-hierarchy/dataset.json",
-    "sha256": "1d190ed98af7346cad3440acdd4fdd37d7db47fa4825e3d7317251a7ca7d1660",
+    "sha256": "7a8cdea8990bb89c44609ba4ea0a1cfb85dc62baddf91dd2762f55f7e5d2f423",
     "unchanged": true
   },
   "content_types": [
@@ -65,7 +65,7 @@
       "path": "channel_daily.json",
       "row_count": 9990,
       "bytes": 7307077,
-      "sha256": "5aba3e2e8d632397cc41f78a2e7e3688e27f1a03482d3ab71ee8a044bc44fbab"
+      "sha256": "756901465693bfefa53cc52842506c7db954a083ac77f47e8244f241c1afdc2f"
     },
     {
       "path": "video_daily.json",
@@ -124,14 +124,14 @@
     {
       "path": "channel_summary_28d.csv",
       "row_count": 15,
-      "bytes": 5051,
-      "sha256": "d978abc4e5aaddc9b75f5c20eed03c3cda3e6ef77fb16cec4358880d321df8f3"
+      "bytes": 5131,
+      "sha256": "c99cb5e30c5e0196a77cfb1561aa2a61fbbe536800fa785c34dba85d25ae2885"
     },
     {
       "path": "channel_snapshot_daily.json",
       "row_count": 1350,
       "bytes": 663398,
-      "sha256": "6a975cd31a449a3cf4ba209ec8e35aecb78ef2a063efdf4d68b3e2b6d2846c31"
+      "sha256": "aa6620e94bd5111d22dca4461553a182d3b6a51fbeea22c7d0ba5665d4d48b14"
     }
   ]
 }

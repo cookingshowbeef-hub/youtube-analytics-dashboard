@@ -45,6 +45,7 @@
     // Page 2 (Team)
     selectedTeamId: 'TEAM-01',
     teamChartMetric: 'views',
+    teamTableSort: 'growth', // 'growth' | 'views'
     // Page 3 (Channel)
     channelMode: 'single',  // 'single' | 'compare'
     selectedChannelId: 'UCSJ4gkVC6NrvII8umztf0Ow',
@@ -442,7 +443,8 @@
             views: r.views || 0,
             watchHours: null,
             netSubs: null,
-            revenue: null
+            revenue: null,
+            videosPublished: Number(r.daily_videos_published || 0)
           });
         }
       });
@@ -535,7 +537,8 @@
         watchHours: Number((m / 60).toFixed(2)),
         netSubs: sg - sl,
         revenue: dayHasMon ? Number(rev) : null,
-        viewsWithMon: dayHasMon ? v : 0
+        viewsWithMon: dayHasMon ? v : 0,
+        videosPublished: Number(r.daily_videos_published || 0)
       });
     });
 
@@ -645,12 +648,14 @@
       let dNetSubs = 0;
       let dRevCents = 0;
       let dHasRev = false;
+      let dVideosPublished = 0;
       chResults.forEach(c => {
         const pt = c.dailyMap.get(dayIso);
         if (pt) {
           dViews += (pt.views || 0);
           dWatchHours += (pt.watchHours || 0);
           dNetSubs += (pt.netSubs || 0);
+          dVideosPublished += (pt.videosPublished || 0);
           if (pt.revenue !== null && pt.revenue !== undefined) {
             dHasRev = true;
             dRevCents += Math.round(pt.revenue * 100);
@@ -662,7 +667,8 @@
         views: hasAnyViews ? dViews : null,
         watchHours: hasAnyAnalytics ? Number(dWatchHours.toFixed(2)) : null,
         netSubs: validSubChannels.length > 0 ? dNetSubs : null,
-        revenue: dHasRev ? Number((dRevCents / 100).toFixed(2)) : null
+        revenue: dHasRev ? Number((dRevCents / 100).toFixed(2)) : null,
+        videosPublished: dVideosPublished
       };
     });
 
@@ -717,7 +723,10 @@
       const revGrowthPct = (curr.estimatedRevenue !== null && prev && prev.estimatedRevenue && prev.estimatedRevenue > 0)
         ? Number((((curr.estimatedRevenue - prev.estimatedRevenue) / prev.estimatedRevenue) * 100).toFixed(2))
         : null;
-      const daysSinceLastUpload = Math.max(0, Math.round((new Date('2026-10-26T00:00:00Z') - new Date(curr.meta.lastPublishedPt + 'T00:00:00Z')) / 86400000));
+      const lastPubCutoff = curr.meta.lastPublishedPt && curr.meta.lastPublishedPt <= '2026-10-26'
+        ? curr.meta.lastPublishedPt
+        : '2026-10-26';
+      const daysSinceLastUpload = Math.max(0, Math.round((new Date('2026-10-26T00:00:00Z') - new Date(lastPubCutoff + 'T00:00:00Z')) / 86400000));
       return {
         id: curr.channelId,
         meta: curr.meta,
@@ -725,6 +734,7 @@
         prev,
         viewsGrowthPct,
         revGrowthPct,
+        lastPublishedCutoff: lastPubCutoff,
         daysSinceLastUpload
       };
     });
@@ -748,7 +758,7 @@
       return {
         id: t.id,
         name: t.name,
-        leader: t.leader || 'Trưởng nhóm',
+        leader: t.leader || '',
         color: TEAM_COLORS[t.id] || '#38BDF8',
         curr: tCurr,
         prev: tPrev,
@@ -799,16 +809,10 @@
     }
     headerEl.style.display = 'flex';
 
-    // Determine active scope channels (15 for company, 5 for team, 1..5 for channel)
+    // Determine active scope channels (Always "3 Team · 15 kênh" on company/team pages; 1..5 on channel page)
     let scopeLabel = '3 Team · 15 kênh';
     let scopeCurr = snap.systemCurr;
-    if (activeViewId === 'view-report-team') {
-      const tp = snap.teamPairs.find(t => t.id === v3State.selectedTeamId) || snap.teamPairs[0];
-      if (tp) {
-        scopeLabel = `${tp.name} · 5 kênh`;
-        scopeCurr = tp.curr;
-      }
-    } else if (activeViewId === 'view-report-channel' && v3State.channelMode === 'single') {
+    if (activeViewId === 'view-report-channel' && v3State.channelMode === 'single') {
       const cp = snap.channelPairs.find(c => c.id === v3State.selectedChannelId) || snap.channelPairs[0];
       if (cp) {
         scopeLabel = `Kênh: ${cp.meta.title} (${cp.meta.teamName})`;
@@ -2876,8 +2880,37 @@
 
   // =========================================================================
   // PAGE 2: BÁO CÁO THEO TEAM (#view-report-team)
-  // Question: "Team nào đang tốt nhất, và vì sao?"
   // =========================================================================
+  const TEAM_SHADES = {
+    'TEAM-01': [
+      { bg: '#38BDF8', fg: '#090D16' },
+      { bg: '#0EA5E9', fg: '#090D16' },
+      { bg: '#0284C7', fg: '#F8FAFC' },
+      { bg: '#0369A1', fg: '#F8FAFC' },
+      { bg: '#075985', fg: '#F8FAFC' }
+    ],
+    'TEAM-02': [
+      { bg: '#F59E0B', fg: '#090D16' },
+      { bg: '#D97706', fg: '#090D16' },
+      { bg: '#B45309', fg: '#F8FAFC' },
+      { bg: '#92400E', fg: '#F8FAFC' },
+      { bg: '#78350F', fg: '#F8FAFC' }
+    ],
+    'TEAM-03': [
+      { bg: '#EC4899', fg: '#090D16' },
+      { bg: '#DB2777', fg: '#F8FAFC' },
+      { bg: '#BE185D', fg: '#F8FAFC' },
+      { bg: '#9D174D', fg: '#F8FAFC' },
+      { bg: '#831843', fg: '#F8FAFC' }
+    ]
+  };
+
+  function shortEmployeeName(fullName) {
+    const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length <= 2) return parts.join(' ');
+    return parts.slice(-2).join(' ');
+  }
+
   function renderTeamPage(snap) {
     const root = document.getElementById('v3-team-root');
     if (!root) return;
@@ -2885,48 +2918,100 @@
     if (legacySection) legacySection.style.display = 'none';
 
     const sortedTeams = [...snap.teamPairs].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
-    const bestTeamId = sortedTeams[0]?.id;
-    const selectedTeam = snap.teamPairs.find(t => t.id === v3State.selectedTeamId) || sortedTeams[0];
+    const selectedTeam = sortedTeams.find(t => t.id === v3State.selectedTeamId) || sortedTeams[0];
     if (selectedTeam) v3State.selectedTeamId = selectedTeam.id;
 
-    // Sort the 5 channels inside selectedTeam by viewsGrowthPct descending (per reviewer requirement #2.5)
-    const teamChannelsByGrowth = [...(selectedTeam ? selectedTeam.channels : [])].sort((a, b) => (b.viewsGrowthPct ?? -999) - (a.viewsGrowthPct ?? -999));
-
-    // Team-specific alerts
-    const teamAlerts = (selectedTeam ? selectedTeam.channels : []).filter(cp => {
-      const drop = cp.prev && (cp.prev.views || 0) >= 5000 && cp.viewsGrowthPct !== null && cp.viewsGrowthPct <= v3State.alertDropThreshold;
-      const slow = cp.daysSinceLastUpload > v3State.alertUploadCycleDays;
-      const perm = cp.curr.analyticsStatus !== 'demo_ready' || cp.curr.monetaryStatus !== 'demo_ready';
-      return drop || slow || perm;
+    const sortMode = v3State.teamTableSort || 'growth';
+    const teamChannelsSorted = [...(selectedTeam ? selectedTeam.channels : [])].sort((a, b) => {
+      if (sortMode === 'views') {
+        return (b.curr.views || 0) - (a.curr.views || 0);
+      }
+      return (b.viewsGrowthPct ?? -999) - (a.viewsGrowthPct ?? -999);
     });
 
+    // Team-specific alerts: ONLY (>7 days without upload as of 26/10) OR (channel accounts for >40% of team views)
+    const selectedTeamViews = (selectedTeam && selectedTeam.curr && selectedTeam.curr.views) || 0;
+    const teamAlerts = [];
+    (selectedTeam ? selectedTeam.channels : []).forEach(cp => {
+      const slow = cp.daysSinceLastUpload > 7;
+      const sharePct = (selectedTeamViews > 0 && cp.curr.views !== null)
+        ? Number(((cp.curr.views / selectedTeamViews) * 100).toFixed(1))
+        : 0;
+      const highShare = sharePct > 40;
+      if (slow || highShare) {
+        teamAlerts.push({ cp, slow, highShare, sharePct });
+      }
+    });
+
+    // Build 30-day upload cadence strip data ending at snap.win.end (default 27/09–26/10) from daily_videos_published
+    const stripEndIso = snap.win.end || '2026-10-26';
+    const stripStartIso = shiftIsoDays(stripEndIso, -29);
+    const stripDays = listIsoDays(stripStartIso, stripEndIso);
+    const demo = core().DEMO_STORE;
+    const cadenceByTeam = sortedTeams.map(tp => {
+      const dayCounts = new Map();
+      stripDays.forEach(d => dayCounts.set(d, 0));
+      tp.channels.forEach(cp => {
+        const rows = (demo && demo.getDailyRows) ? demo.getDailyRows(cp.id, stripStartIso, stripEndIso) : [];
+        rows.forEach(r => {
+          if (r.day <= '2026-10-26' && dayCounts.has(r.day)) {
+            dayCounts.set(r.day, dayCounts.get(r.day) + Number(r.daily_videos_published || 0));
+          }
+        });
+      });
+      const cells = stripDays.map(d => ({ day: d, count: dayCounts.get(d) || 0 }));
+      const totalVids30d = cells.reduce((s, x) => s + x.count, 0);
+      const activeDays30d = cells.filter(x => x.count > 0).length;
+      const slowChannels = tp.channels.filter(c => c.daysSinceLastUpload > 7).length;
+      return { tp, cells, totalVids30d, activeDays30d, slowChannels };
+    });
+
+    const chartTitleMap = {
+      views: 'Lượt xem theo ngày',
+      watchHours: 'Giờ xem theo ngày [Analytics]',
+      revenue: 'Doanh thu theo ngày [Analytics]'
+    };
+    const chartTitle = chartTitleMap[v3State.teamChartMetric] || 'Lượt xem theo ngày';
+
     root.innerHTML = `
-      <!-- 1. 3 TEAM CARDS -->
-      <div class="v3-grid-3">
-        ${snap.teamPairs.map(tp => {
+      <!-- 1. 3 TEAM CARDS (Sorted by views rank #1/#2/#3, equal height, nowrap labels, conclusion line) -->
+      <div class="v3-grid-3 v3-team-cards-grid">
+        ${sortedTeams.map((tp, idx) => {
+          const rank = idx + 1;
           const isSelected = tp.id === selectedTeam.id;
-          const isBest = tp.id === bestTeamId;
+          const chByViews = [...tp.channels].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
+          const topCh = chByViews[0];
+          const topSharePct = (tp.curr.views && tp.curr.views > 0 && topCh && topCh.curr.views !== null)
+            ? ((topCh.curr.views / tp.curr.views) * 100)
+            : 0;
           return `
-            <div class="v3-panel clickable-row" data-select-team-card="${tp.id}" style="margin-bottom:0;border:2px solid ${isSelected ? tp.color : 'var(--border-subtle)'};background:${isSelected ? tp.color + '10' : 'var(--bg-card)'};">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span class="v3-team-dot" style="width:12px;height:12px;background:${tp.color};"></span>
-                  <strong style="font-size:15px;">${esc(tp.name)}</strong>
+            <div class="v3-panel clickable-row v3-team-card" data-select-team-card="${tp.id}" style="margin-bottom:0;border:2px solid ${isSelected ? tp.color : 'var(--border-subtle)'};background:${isSelected ? tp.color + '10' : 'var(--bg-card)'};">
+              <div>
+                <div class="v3-team-card-top">
+                  <div class="v3-team-card-name-wrap">
+                    <span class="v3-rank-pill ${rank === 1 ? 'top1' : ''}">#${rank}</span>
+                    <span class="v3-team-dot" style="width:11px;height:11px;background:${tp.color};flex-shrink:0;"></span>
+                    <strong class="v3-team-card-title">${esc(tp.name)}</strong>
+                  </div>
+                  <div class="v3-team-card-badges">
+                    <span class="v3-badge muted" style="white-space:nowrap;">${fmtDec(tp.shareOfCompanyViews, 1)}% views</span>
+                  </div>
                 </div>
-                <div style="display:flex;gap:5px;">
-                  ${isBest ? `<span class="v3-badge highest">[Dẫn đầu công ty]</span>` : ''}
-                  <span class="v3-badge muted">${tp.shareOfCompanyViews}% views</span>
+
+                <div class="v3-kpi-value" style="margin-bottom:6px;white-space:nowrap;">${tp.curr.views !== null ? fmtInt(tp.curr.views) + ' views' : '—'}</div>
+                <div style="margin-bottom:10px;white-space:nowrap;">${fmtDeltaBadge(tp.curr.views, tp.prev.views)}</div>
+
+                <div class="v3-team-card-metrics">
+                  <div class="v3-team-card-metric-item">Sub ròng: <strong>${tp.curr.netSubs !== null ? (tp.curr.netSubs > 0 ? '+' + fmtInt(tp.curr.netSubs) : fmtInt(tp.curr.netSubs)) : '—'}</strong></div>
+                  <div class="v3-team-card-metric-item">Video đăng: <strong>${fmtInt(tp.curr.videosPublished)} video</strong></div>
+                  <div class="v3-team-card-metric-item">Tương tác: <strong>${tp.curr.engagementRate !== null ? fmtDec(tp.curr.engagementRate, 2) + '%' : '—'}</strong></div>
+                  <div class="v3-team-card-metric-item">Doanh thu: <strong>${tp.curr.estimatedRevenue !== null ? fmtMoney(tp.curr.estimatedRevenue) : '—'}</strong></div>
                 </div>
               </div>
 
-              <div class="v3-kpi-value" style="margin-bottom:6px;">${tp.curr.views !== null ? fmtInt(tp.curr.views) + ' views' : '—'}</div>
-              <div style="margin-bottom:10px;">${fmtDeltaBadge(tp.curr.views, tp.prev.views)}</div>
-
-              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:12px;padding-top:10px;border-top:1px solid var(--border-subtle);">
-                <div>Sub ròng: <strong>${tp.curr.netSubs !== null ? (tp.curr.netSubs > 0 ? '+' + fmtInt(tp.curr.netSubs) : fmtInt(tp.curr.netSubs)) : '—'}</strong></div>
-                <div>Số video đăng: <strong>${fmtInt(tp.curr.videosPublished)} video</strong></div>
-                <div>Tỷ lệ tương tác: <strong>${tp.curr.engagementRate !== null ? tp.curr.engagementRate.toFixed(2) + '%' : '—'}</strong></div>
-                <div>Doanh thu [Analytics]: <strong>${tp.curr.estimatedRevenue !== null ? fmtMoney(tp.curr.estimatedRevenue) : '—'}</strong></div>
+              <div class="v3-team-card-conclusion" title="Kênh lớn nhất: ${esc(topCh ? topCh.meta.title : '—')} (${fmtDec(topSharePct, 1)}% views của team)">
+                <i class="ri-bar-chart-grouped-line" style="color:${tp.color};"></i>
+                <span>Kênh lớn nhất chiếm <strong>${fmtDec(topSharePct, 1)}%</strong> views (${esc(topCh ? topCh.meta.title : '—')})</span>
               </div>
             </div>
           `;
@@ -2939,10 +3024,7 @@
           <div>
             <div class="v3-panel-title">
               <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
-              Biểu đồ đường 3 Team theo thời gian (Nhãn trực tiếp cuối đường · Màu cố định từng Team)
-            </div>
-            <div class="v3-panel-subtitle">
-              Jazz & Lo-fi (#38BDF8 Sky) • Retro & Electronic (#F59E0B Amber) • Indie & Chill (#EC4899 Magenta)
+              ${esc(chartTitle)}
             </div>
           </div>
           <div class="v3-preset-group">
@@ -2956,73 +3038,125 @@
         </div>
       </section>
 
-      <!-- 3. 100% STACKED MEMBER CONTRIBUTION BAR & 4. 30-DAY UPLOAD CADENCE -->
+      <!-- 3. 100% STACKED MEMBER CONTRIBUTION BAR & 4. 30-DAY UPLOAD CADENCE STRIP -->
       <div class="v3-grid-2">
-        <section class="v3-panel" style="margin-bottom:0;">
-          <div class="v3-panel-header">
-            <div>
-              <div class="v3-panel-title">
-                <i class="ri-pie-chart-box-line" style="color:#38BDF8;"></i>
-                Tỷ trọng đóng góp của 5 nhân viên trong từng Team (Thanh xếp chồng 100%)
-              </div>
-              <div class="v3-panel-subtitle">Giúp nhận diện nhanh team đang tăng đồng đều hay phụ thuộc vào 1 cá nhân</div>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:16px;">
-            ${snap.teamPairs.map(tp => {
-              const tViews = Math.max(1, tp.curr.views || 1);
-              const shades = ['#38BDF8', '#0EA5E9', '#6366F1', '#F59E0B', '#EC4899'];
-              return `
-                <div>
-                  <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:6px;">
-                    <span><span class="v3-team-dot" style="background:${tp.color};"></span> ${esc(tp.name)}</span>
-                    <span style="font-family:'JetBrains Mono',monospace;">${tp.curr.views !== null ? fmtInt(tp.curr.views) + ' views' : '—'}</span>
-                  </div>
-                  <div style="display:flex;height:24px;border-radius:6px;overflow:hidden;border:1px solid var(--border-subtle);">
-                    ${tp.channels.map((cp, cIdx) => {
-                      const pct = tp.curr.views ? ((cp.curr.views || 0) / tViews) * 100 : 20;
-                      const bg = shades[cIdx % shades.length];
-                      return `<div style="width:${pct.toFixed(1)}%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#0B0F19;overflow:hidden;white-space:nowrap;" title="${esc(cp.meta.employeeName)} (${esc(cp.meta.title)}): ${fmtInt(cp.curr.views)} views (${pct.toFixed(1)}%)">${pct >= 12 ? pct.toFixed(0) + '%' : ''}</div>`;
-                    }).join('')}
-                  </div>
-                  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:11px;color:var(--text-muted);">
-                    ${tp.channels.map((cp, cIdx) => {
-                      const pct = tp.curr.views ? ((cp.curr.views || 0) / tViews) * 100 : 0;
-                      return `<span><span class="v3-team-dot" style="width:7px;height:7px;background:${shades[cIdx % shades.length]};"></span> ${esc(cp.meta.employeeName)}: <strong>${pct.toFixed(1)}%</strong></span>`;
-                    }).join('')}
-                  </div>
+        <section class="v3-panel" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <div class="v3-panel-header" style="margin-bottom:14px;">
+              <div>
+                <div class="v3-panel-title">
+                  <i class="ri-pie-chart-box-line" style="color:#38BDF8;"></i>
+                  Đóng góp của từng nhân viên vào team
                 </div>
-              `;
-            }).join('')}
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              ${sortedTeams.map(tp => {
+                const tViews = Math.max(1, tp.curr.views || 1);
+                const palette = TEAM_SHADES[tp.id] || TEAM_SHADES['TEAM-01'];
+                const chSorted = [...tp.channels].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
+                return `
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:6px;white-space:nowrap;">
+                      <span><span class="v3-team-dot" style="background:${tp.color};"></span> ${esc(tp.name)}</span>
+                      <span style="font-family:'JetBrains Mono',monospace;">${tp.curr.views !== null ? fmtInt(tp.curr.views) + ' views' : '—'}</span>
+                    </div>
+                    <div class="v3-contrib-bar">
+                      ${chSorted.map((cp, cIdx) => {
+                        const pct = tp.curr.views ? ((cp.curr.views || 0) / tViews) * 100 : 20;
+                        const shade = palette[cIdx % palette.length];
+                        const shortLabel = pct >= 10 ? `${esc(shortEmployeeName(cp.meta.employeeName))} ${Math.round(pct)}%` : '';
+                        return `<div class="v3-contrib-seg" style="width:${pct.toFixed(2)}%;background:${shade.bg};color:${shade.fg};" title="${esc(cp.meta.employeeName)} (${esc(cp.meta.title)}): ${fmtInt(cp.curr.views)} views (${fmtDec(pct, 1)}%)">${shortLabel}</div>`;
+                      }).join('')}
+                    </div>
+                    <div class="v3-contrib-legend">
+                      ${chSorted.map((cp, cIdx) => {
+                        const pct = tp.curr.views ? ((cp.curr.views || 0) / tViews) * 100 : 0;
+                        const shade = palette[cIdx % palette.length];
+                        return `<span class="v3-contrib-legend-item"><span class="v3-contrib-swatch" style="background:${shade.bg};"></span>${esc(cp.meta.employeeName)}: <strong>${fmtDec(pct, 1)}%</strong></span>`;
+                      }).join('')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
           </div>
         </section>
 
-        <section class="v3-panel" style="margin-bottom:0;">
-          <div class="v3-panel-header">
-            <div>
-              <div class="v3-panel-title">
-                <i class="ri-calendar-event-line" style="color:#F59E0B;"></i>
-                Nhịp đăng video của 3 Team trong kỳ
+        <section class="v3-panel" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <div class="v3-panel-header" style="margin-bottom:14px;">
+              <div>
+                <div class="v3-panel-title">
+                  <i class="ri-calendar-check-line" style="color:#F59E0B;"></i>
+                  Nhịp đăng video 30 ngày (${formatIsoToShortVN(stripStartIso)}–${formatIsoToShortVN(stripEndIso)})
+                </div>
               </div>
-              <div class="v3-panel-subtitle">Tổng số video phát hành và mật độ kênh hoạt động của từng Team</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              ${cadenceByTeam.map(({ tp, cells, totalVids30d, activeDays30d }) => {
+                return `
+                  <div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;margin-bottom:6px;white-space:nowrap;">
+                      <span style="font-weight:700;"><span class="v3-team-dot" style="background:${tp.color};"></span> ${esc(tp.name)}</span>
+                      <span style="font-size:11.5px;color:var(--text-muted);">
+                        <strong style="color:var(--text-main);font-family:var(--font-mono);">${fmtInt(totalVids30d)} video</strong> · ${activeDays30d}/30 ngày có đăng
+                      </span>
+                    </div>
+                    <div class="v3-cadence-strip">
+                      ${cells.map(c => {
+                        const lit = c.count > 0;
+                        const high = c.count >= 2;
+                        const bg = !lit
+                          ? 'rgba(148, 163, 184, 0.09)'
+                          : (high ? tp.color : tp.color + '8C');
+                        const border = !lit
+                          ? 'rgba(148, 163, 184, 0.16)'
+                          : tp.color;
+                        const fg = high ? '#090D16' : '#F8FAFC';
+                        return `<div class="v3-cadence-cell ${lit ? 'lit' : ''}" style="background:${bg};border-color:${border};color:${fg};" title="${formatIsoToVN(c.day)}: ${c.count} video mới (${esc(tp.name)})">${lit ? c.count : ''}</div>`;
+                      }).join('')}
+                    </div>
+                    <div class="v3-cadence-axis">
+                      <span>${formatIsoToShortVN(stripDays[0])}</span>
+                      <span>${formatIsoToShortVN(stripDays[7])}</span>
+                      <span>${formatIsoToShortVN(stripDays[14])}</span>
+                      <span>${formatIsoToShortVN(stripDays[21])}</span>
+                      <span>${formatIsoToShortVN(stripDays[stripDays.length - 1])}</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
             </div>
           </div>
-          <div style="height: 235px; position: relative;">
-            <canvas id="v3-team-cadence-canvas"></canvas>
+          <div class="v3-cadence-footer">
+            <span><span class="v3-cadence-dot dim"></span> 0 video</span>
+            <span><span class="v3-cadence-dot mid"></span> 1 video/ngày</span>
+            <span><span class="v3-cadence-dot bright"></span> ≥2 video/ngày</span>
+            <span style="margin-left:auto;color:var(--text-dim);">Nguồn: daily_videos_published cấp kênh</span>
           </div>
         </section>
       </div>
 
-      <!-- 5. 5-CHANNEL TABLE IN SELECTED TEAM (SORTED BY % GROWTH) & 6. TEAM ALERTS -->
+      <!-- 5. 5-CHANNEL TABLE IN SELECTED TEAM & 6. TEAM ALERTS -->
       <section class="v3-panel">
         <div class="v3-panel-header">
           <div>
             <div class="v3-panel-title">
               <span class="v3-team-dot" style="width:11px;height:11px;background:${selectedTeam.color};"></span>
-              Bảng 5 Kênh thuộc ${esc(selectedTeam.name)} (Xếp theo % tăng trưởng cao xuống thấp)
+              Bảng 5 kênh thuộc ${esc(selectedTeam.name)}
             </div>
-            <div class="v3-panel-subtitle">
-              Trưởng nhóm: <strong>${esc(selectedTeam.leader)}</strong> • Nhấn vào thẻ Team phía trên để chuyển đổi giữa 3 Team
+            ${selectedTeam.leader && selectedTeam.leader !== 'Trưởng nhóm' ? `
+              <div class="v3-panel-subtitle">
+                Trưởng nhóm: <strong>${esc(selectedTeam.leader)}</strong> · Nhấn vào thẻ team phía trên để chuyển đổi giữa 3 team
+              </div>
+            ` : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:12px;color:var(--text-muted);font-weight:600;">Sắp xếp:</span>
+            <div class="v3-preset-group">
+              <button type="button" class="v3-preset-btn ${sortMode === 'growth' ? 'active' : ''}" data-tm-sort="growth">Tăng trưởng</button>
+              <button type="button" class="v3-preset-btn ${sortMode === 'views' ? 'active' : ''}" data-tm-sort="views">Lượt xem</button>
             </div>
           </div>
         </div>
@@ -3042,71 +3176,78 @@
               </tr>
             </thead>
             <tbody>
-              ${teamChannelsByGrowth.map((cp, idx) => `
-                <tr class="clickable-row" data-goto-channel="${cp.id}">
-                  <td>
-                    <span class="v3-badge ${idx === 0 ? 'highest' : (idx === teamChannelsByGrowth.length - 1 ? 'lowest' : 'muted')}">
-                      #${idx + 1}${idx === 0 ? ' [Tăng nhanh nhất]' : (idx === teamChannelsByGrowth.length - 1 ? ' [Chậm nhất team]' : '')}
-                    </span>
-                  </td>
-                  <td><strong>${esc(cp.meta.title)}</strong></td>
-                  <td>${esc(cp.meta.employeeName)} (${esc(cp.meta.employeeId)})</td>
-                  <td class="num"><strong>${cp.curr.views !== null ? fmtInt(cp.curr.views) : '—'}</strong></td>
-                  <td class="num">${fmtDeltaBadge(cp.curr.views, cp.prev.views)}</td>
-                  <td class="num">${cp.curr.netSubs !== null ? (cp.curr.netSubs > 0 ? '+' + fmtInt(cp.curr.netSubs) : fmtInt(cp.curr.netSubs)) : '—'}</td>
-                  <td class="num">${fmtInt(cp.curr.videosPublished)}</td>
-                  <td class="num">${formatIsoToVN(cp.meta.lastPublishedPt)} (${cp.daysSinceLastUpload} ngày)</td>
-                  <td class="num">${cp.curr.estimatedRevenue !== null ? fmtMoney(cp.curr.estimatedRevenue) : '—'}</td>
-                </tr>
-              `).join('')}
+              ${teamChannelsSorted.map((cp, idx) => {
+                const topTag = sortMode === 'views' ? ' [Lớn nhất team]' : ' [Tăng nhanh nhất]';
+                const lowTag = sortMode === 'views' ? ' [Nhỏ nhất team]' : ' [Chậm nhất team]';
+                return `
+                  <tr class="clickable-row" data-goto-channel="${cp.id}">
+                    <td style="white-space:nowrap;">
+                      <span class="v3-badge ${idx === 0 ? 'highest' : (idx === teamChannelsSorted.length - 1 ? 'lowest' : 'muted')}">
+                        #${idx + 1}${idx === 0 ? topTag : (idx === teamChannelsSorted.length - 1 ? lowTag : '')}
+                      </span>
+                    </td>
+                    <td style="white-space:nowrap;"><strong>${esc(cp.meta.title)}</strong></td>
+                    <td style="white-space:nowrap;">${esc(cp.meta.employeeName)} (${esc(cp.meta.employeeId)})</td>
+                    <td class="num" style="white-space:nowrap;"><strong>${cp.curr.views !== null ? fmtInt(cp.curr.views) : '—'}</strong></td>
+                    <td class="num" style="white-space:nowrap;">${fmtDeltaBadge(cp.curr.views, cp.prev.views)}</td>
+                    <td class="num" style="white-space:nowrap;">${cp.curr.netSubs !== null ? (cp.curr.netSubs > 0 ? '+' + fmtInt(cp.curr.netSubs) : fmtInt(cp.curr.netSubs)) : '—'}</td>
+                    <td class="num" style="white-space:nowrap;">${fmtInt(cp.curr.videosPublished)}</td>
+                    <td class="num" style="white-space:nowrap;font-family:var(--font-sans);"><span style="font-family:var(--font-mono);">${formatIsoToVN(cp.lastPublishedCutoff)}</span> <span style="color:var(--text-muted);font-size:11px;">(${cp.daysSinceLastUpload} ngày trước)</span></td>
+                    <td class="num" style="white-space:nowrap;"><strong>${cp.curr.estimatedRevenue !== null ? fmtMoney(cp.curr.estimatedRevenue) : '—'}</strong></td>
+                  </tr>
+                `;
+              }).join('')}
             </tbody>
           </table>
         </div>
 
-        <div style="margin-top:14px;padding:12px 14px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);">
-          <strong style="font-size:12.5px;display:block;margin-bottom:8px;">
-            <i class="ri-Notification-badge-line" style="color:#F59E0B;"></i> Cảnh báo riêng của ${esc(selectedTeam.name)} (${teamAlerts.length} cảnh báo):
-          </strong>
-          ${teamAlerts.length === 0 ? `
-            <span style="font-size:12.5px;color:#10B981;">Tất cả 5 kênh trong ${esc(selectedTeam.name)} đều tăng trưởng ổn định, đúng lịch đăng và đủ quyền dữ liệu.</span>
-          ` : `
+        ${teamAlerts.length > 0 ? `
+          <div class="v3-team-alert-box">
+            <strong style="font-size:12.5px;display:block;margin-bottom:8px;">
+              <i class="ri-error-warning-line" style="color:#F59E0B;"></i> Cảnh báo vận hành của ${esc(selectedTeam.name)} (${teamAlerts.length} kênh):
+            </strong>
             <div style="display:flex;flex-wrap:wrap;gap:8px;">
-              ${teamAlerts.map(cp => {
+              ${teamAlerts.map(item => {
                 const reasons = [];
-                if (cp.prev && (cp.prev.views || 0) >= 5000 && cp.viewsGrowthPct !== null && cp.viewsGrowthPct <= v3State.alertDropThreshold) {
-                  reasons.push(`[Giảm sâu ${cp.viewsGrowthPct.toFixed(1)}%]`);
+                if (item.slow) {
+                  reasons.push(`Quá 7 ngày chưa đăng (${item.cp.daysSinceLastUpload} ngày · từ ${formatIsoToShortVN(item.cp.lastPublishedCutoff)})`);
                 }
-                if (cp.daysSinceLastUpload > v3State.alertUploadCycleDays) {
-                  reasons.push(`[Chậm lịch đăng: ${cp.daysSinceLastUpload} ngày]`);
-                }
-                if (cp.curr.analyticsStatus !== 'demo_ready' || cp.curr.monetaryStatus !== 'demo_ready') {
-                  reasons.push(`[Thiếu quyền: ${cp.curr.monetaryStatus}]`);
+                if (item.highShare) {
+                  reasons.push(`Chiếm ${fmtDec(item.sharePct, 1)}% views của team (> 40%)`);
                 }
                 return `
-                  <span class="v3-scope-pill clickable-row" data-goto-channel="${cp.id}" style="border-color:rgba(245,158,11,0.4);">
-                    <strong>${esc(cp.meta.title)}</strong> (${esc(cp.meta.employeeName)}):
+                  <span class="v3-scope-pill clickable-row" data-goto-channel="${item.cp.id}" style="border-color:rgba(245,158,11,0.4);">
+                    <strong>${esc(item.cp.meta.title)}</strong> (${esc(item.cp.meta.employeeName)}):
                     <span style="color:#F59E0B;font-weight:700;">${esc(reasons.join(' · '))}</span>
                   </span>
                 `;
               }).join('')}
             </div>
-          `}
-        </div>
+          </div>
+        ` : ''}
       </section>
     `;
 
-    // Render 3-Team Line Chart & Upload Cadence Chart
+    // Render 3-Team Line Chart (no legend, Y starts at 0, Vietnamese ticks, direct end-of-line label with full-period total)
     destroyChart('teamTrend');
     const trendCanvas = document.getElementById('v3-team-trend-canvas');
     if (trendCanvas && typeof Chart !== 'undefined') {
       const metric = v3State.teamChartMetric;
       const days = snap.win.days;
       const labels = days.map(d => d.slice(8, 10) + '/' + d.slice(5, 7));
-      const datasets = snap.teamPairs.map(tp => {
+      const datasets = sortedTeams.map(tp => {
         const series = (tp.curr.dailySeries || []).map(d => d[metric]);
-        const lastVal = series.slice().reverse().find(v => v !== null && v !== undefined);
+        let periodTotalStr = '—';
+        if (metric === 'views' && tp.curr.views !== null) {
+          periodTotalStr = fmtCompact(tp.curr.views, true);
+        } else if (metric === 'watchHours' && tp.curr.watchHours !== null) {
+          periodTotalStr = fmtInt(tp.curr.watchHours) + 'h';
+        } else if (metric === 'revenue' && tp.curr.estimatedRevenue !== null) {
+          periodTotalStr = fmtMoney(tp.curr.estimatedRevenue);
+        }
         return {
-          label: `${tp.name} (${lastVal !== undefined ? fmtCompact(lastVal) : '—'})`,
+          label: tp.name,
+          endLabel: `${tp.name} · ${periodTotalStr}`,
           data: series,
           borderColor: tp.color,
           backgroundColor: 'transparent',
@@ -3115,64 +3256,108 @@
           tension: 0.3
         };
       });
+
+      const directEndLabelsPlugin = {
+        id: 'directTeamEndLabels',
+        afterDatasetsDraw(chart) {
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return;
+          const items = [];
+          chart.data.datasets.forEach((ds, i) => {
+            const meta = chart.getDatasetMeta(i);
+            if (!meta || meta.hidden || !meta.data || !meta.data.length) return;
+            let lastEl = null;
+            for (let k = meta.data.length - 1; k >= 0; k--) {
+              if (ds.data[k] !== null && ds.data[k] !== undefined) {
+                lastEl = meta.data[k];
+                break;
+              }
+            }
+            if (!lastEl) return;
+            items.push({
+              x: lastEl.x,
+              y: lastEl.y,
+              rawY: lastEl.y,
+              color: ds.borderColor,
+              text: ds.endLabel || ds.label
+            });
+          });
+          if (!items.length) return;
+          items.sort((a, b) => a.y - b.y);
+          const minGap = 18;
+          for (let i = 1; i < items.length; i++) {
+            if (items[i].y - items[i - 1].y < minGap) {
+              items[i].y = items[i - 1].y + minGap;
+            }
+          }
+          const maxBottom = chartArea.bottom - 6;
+          if (items[items.length - 1].y > maxBottom) {
+            items[items.length - 1].y = maxBottom;
+            for (let i = items.length - 2; i >= 0; i--) {
+              if (items[i + 1].y - items[i].y < minGap) {
+                items[i].y = items[i + 1].y - minGap;
+              }
+            }
+          }
+          ctx.save();
+          ctx.font = '700 12px Inter, system-ui, sans-serif';
+          ctx.textBaseline = 'middle';
+          items.forEach(it => {
+            ctx.strokeStyle = it.color;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(it.x + 3, it.rawY);
+            ctx.lineTo(chartArea.right + 8, it.y);
+            ctx.stroke();
+
+            ctx.fillStyle = it.color;
+            ctx.beginPath();
+            ctx.arc(it.x, it.rawY, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = it.color;
+            ctx.fillText(it.text, chartArea.right + 12, it.y);
+          });
+          ctx.restore();
+        }
+      };
+
       chartInstances['teamTrend'] = new Chart(trendCanvas.getContext('2d'), {
         type: 'line',
         data: { labels, datasets },
+        plugins: [directEndLabelsPlugin],
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          layout: { padding: { right: 185, top: 14, bottom: 6 } },
           interaction: { mode: 'index', intersect: false },
-          plugins: { legend: { labels: { color: '#CBD5E1', font: { weight: '700' } } } },
+          plugins: {
+            legend: { display: false }
+          },
           scales: {
-            x: { ticks: { color: '#94A3B8', maxTicksLimit: 14 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-            y: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+            x: { ticks: { color: '#94A3B8', maxTicksLimit: 15 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: {
+              beginAtZero: true,
+              min: 0,
+              ticks: {
+                color: '#94A3B8',
+                callback: function (val) {
+                  if (metric === 'revenue') return fmtMoney(val);
+                  return new Intl.NumberFormat('vi-VN').format(Math.round(val));
+                }
+              },
+              grid: { color: 'rgba(255,255,255,0.06)' }
+            }
           }
         }
       });
     }
 
     destroyChart('teamCadence');
-    const cadCanvas = document.getElementById('v3-team-cadence-canvas');
-    if (cadCanvas && typeof Chart !== 'undefined') {
-      chartInstances['teamCadence'] = new Chart(cadCanvas.getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: snap.teamPairs.map(tp => tp.name),
-          datasets: [
-            {
-              label: 'Video đăng trong kỳ',
-              data: snap.teamPairs.map(tp => tp.curr.videosPublished),
-              backgroundColor: snap.teamPairs.map(tp => tp.color + 'CC'),
-              borderColor: snap.teamPairs.map(tp => tp.color),
-              borderWidth: 1.5,
-              borderRadius: 6
-            },
-            {
-              label: 'Video đăng 7 ngày gần nhất',
-              data: snap.teamPairs.map(tp => tp.curr.videosLast7d),
-              backgroundColor: 'rgba(148, 163, 184, 0.35)',
-              borderColor: '#94A3B8',
-              borderWidth: 1,
-              borderRadius: 6
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#CBD5E1' } } },
-          scales: {
-            x: { ticks: { color: '#CBD5E1' }, grid: { color: 'rgba(255,255,255,0.04)' } },
-            y: { ticks: { color: '#94A3B8', stepSize: 5 }, grid: { color: 'rgba(255,255,255,0.06)' } }
-          }
-        }
-      });
-    }
 
     root.querySelectorAll('[data-select-team-card]').forEach(card => {
       card.addEventListener('click', () => {
         v3State.selectedTeamId = card.getAttribute('data-select-team-card');
-        renderSharedHeader(snap, 'view-report-team');
         renderTeamPage(snap);
       });
     });
@@ -3180,6 +3365,13 @@
     root.querySelectorAll('[data-tm-metric]').forEach(btn => {
       btn.addEventListener('click', () => {
         v3State.teamChartMetric = btn.getAttribute('data-tm-metric');
+        renderTeamPage(snap);
+      });
+    });
+
+    root.querySelectorAll('[data-tm-sort]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        v3State.teamTableSort = btn.getAttribute('data-tm-sort');
         renderTeamPage(snap);
       });
     });

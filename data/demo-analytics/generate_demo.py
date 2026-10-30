@@ -256,6 +256,14 @@ def main():
             v_pub = 1 if (is_sched_day and r_pub.random() < 0.78) else 0
             if ci == 0 and day == dt.date(2026, 10, 14):
                 v_pub = 0
+            if ci == 0 and day == dt.date(2026, 10, 16):
+                v_pub = 1
+            if ci == 0 and day > dt.date(2026, 10, 16):
+                v_pub = 0
+            if ci == 12 and day == dt.date(2026, 10, 15):
+                v_pub = 1
+            if ci == 12 and day > dt.date(2026, 10, 15):
+                v_pub = 0
             channel_vids_pub[cid, day] = v_pub
 
     channel_rows = [dict(channel_id=cid, day=day.isoformat(), content_type="VIDEO",
@@ -516,7 +524,8 @@ def main():
             next_day = day + dt.timedelta(days=1)
             captured_utc = f"{next_day.isoformat()}T07:05:00Z"
             ch_videos = [v for v in by_channel[cid] if publication[v["id"]] <= day]
-            last_pub = max((publication[v["id"]] for v in ch_videos), default=first_pub_by_channel[cid])
+            pub_days_up_to = [d for d in all_days if d <= day and channel_vids_pub[cid, d] > 0]
+            last_pub = max(pub_days_up_to) if pub_days_up_to else max((publication[v["id"]] for v in ch_videos), default=first_pub_by_channel[cid])
             snapshot_rows.append(dict(
                 channel_id=cid,
                 snapshot_date_pt=day.isoformat(),
@@ -537,6 +546,7 @@ def main():
         # Build profile for 28d and 7d snapshot window
         ch_snaps = [s for s in snapshot_rows if s["channel_id"] == cid]
         snap_end = ch_snaps[-1]
+        snap_cutoff = next(s for s in ch_snaps if s["snapshot_date_pt"] == str(ANALYTICS_AVAILABLE_END))
         snap_28_start = next(s for s in ch_snaps if s["snapshot_date_pt"] == str(DEFAULT_START))
         snap_7_start = next(s for s in ch_snaps if s["snapshot_date_pt"] == str(END - dt.timedelta(days=6)))
         pub_delta_28d = snap_end["subscriber_count_public"] - snap_28_start["subscriber_count_public"]
@@ -554,7 +564,7 @@ def main():
             sub_delta_7d_below_step=bool(abs(pub_delta_7d) < snap_end["sub_rounding_step"]),
             view_count_cumulative=snap_end["view_count_cumulative"],
             video_count_public=snap_end["video_count_public"],
-            last_video_published_pt=snap_end["last_video_published_pt"],
+            last_video_published_pt=snap_cutoff["last_video_published_pt"],
             expected_upload_cycle_days=7,
             has_negative_anomaly_90d=any(s["is_negative_anomaly"] for s in ch_snaps),
             negative_anomalies=[

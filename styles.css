@@ -5916,3 +5916,241 @@ input:checked + .slider:before {
   transition: all 0.3s ease;
 }
 
+/* =========================================================================
+   PAGE 2: BÁO CÁO THEO TEAM (#view-report-team)
+   ========================================================================= */
+.v3-team-cards-grid {
+  align-items: stretch;
+}
+
+.v3-team-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: 16px 18px;
+}
+
+.v3-team-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  white-space: nowrap;
+}
+
+.v3-team-card-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.v3-team-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v3-team-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.v3-rank-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  background: rgba(148, 163, 184, 0.14);
+  color: #CBD5E1;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  flex-shrink: 0;
+}
+
+.v3-rank-pill.top1 {
+  background: rgba(16, 185, 129, 0.16);
+  color: #10B981;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.v3-team-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 10px;
+  font-size: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.v3-team-card-metric-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+}
+
+.v3-team-card-metric-item strong {
+  color: var(--text-main);
+}
+
+.v3-team-card-conclusion {
+  margin-top: 12px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v3-team-card-conclusion strong {
+  color: var(--text-main);
+}
+
+/* Stacked Member Contribution Bar */
+.v3-contrib-bar {
+  display: flex;
+  height: 26px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.v3-contrib-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 800;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0 4px;
+  border-right: 1px solid rgba(9, 13, 22, 0.45);
+}
+
+.v3-contrib-seg:last-child {
+  border-right: none;
+}
+
+.v3-contrib-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.v3-contrib-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.v3-contrib-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* 30-Day Upload Cadence Strip */
+.v3-cadence-strip {
+  display: grid;
+  grid-template-columns: repeat(30, 1fr);
+  gap: 3px;
+}
+
+.v3-cadence-cell {
+  height: 26px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  user-select: none;
+}
+
+.v3-cadence-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  margin-top: 4px;
+}
+
+.v3-cadence-footer {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.v3-cadence-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.v3-cadence-dot.dim {
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.v3-cadence-dot.mid {
+  background: rgba(56, 189, 248, 0.55);
+  border: 1px solid #38BDF8;
+}
+
+.v3-cadence-dot.bright {
+  background: #38BDF8;
+  border: 1px solid #38BDF8;
+}
+
+.v3-team-alert-box {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+#v3-team-root .v3-table thead th,
+#v3-team-root .v3-table tbody td {
+  padding: 8px 5px;
+  font-size: 11.6px;
+}
+
+
+

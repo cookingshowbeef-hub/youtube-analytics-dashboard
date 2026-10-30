@@ -21,19 +21,22 @@
       "id": "TEAM-01",
       "name": "Jazz & Lo-fi",
       "source": "mock_org",
-      "is_fictional": true
+      "is_fictional": true,
+      "leader": "Lê Minh Anh"
     },
     {
       "id": "TEAM-02",
       "name": "Retro & Electronic",
       "source": "mock_org",
-      "is_fictional": true
+      "is_fictional": true,
+      "leader": "Nguyễn Hoàng Nam"
     },
     {
       "id": "TEAM-03",
       "name": "Indie & Chill",
       "source": "mock_org",
-      "is_fictional": true
+      "is_fictional": true,
+      "leader": "Trịnh Minh Khang"
     }
   ],
   "employees": [
@@ -316,8 +319,8 @@
       "requested_handle": "@LunaviaVintageMelodies",
       "url": "https://www.youtube.com/channel/UCL9VCEoz6M6JcUKxlJcr3LQ",
       "snippet": {
-        "title": "Lunavia",
-        "description": "Welcome to Lunavia. 🌙\n\nLunavia is an imaginary woman from the 1950s, inspired by the beauty, music, and quiet emotions of a bygone era. She is not a real historical figure, but a character born from nostalgia, imagination, and a love for timeless stories. 🌷\n\nTo me, Lunavia represents a woman who finds beauty in simple moments—the warmth of an old song, a handwritten letter, a quiet evening, or a memory that refuses to fade.\n\nThis channel is a journey into that forgotten atmosphere, filled with **vintage melodies, romantic moments, old-fashioned elegance, and stories that feel like memories from another time.✨\n\nEverything here is created to capture the feeling of yesterday—not to recreate history perfectly, but to preserve the emotions and beauty that make the past feel so special.\n\nPlease be aware of channels impersonating Lunavia.\nThe only official channels are Lunavia .\n\nThank you for stepping into Lunavia’s world. 💜\nWhere yesterday lives on through music, memories, and dreams.\n",
+        "title": "Lunavia Vintage Melodies",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Lunavia Vintage Melodies).",
         "customUrl": "@lunaviavintagemelodies",
         "publishedAt": "2026-08-24T12:10:00.252723Z",
         "thumbnails": {
@@ -338,8 +341,8 @@
           }
         },
         "localized": {
-          "title": "Lunavia",
-          "description": "Welcome to Lunavia. 🌙\n\nLunavia is an imaginary woman from the 1950s, inspired by the beauty, music, and quiet emotions of a bygone era. She is not a real historical figure, but a character born from nostalgia, imagination, and a love for timeless stories. 🌷\n\nTo me, Lunavia represents a woman who finds beauty in simple moments—the warmth of an old song, a handwritten letter, a quiet evening, or a memory that refuses to fade.\n\nThis channel is a journey into that forgotten atmosphere, filled with **vintage melodies, romantic moments, old-fashioned elegance, and stories that feel like memories from another time.✨\n\nEverything here is created to capture the feeling of yesterday—not to recreate history perfectly, but to preserve the emotions and beauty that make the past feel so special.\n\nPlease be aware of channels impersonating Lunavia.\nThe only official channels are Lunavia .\n\nThank you for stepping into Lunavia’s world. 💜\nWhere yesterday lives on through music, memories, and dreams.\n"
+          "title": "Lunavia Vintage Melodies",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Lunavia Vintage Melodies)."
         },
         "country": "US"
       },
@@ -382,12 +385,12 @@
     },
     {
       "id": "UCSJ4gkVC6NrvII8umztf0Ow",
-      "requested_handle": "@LofiGirl",
+      "requested_handle": "@MellowMoonLofi",
       "url": "https://www.youtube.com/channel/UCSJ4gkVC6NrvII8umztf0Ow",
       "snippet": {
-        "title": "Lofi Girl",
-        "description": "Lofi House is now available! 🌇\n",
-        "customUrl": "@lofigirl",
+        "title": "Mellow Moon Lofi",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Mellow Moon Lofi).",
+        "customUrl": "@mellowmoonlofi",
         "publishedAt": "2015-03-18T15:36:55Z",
         "thumbnails": {
           "default": {
@@ -407,8 +410,8 @@
           }
         },
         "localized": {
-          "title": "Lofi Girl",
-          "description": "Lofi House is now available! 🌇\n"
+          "title": "Mellow Moon Lofi",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Mellow Moon Lofi)."
         },
         "country": "FR"
       },
@@ -451,12 +454,12 @@
     },
     {
       "id": "UCOxqgCwgOqC2lMqC5PYz_Dg",
-      "requested_handle": "@ChillhopMusic",
+      "requested_handle": "@HarborBreezeBeats",
       "url": "https://www.youtube.com/channel/UCOxqgCwgOqC2lMqC5PYz_Dg",
       "snippet": {
-        "title": "Chillhop Music",
-        "description": "Laidback beats for a more relaxed everyday life. 🎶\n\n😊 ❘ Listen to our music on Spotify, Apple Music & other services\n→ https://chillhop.ffm.to/listen.DXF\n\nAll music and visual art in this video was created by talented, real humans, with no AI involved 🫶\n",
-        "customUrl": "@chillhopmusic",
+        "title": "Harbor Breeze Beats",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Harbor Breeze Beats).",
+        "customUrl": "@harborbreezebeats",
         "publishedAt": "2013-01-03T20:55:21Z",
         "thumbnails": {
           "default": {
@@ -477,8 +480,8 @@
         },
         "defaultLanguage": "en-GB",
         "localized": {
-          "title": "Chillhop Music",
-          "description": "Laidback beats for a more relaxed everyday life. 🎶\n\n😊 ❘ Listen to our music on Spotify, Apple Music & other services\n→ https://chillhop.ffm.to/listen.DXF\n\nAll music and visual art in this video was created by talented, real humans, with no AI involved 🫶\n"
+          "title": "Harbor Breeze Beats",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Harbor Breeze Beats)."
         },
         "country": "NL"
       },
@@ -521,12 +524,12 @@
     },
     {
       "id": "UCi8wqezBudeAiTdKOX571ug",
-      "requested_handle": "@thejazzhopcafe",
+      "requested_handle": "@VelvetEspressoJazz",
       "url": "https://www.youtube.com/channel/UCi8wqezBudeAiTdKOX571ug",
       "snippet": {
-        "title": "The Jazz Hop Café",
-        "description": "☕ Freshly Roasted Beats\nwww.thejazzhopcafe.com\n\nThe Jazz Hop Café is a music label & merch store.\nServing freshly roasted Jazz Hop & Lofi beats!\n\nShowcasing human art & music 🚫🤖\n\n💽 Submit Music [Status: Open]\nwww.thejazzhopcafe.com/submissions\n\n📓 Business Inquiries\nwww.thejazzhopcafe.com/contact",
-        "customUrl": "@jazzhopcafe",
+        "title": "Velvet Espresso Jazz",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Velvet Espresso Jazz).",
+        "customUrl": "@velvetespressojazz",
         "publishedAt": "2015-10-15T12:25:28Z",
         "thumbnails": {
           "default": {
@@ -546,8 +549,8 @@
           }
         },
         "localized": {
-          "title": "The Jazz Hop Café",
-          "description": "☕ Freshly Roasted Beats\nwww.thejazzhopcafe.com\n\nThe Jazz Hop Café is a music label & merch store.\nServing freshly roasted Jazz Hop & Lofi beats!\n\nShowcasing human art & music 🚫🤖\n\n💽 Submit Music [Status: Open]\nwww.thejazzhopcafe.com/submissions\n\n📓 Business Inquiries\nwww.thejazzhopcafe.com/contact"
+          "title": "Velvet Espresso Jazz",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Velvet Espresso Jazz)."
         },
         "country": "GB"
       },
@@ -591,12 +594,12 @@
     },
     {
       "id": "UCJhjE7wbdYAae1G25m0tHAA",
-      "requested_handle": "@CafeMusicBGMchannel",
+      "requested_handle": "@SaigonCornerBGM",
       "url": "https://www.youtube.com/channel/UCJhjE7wbdYAae1G25m0tHAA",
       "snippet": {
-        "title": "Cafe Music BGM channel",
-        "description": "☕ About Cafe Music BGM channel\nWelcome to our Cafe Music channel, your source for 'Everyday Music'. Perfect for relaxation, work, or study, our tunes will transform your daily rhythm. Subscribe now, and let us infuse your life with cafe ambiance, making ordinary moments extraordinary.\n* All music in this video & in this channel is original music by BGMC. We are playing all the songs.\n\n\n📜 What is BGMC?\nMorning.\nGentle light that shines through the blinds\nOne glass of water after waking up\nThe tender breeze from the window that we feel with all our body\n\nThese things are too ordinary in everyday life to be conscious.\nBut we can't live even if one of them is missing.\n\"BGMC - BGM channel\" has been providing music, hoping to be like them.\n\nThough it is colorless and transparent, we want to make the listener's daily life as colorful as possible.\nThat is the essence of the music we deliver.\n\nLight, water, wind, and BGMC\nA new value for music.",
-        "customUrl": "@cafemusicbgmchannel",
+        "title": "Saigon Corner BGM",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Saigon Corner BGM).",
+        "customUrl": "@saigoncornerbgm",
         "publishedAt": "2014-11-05T23:27:11Z",
         "thumbnails": {
           "default": {
@@ -616,8 +619,8 @@
           }
         },
         "localized": {
-          "title": "Cafe Music BGM channel",
-          "description": "☕ About Cafe Music BGM channel\nWelcome to our Cafe Music channel, your source for 'Everyday Music'. Perfect for relaxation, work, or study, our tunes will transform your daily rhythm. Subscribe now, and let us infuse your life with cafe ambiance, making ordinary moments extraordinary.\n* All music in this video & in this channel is original music by BGMC. We are playing all the songs.\n\n\n📜 What is BGMC?\nMorning.\nGentle light that shines through the blinds\nOne glass of water after waking up\nThe tender breeze from the window that we feel with all our body\n\nThese things are too ordinary in everyday life to be conscious.\nBut we can't live even if one of them is missing.\n\"BGMC - BGM channel\" has been providing music, hoping to be like them.\n\nThough it is colorless and transparent, we want to make the listener's daily life as colorful as possible.\nThat is the essence of the music we deliver.\n\nLight, water, wind, and BGMC\nA new value for music."
+          "title": "Saigon Corner BGM",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Saigon Corner BGM)."
         },
         "country": "JP"
       },
@@ -660,12 +663,12 @@
     },
     {
       "id": "UCuNF36PtETqVFz_yK6C_v-g",
-      "requested_handle": "@the80sgroovemachine",
+      "requested_handle": "@CassetteHorizon84",
       "url": "https://www.youtube.com/channel/UCuNF36PtETqVFz_yK6C_v-g",
       "snippet": {
-        "title": "80s Groove Machine",
-        "description": "Welcome to 80s Groove Machine📼🕺\n\n80s Groove Machine brings you original 80s-inspired music shaped by synth-pop, dance-pop, New Wave, retro electronic, disco-funk, Italo disco, and pop-rock influences.\n\n✨ On this channel, you’ll find:\n\n• Energetic 80s dance-pop and synth-pop mixes\n• New Wave and retro electronic grooves\n• Italo disco, post-disco, synth-funk, and electro-funk rhythms\n• Feel-good playlists for driving, dancing, workouts, and parties\n• Night-drive mixes inspired by neon cities and vintage dance floors\n\nWhether you grew up with the sound of the 1980s or simply love its colourful style, these mixes will take you back to an era of cassette tapes, arcade lights, big choruses, and unforgettable grooves.\n\nSubscribe and turn on the notification bell 🔔 for new 80s-inspired mixes, retro playlists, and nonstop synth-powered energy.\n\n🌃 Neon lights. Drum machines. Synthesizers. Pure 80s Groove.\n\n#80sGrooveMachine #80sDancePop #SynthPop #NewWave #RetroMusic\n\n",
-        "customUrl": "@the80sgroovemachine",
+        "title": "Cassette Horizon 84",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Cassette Horizon 84).",
+        "customUrl": "@cassettehorizon84",
         "publishedAt": "2026-05-20T13:51:30.871372Z",
         "thumbnails": {
           "default": {
@@ -685,8 +688,8 @@
           }
         },
         "localized": {
-          "title": "80s Groove Machine",
-          "description": "Welcome to 80s Groove Machine📼🕺\n\n80s Groove Machine brings you original 80s-inspired music shaped by synth-pop, dance-pop, New Wave, retro electronic, disco-funk, Italo disco, and pop-rock influences.\n\n✨ On this channel, you’ll find:\n\n• Energetic 80s dance-pop and synth-pop mixes\n• New Wave and retro electronic grooves\n• Italo disco, post-disco, synth-funk, and electro-funk rhythms\n• Feel-good playlists for driving, dancing, workouts, and parties\n• Night-drive mixes inspired by neon cities and vintage dance floors\n\nWhether you grew up with the sound of the 1980s or simply love its colourful style, these mixes will take you back to an era of cassette tapes, arcade lights, big choruses, and unforgettable grooves.\n\nSubscribe and turn on the notification bell 🔔 for new 80s-inspired mixes, retro playlists, and nonstop synth-powered energy.\n\n🌃 Neon lights. Drum machines. Synthesizers. Pure 80s Groove.\n\n#80sGrooveMachine #80sDancePop #SynthPop #NewWave #RetroMusic\n\n"
+          "title": "Cassette Horizon 84",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Cassette Horizon 84)."
         },
         "country": "US"
       },
@@ -729,12 +732,12 @@
     },
     {
       "id": "UCmYTgpKxd-QOJCPDrmaXuqQ",
-      "requested_handle": "@ThePrimeThanatos",
+      "requested_handle": "@AetherGridSynth",
       "url": "https://www.youtube.com/channel/UCmYTgpKxd-QOJCPDrmaXuqQ",
       "snippet": {
-        "title": "ThePrimeThanatos",
-        "description": "Hello and welcome to ThePrimeThanatos, On this channel you will find a wide variety of different electronic, Synthwave & Retrowave music.\n\n\n✖ Subscribe to ThePrimeCronus (Epic/Orchestral/Trailer Music): http://goo.gl/jrSyRt\n✖ Support on Patreon: http://goo.gl/Zri9ic\n✖ Mixer: https://mixer.com/ThePrimeThanatos\n▂\n\nNote for the new Artists: \n\n✖✖ If you would like to submit your track, visual art for promotion.\n✖✖ If you want to adding any kind of information which belongs to the video (audio or visual)\n✖✖ If you have any issues regarding any of the videos. \n\nPlease email me at prime thanatos @ outl ook.com (remove the spaces), please do not send me message on this channel. \n\n▂\nSubmission Requirements:\n✖✖ Audio & Visual - Must be Synthwave, Vaporwave, Retro Electro, Cyberpunk (\"80's Genre\")\n✖✖ Audio - Please specify the genre on submission\n✖✖ Please provide all your social media links for description.\n\nEnjoy!",
-        "customUrl": "@theprimethanatos",
+        "title": "Aether Grid Synth",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Aether Grid Synth).",
+        "customUrl": "@aethergridsynth",
         "publishedAt": "2014-10-13T03:36:04Z",
         "thumbnails": {
           "default": {
@@ -754,8 +757,8 @@
           }
         },
         "localized": {
-          "title": "ThePrimeThanatos",
-          "description": "Hello and welcome to ThePrimeThanatos, On this channel you will find a wide variety of different electronic, Synthwave & Retrowave music.\n\n\n✖ Subscribe to ThePrimeCronus (Epic/Orchestral/Trailer Music): http://goo.gl/jrSyRt\n✖ Support on Patreon: http://goo.gl/Zri9ic\n✖ Mixer: https://mixer.com/ThePrimeThanatos\n▂\n\nNote for the new Artists: \n\n✖✖ If you would like to submit your track, visual art for promotion.\n✖✖ If you want to adding any kind of information which belongs to the video (audio or visual)\n✖✖ If you have any issues regarding any of the videos. \n\nPlease email me at prime thanatos @ outl ook.com (remove the spaces), please do not send me message on this channel. \n\n▂\nSubmission Requirements:\n✖✖ Audio & Visual - Must be Synthwave, Vaporwave, Retro Electro, Cyberpunk (\"80's Genre\")\n✖✖ Audio - Please specify the genre on submission\n✖✖ Please provide all your social media links for description.\n\nEnjoy!"
+          "title": "Aether Grid Synth",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Aether Grid Synth)."
         }
       },
       "statistics": {
@@ -797,12 +800,12 @@
     },
     {
       "id": "UCD-4g5w1h8xQpLaNS_ghU4g",
-      "requested_handle": "@NewRetroWave",
+      "requested_handle": "@NeonMirageWave",
       "url": "https://www.youtube.com/channel/UCD-4g5w1h8xQpLaNS_ghU4g",
       "snippet": {
-        "title": "NewRetroWave",
-        "description": "NewRetroWave is a network dedicated to promoting the BEST in the Retrowave culture. Since it's EST. in Nov 2011, NewRetroWave has grown and evolved into a prominent musical hub and online presence where the Retrowave is given its due exposure. You are all about to embark on a journey into new retro sounds that will change your lives forever!\n\nWe upload weekly on Mon - Friday.\n\nIf you want your music or artwork removed from our Youtube Channel/ website, please email our legal team at:   legal@newretrowave.com\n\n\nWe host 80's and 90's themed/ inspired sounds which includes - Synthwave/ Dreamwave/ Darksynth/ Cyberpunk/ Retro-Electro/ Chillsynth/ Shoegaze/ Acid House/ Jungle, DnB/ Trance/ VaporTrap/ 80s and 90's pop/ Synthpop/ Synthfunk/ K-Synth/ J-Synth/ Citypop.\n\n\n©2026 NewRetroWave, LLC. All Rights Reserved.",
-        "customUrl": "@newretrowave",
+        "title": "Neon Mirage Wave",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Neon Mirage Wave).",
+        "customUrl": "@neonmiragewave",
         "publishedAt": "2011-11-02T01:38:26Z",
         "thumbnails": {
           "default": {
@@ -822,8 +825,8 @@
           }
         },
         "localized": {
-          "title": "NewRetroWave",
-          "description": "NewRetroWave is a network dedicated to promoting the BEST in the Retrowave culture. Since it's EST. in Nov 2011, NewRetroWave has grown and evolved into a prominent musical hub and online presence where the Retrowave is given its due exposure. You are all about to embark on a journey into new retro sounds that will change your lives forever!\n\nWe upload weekly on Mon - Friday.\n\nIf you want your music or artwork removed from our Youtube Channel/ website, please email our legal team at:   legal@newretrowave.com\n\n\nWe host 80's and 90's themed/ inspired sounds which includes - Synthwave/ Dreamwave/ Darksynth/ Cyberpunk/ Retro-Electro/ Chillsynth/ Shoegaze/ Acid House/ Jungle, DnB/ Trance/ VaporTrap/ 80s and 90's pop/ Synthpop/ Synthfunk/ K-Synth/ J-Synth/ Citypop.\n\n\n©2026 NewRetroWave, LLC. All Rights Reserved."
+          "title": "Neon Mirage Wave",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Neon Mirage Wave)."
         },
         "country": "US"
       },
@@ -866,12 +869,12 @@
     },
     {
       "id": "UC6ghlxmJNMd8BE_u1HR-bTg",
-      "requested_handle": "@The80sGuy",
+      "requested_handle": "@ArcadeMidnightClub",
       "url": "https://www.youtube.com/channel/UC6ghlxmJNMd8BE_u1HR-bTg",
       "snippet": {
-        "title": "The '80s Guy",
-        "description": "The ‘80s Guy: YouTube curator, synthwave expert, time traveler. \nThe man behind the videos is a man from the past, compelled to leave his timeline in the 1980s to find the most exciting evolutions of synthesizer music.\n\nHis journey has led him here, to the future.\n\n-============================================-\n                             Support The '80s Guy\n-============================================-\n► Subscribe:               https://the80sguy.org/sub\n► Become a Patron:  https://patreon.com/the80sguy\n-============================================-\n                         Submit Your Music and Art\n-============================================-\n► Music:    https://the80sguy.com/submit\n► Artwork: https://the80sguy.com/art\n-============================================-\n\n♫ All Rights Reserved By The Original Artists & Labels.",
-        "customUrl": "@the80sguy",
+        "title": "Arcade Midnight Club",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Arcade Midnight Club).",
+        "customUrl": "@arcademidnightclub",
         "publishedAt": "2015-03-09T10:09:22Z",
         "thumbnails": {
           "default": {
@@ -892,8 +895,8 @@
         },
         "defaultLanguage": "en",
         "localized": {
-          "title": "The '80s Guy",
-          "description": "The ‘80s Guy: YouTube curator, synthwave expert, time traveler. \nThe man behind the videos is a man from the past, compelled to leave his timeline in the 1980s to find the most exciting evolutions of synthesizer music.\n\nHis journey has led him here, to the future.\n\n-============================================-\n                             Support The '80s Guy\n-============================================-\n► Subscribe:               https://the80sguy.org/sub\n► Become a Patron:  https://patreon.com/the80sguy\n-============================================-\n                         Submit Your Music and Art\n-============================================-\n► Music:    https://the80sguy.com/submit\n► Artwork: https://the80sguy.com/art\n-============================================-\n\n♫ All Rights Reserved By The Original Artists & Labels."
+          "title": "Arcade Midnight Club",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Arcade Midnight Club)."
         },
         "country": "FR"
       },
@@ -936,12 +939,12 @@
     },
     {
       "id": "UCPzWlhG7QM56Y8MYB3qMVnQ",
-      "requested_handle": "@ElectronicGems",
+      "requested_handle": "@PrismPulseAudio",
       "url": "https://www.youtube.com/channel/UCPzWlhG7QM56Y8MYB3qMVnQ",
       "snippet": {
-        "title": "Electronic Gems",
-        "description": "Bringing hidden gems of the electronic music world to the forefront.\n\n",
-        "customUrl": "@electronicgems",
+        "title": "Prism Pulse Audio",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Prism Pulse Audio).",
+        "customUrl": "@prismpulseaudio",
         "publishedAt": "2008-03-08T01:00:29Z",
         "thumbnails": {
           "default": {
@@ -961,8 +964,8 @@
           }
         },
         "localized": {
-          "title": "Electronic Gems",
-          "description": "Bringing hidden gems of the electronic music world to the forefront.\n\n"
+          "title": "Prism Pulse Audio",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Prism Pulse Audio)."
         },
         "country": "CA"
       },
@@ -1005,12 +1008,12 @@
     },
     {
       "id": "UC5nc_ZtjKW1htCVZVRxlQAQ",
-      "requested_handle": "@MrSuicideSheep",
+      "requested_handle": "@StarlightDriftMusic",
       "url": "https://www.youtube.com/channel/UC5nc_ZtjKW1htCVZVRxlQAQ",
       "snippet": {
-        "title": "MrSuicideSheep",
-        "description": "On this channel you will find a wide variety of different electronic and sometimes non-electronic music. I strive to find the best and most enjoyable music for you guys. I hope you have a good time here :)\n\n\nPlease submit your music here.\nhttp://mrsuicidesheep.com/submit",
-        "customUrl": "@mrsuicidesheep",
+        "title": "Starlight Drift Music",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Starlight Drift Music).",
+        "customUrl": "@starlightdriftmusic",
         "publishedAt": "2010-04-09T15:30:04Z",
         "thumbnails": {
           "default": {
@@ -1030,8 +1033,8 @@
           }
         },
         "localized": {
-          "title": "MrSuicideSheep",
-          "description": "On this channel you will find a wide variety of different electronic and sometimes non-electronic music. I strive to find the best and most enjoyable music for you guys. I hope you have a good time here :)\n\n\nPlease submit your music here.\nhttp://mrsuicidesheep.com/submit"
+          "title": "Starlight Drift Music",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Starlight Drift Music)."
         },
         "country": "CA"
       },
@@ -1074,12 +1077,12 @@
     },
     {
       "id": "UCM9KEEuzacwVlkt9JfJad7g",
-      "requested_handle": "@ChillNation",
+      "requested_handle": "@CloudburstCoastChill",
       "url": "https://www.youtube.com/channel/UCM9KEEuzacwVlkt9JfJad7g",
       "snippet": {
-        "title": "Chill Nation",
-        "description": "Welcome to Chill Nation! This channel is the official second channel of \"Trap Nation\", at Chill Nation we upload more chill and laid back music you won't hear on Trap Nation.",
-        "customUrl": "@chillnation",
+        "title": "Cloudburst Coast Chill",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Cloudburst Coast Chill).",
+        "customUrl": "@cloudburstcoastchill",
         "publishedAt": "2014-02-26T22:28:38Z",
         "thumbnails": {
           "default": {
@@ -1099,8 +1102,8 @@
           }
         },
         "localized": {
-          "title": "Chill Nation",
-          "description": "Welcome to Chill Nation! This channel is the official second channel of \"Trap Nation\", at Chill Nation we upload more chill and laid back music you won't hear on Trap Nation."
+          "title": "Cloudburst Coast Chill",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Cloudburst Coast Chill)."
         },
         "country": "US"
       },
@@ -1143,12 +1146,12 @@
     },
     {
       "id": "UCWzZ5TIGoZ6o-KtbGCyhnhg",
-      "requested_handle": "@CollegeMusic",
+      "requested_handle": "@AmberCampusSessions",
       "url": "https://www.youtube.com/channel/UCWzZ5TIGoZ6o-KtbGCyhnhg",
       "snippet": {
-        "title": "College Music",
-        "description": "Hibernating... 😴\n\nAt College Music, we find and showcase the latest work from up and coming artists. Whether you're about to go out, having a party or just relaxing; we aim to represent something exciting, attractive and inviting.  The name originated because a small group of friends while at college struggled to find music which had originality and didn't conform to the generic \"pop\" which was consistently released to the public. College Music is about new music from unheard artists and providing a platform for them to be heard by listeners like us. We firmly believe that a brand’s name, ethos, and content should all align together. For us, our name ties in perfectly. \n\nIf for any reason you would like your work removed, contact us here:\ncopyright@collegemusic.co.uk\n\n",
-        "customUrl": "@collegemusic",
+        "title": "Amber Campus Sessions",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Amber Campus Sessions).",
+        "customUrl": "@ambercampussessions",
         "publishedAt": "2015-01-28T14:30:25Z",
         "thumbnails": {
           "default": {
@@ -1168,8 +1171,8 @@
           }
         },
         "localized": {
-          "title": "College Music",
-          "description": "Hibernating... 😴\n\nAt College Music, we find and showcase the latest work from up and coming artists. Whether you're about to go out, having a party or just relaxing; we aim to represent something exciting, attractive and inviting.  The name originated because a small group of friends while at college struggled to find music which had originality and didn't conform to the generic \"pop\" which was consistently released to the public. College Music is about new music from unheard artists and providing a platform for them to be heard by listeners like us. We firmly believe that a brand’s name, ethos, and content should all align together. For us, our name ties in perfectly. \n\nIf for any reason you would like your work removed, contact us here:\ncopyright@collegemusic.co.uk\n\n"
+          "title": "Amber Campus Sessions",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Amber Campus Sessions)."
         },
         "country": "GB"
       },
@@ -1212,12 +1215,12 @@
     },
     {
       "id": "UCEi0EgWJ5m7gVBQ68a1L0TA",
-      "requested_handle": "@alexrainbirdMusic",
+      "requested_handle": "@PinewoodIndieFolk",
       "url": "https://www.youtube.com/channel/UCEi0EgWJ5m7gVBQ68a1L0TA",
       "snippet": {
-        "title": "alexrainbirdMusic",
-        "description": "We are Alex and Beth Rainbird - a married couple from the UK! 👩‍❤️‍👨\n\nWe find and share the best independent music from artists that deserve more love... 🎶\n\n...and pair it with photos of the beautiful places we've travelled to around the world 🗺️\n\nNo AI or algorithms - just real people, handpicked songs and incredible locations.\n\nWe feature 100+ new songs each month, along with \n- Carefully curated monthly, seasonal and themed playlists\n- 24/7 indie radio streams\n- Exclusive live sessions\n...and much more.\n\nSubscribe to join our journey and discover your next favourite song! ❤️\n\n🎵 Submit your music:\nhttps://www.submithub.com/to/alexrainbirdmusic\nor\nhttps://alexrainbirdmusic.portal.district.biz/\n\n📩 All other enquiries:\nalexrainbirdmusic@gmail.com\n\nThank you so much for supporting independent artists 🙏\n",
-        "customUrl": "@alexrainbirdmusic",
+        "title": "Pinewood Indie Folk",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Pinewood Indie Folk).",
+        "customUrl": "@pinewoodindiefolk",
         "publishedAt": "2008-04-26T12:54:52Z",
         "thumbnails": {
           "default": {
@@ -1237,8 +1240,8 @@
           }
         },
         "localized": {
-          "title": "alexrainbirdMusic",
-          "description": "We are Alex and Beth Rainbird - a married couple from the UK! 👩‍❤️‍👨\n\nWe find and share the best independent music from artists that deserve more love... 🎶\n\n...and pair it with photos of the beautiful places we've travelled to around the world 🗺️\n\nNo AI or algorithms - just real people, handpicked songs and incredible locations.\n\nWe feature 100+ new songs each month, along with \n- Carefully curated monthly, seasonal and themed playlists\n- 24/7 indie radio streams\n- Exclusive live sessions\n...and much more.\n\nSubscribe to join our journey and discover your next favourite song! ❤️\n\n🎵 Submit your music:\nhttps://www.submithub.com/to/alexrainbirdmusic\nor\nhttps://alexrainbirdmusic.portal.district.biz/\n\n📩 All other enquiries:\nalexrainbirdmusic@gmail.com\n\nThank you so much for supporting independent artists 🙏\n"
+          "title": "Pinewood Indie Folk",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Pinewood Indie Folk)."
         },
         "country": "GB"
       },
@@ -1281,12 +1284,12 @@
     },
     {
       "id": "UCbuK8xxu2P_sqoMnDsoBrrg",
-      "requested_handle": "@WaveMusic",
+      "requested_handle": "@TidalBloomAcoustic",
       "url": "https://www.youtube.com/channel/UCbuK8xxu2P_sqoMnDsoBrrg",
       "snippet": {
-        "title": "WaveMusic",
-        "description": "Your Home For The Best Pop & Electronic Music With Lyrics! \nAll new videos will be a 4k lyric video with closed captions (CC) and have lyrics in the description. This channel is dedicated to pop electronic, chill pop, melodic bass, and the chiller side of EDM and Pop! If I like it, I try my best to share it!  \n\nTrack submissions for upload:  https://wavemusic.portal.district.biz/\nBusiness Contact (no submissions): See below\nParadise Music tracks for a record label release ONLY. (No YouTube Promo Submissions): label@paradisemusic.io\n",
-        "customUrl": "@wavemusic",
+        "title": "Tidal Bloom Acoustic",
+        "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Tidal Bloom Acoustic).",
+        "customUrl": "@tidalbloomacoustic",
         "publishedAt": "2011-12-20T23:39:50Z",
         "thumbnails": {
           "default": {
@@ -1306,8 +1309,8 @@
           }
         },
         "localized": {
-          "title": "WaveMusic",
-          "description": "Your Home For The Best Pop & Electronic Music With Lyrics! \nAll new videos will be a 4k lyric video with closed captions (CC) and have lyrics in the description. This channel is dedicated to pop electronic, chill pop, melodic bass, and the chiller side of EDM and Pop! If I like it, I try my best to share it!  \n\nTrack submissions for upload:  https://wavemusic.portal.district.biz/\nBusiness Contact (no submissions): See below\nParadise Music tracks for a record label release ONLY. (No YouTube Promo Submissions): label@paradisemusic.io\n"
+          "title": "Tidal Bloom Acoustic",
+          "description": "Kênh âm nhạc minh họa nội bộ thuộc hệ thống BgMedia (Tidal Bloom Acoustic)."
         },
         "country": "US"
       },
@@ -2154,7 +2157,7 @@
       "id": "W7xNzV-oCCU",
       "channel_id": "UCSJ4gkVC6NrvII8umztf0Ow",
       "url": "https://www.youtube.com/watch?v=W7xNzV-oCCU",
-      "title": "Lofi Girl Headphones. Yours now. 🎧",
+      "title": "Mellow Moon Lofi Headphones. Yours now. 🎧",
       "published_at": "2026-10-19T17:00:06Z",
       "thumbnails": {
         "default": {
@@ -2204,7 +2207,7 @@
       "id": "mSSXrDf85nI",
       "channel_id": "UCSJ4gkVC6NrvII8umztf0Ow",
       "url": "https://www.youtube.com/watch?v=mSSXrDf85nI",
-      "title": "just lofi girling 😌 #lofigirl #studytube #procrastinating",
+      "title": "just mellow moon vibing 😌 #mellowmoonlofi #studytube #procrastinating",
       "published_at": "2026-10-17T18:41:13Z",
       "thumbnails": {
         "default": {
@@ -3499,7 +3502,7 @@
       "id": "S_0F8RCnen4",
       "channel_id": "UCJhjE7wbdYAae1G25m0tHAA",
       "url": "https://www.youtube.com/watch?v=S_0F8RCnen4",
-      "title": "Cafe Music LIVE | Today's COFFEE THURSDAY: Autumn Terrace Jazz for a Coffee Break",
+      "title": "Saigon Corner LIVE | Today's COFFEE THURSDAY: Autumn Terrace Jazz for a Coffee Break",
       "published_at": "2026-10-28T18:18:46Z",
       "thumbnails": {
         "default": {
@@ -3599,7 +3602,7 @@
       "id": "Vyh_AAEjQ2g",
       "channel_id": "UCJhjE7wbdYAae1G25m0tHAA",
       "url": "https://www.youtube.com/watch?v=Vyh_AAEjQ2g",
-      "title": "Cafe Music LIVE | Today's COFFEE WEDNESDAY: Sunlit Autumn Window Jazz for Study",
+      "title": "Saigon Corner LIVE | Today's COFFEE WEDNESDAY: Sunlit Autumn Window Jazz for Study",
       "published_at": "2026-10-27T18:47:38Z",
       "thumbnails": {
         "default": {
@@ -5099,7 +5102,7 @@
       "id": "eNqh6Xl7d1c",
       "channel_id": "UCD-4g5w1h8xQpLaNS_ghU4g",
       "url": "https://www.youtube.com/watch?v=eNqh6Xl7d1c",
-      "title": "NewRetroWave TV - (Synthwave / Retrowave)",
+      "title": "Neon Mirage Wave TV - (Synthwave / Retrowave)",
       "published_at": "2026-10-24T10:41:31Z",
       "thumbnails": {
         "default": {
@@ -5339,7 +5342,7 @@
       "id": "OZuY_G00704",
       "channel_id": "UCD-4g5w1h8xQpLaNS_ghU4g",
       "url": "https://www.youtube.com/watch?v=OZuY_G00704",
-      "title": "NewRetroWave TV - (Synthwave / Retrowave) | 2 Hr Longplay | Oct 2026",
+      "title": "Neon Mirage Wave TV - (Synthwave / Retrowave) | 2 Hr Longplay | Oct 2026",
       "published_at": "2026-10-17T05:44:17Z",
       "thumbnails": {
         "default": {
@@ -7499,7 +7502,7 @@
       "id": "OcsV_jvQUE0",
       "channel_id": "UCWzZ5TIGoZ6o-KtbGCyhnhg",
       "url": "https://www.youtube.com/watch?v=OcsV_jvQUE0",
-      "title": "College Music Presents: \"PhonoSynthesis\" 🪴 | organic, ambient instrumentals",
+      "title": "Amber Campus Sessions Presents: \"PhonoSynthesis\" 🪴 | organic, ambient instrumentals",
       "published_at": "2024-10-25T16:27:28Z",
       "thumbnails": {
         "default": {

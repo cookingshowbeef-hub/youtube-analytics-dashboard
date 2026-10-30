@@ -111,6 +111,6 @@
     "retention_videos": 145,
     "summary_entities_per_period": 34
   },
-  "public_snapshot_sha256": "1d190ed98af7346cad3440acdd4fdd37d7db47fa4825e3d7317251a7ca7d1660",
-  "public_bundle_sha256": "7ca367c4f21a04febc7a6a1f40d6b99ca4dd86e0dd4b4b389b6f24fb2f42c921"
+  "public_snapshot_sha256": "7a8cdea8990bb89c44609ba4ea0a1cfb85dc62baddf91dd2762f55f7e5d2f423",
+  "public_bundle_sha256": "5a221aad379c2b34a5c764f4818647f61e632ffec7d59f4b6d430ba69458734e"
 }

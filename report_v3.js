@@ -47,8 +47,15 @@
     teamRankSortField: 'views', // 'views' | 'growth' | 'netSubs' | 'revenue' | 'channels'
     teamRankSortAsc: false,
     teamChartMetric: 'views',
-    teamSingleMetric: 'views', // 'views' | 'netSubs' | 'revenue'
-    teamTableSort: 'growth', // 'growth' | 'views'
+    teamChartCustomPeriod: false, // false = "Theo kỳ chung", true = "Kỳ riêng"
+    teamChartPreset: '30d',       // '7d' | '30d' | 'month' | 'quarter' | 'custom'
+    teamChartMonthKey: '2026-10',
+    teamChartQuarterKey: '2026-Q4',
+    teamChartStartDate: '2026-09-27',
+    teamChartEndDate: '2026-10-26',
+    teamSingleMetric: 'views',    // 'views' | 'netSubs' | 'revenue'
+    teamSingleCompareMode: 'prev',// 'prev' | 'prev_quarter' | 'yoy'
+    teamTableSort: 'growth',      // 'growth' | 'views'
     // Page 3 (Channel)
     channelMode: 'single',  // 'single' | 'compare'
     selectedChannelId: 'UCSJ4gkVC6NrvII8umztf0Ow',
@@ -248,51 +255,66 @@
   // =========================================================================
   // UNIFIED PERIOD & SCENARIO DATA AGGREGATION ENGINE
   // =========================================================================
-  function getPeriodWindow() {
-    let start = v3State.startDate;
-    let end = v3State.endDate;
+  function buildPeriodWindow(opts) {
+    const preset = (opts && opts.preset) || v3State.preset;
+    const monthKey = (opts && opts.monthKey) || v3State.monthKey;
+    const quarterKey = (opts && opts.quarterKey) || v3State.quarterKey;
+    let start = (opts && opts.startDate) || v3State.startDate;
+    let end = (opts && opts.endDate) || v3State.endDate;
+    const compareMode = (opts && opts.compareMode) || v3State.compareMode;
+
     let label = '30 ngày (27/09 – 26/10/2026)';
+    let shortPresetName = '30 ngày';
     let isPartialPeriod = false;
     let isPartialQuarter = false;
     let quarterCalendarDays = 92;
 
-    if (v3State.preset === '7d') {
+    if (preset === '7d') {
       start = '2026-10-20';
       end = '2026-10-26';
+      shortPresetName = '7 ngày';
       label = '7 ngày (20/10 – 26/10/2026)';
-    } else if (v3State.preset === '30d' || v3State.preset === '28d') {
+    } else if (preset === '30d' || preset === '28d') {
       start = '2026-09-27';
       end = '2026-10-26';
+      shortPresetName = '30 ngày';
       label = '30 ngày (27/09 – 26/10/2026)';
-    } else if (v3State.preset === 'month') {
-      if (v3State.monthKey === '2026-10') {
+    } else if (preset === 'month') {
+      if (monthKey === '2026-10') {
         start = '2026-10-01'; end = '2026-10-26'; isPartialPeriod = true;
+        shortPresetName = 'Tháng 10/2026';
         label = 'Tháng 10/2026 (26/31 ngày · đến 26/10)';
-      } else if (v3State.monthKey === '2026-09') {
+      } else if (monthKey === '2026-09') {
         start = '2026-09-01'; end = '2026-09-30';
+        shortPresetName = 'Tháng 09/2026';
         label = 'Tháng 09/2026 (30/30 ngày)';
       } else {
         start = '2026-08-01'; end = '2026-08-31';
+        shortPresetName = 'Tháng 08/2026';
         label = 'Tháng 08/2026 (31/31 ngày)';
       }
-    } else if (v3State.preset === 'quarter') {
-      if (v3State.quarterKey === '2026-Q4') {
+    } else if (preset === 'quarter') {
+      if (quarterKey === '2026-Q4') {
         start = '2026-10-01'; end = '2026-10-26';
         isPartialPeriod = true;
         isPartialQuarter = true;
         quarterCalendarDays = 92;
+        shortPresetName = 'Quý 4/2026';
         label = 'Quý 4/2026 (Chưa trọn quý: 26/92 ngày · đến 26/10)';
-      } else if (v3State.quarterKey === '2026-Q3') {
+      } else if (quarterKey === '2026-Q3') {
         start = '2026-07-01'; end = '2026-09-30';
         quarterCalendarDays = 92;
+        shortPresetName = 'Quý 3/2026';
         label = 'Quý 3/2026 (92/92 ngày)';
       } else {
         start = '2026-04-01'; end = '2026-06-30';
         quarterCalendarDays = 91;
+        shortPresetName = 'Quý 2/2026';
         label = 'Quý 2/2026 (91/91 ngày)';
       }
     } else {
       const customDays = listIsoDays(start, end).length;
+      shortPresetName = `Tùy chỉnh (${customDays} ngày)`;
       label = `Tùy chỉnh (${customDays} ngày: ${formatIsoToVN(start)} – ${formatIsoToVN(end)})`;
     }
 
@@ -300,12 +322,12 @@
     const dayCount = Math.max(1, days.length);
 
     let prevStart, prevEnd, compareLabel, compareModeName;
-    if (v3State.compareMode === 'yoy') {
+    if (compareMode === 'yoy') {
       prevStart = shiftIsoYear(start, -1);
       prevEnd = shiftIsoDays(prevStart, dayCount - 1);
       compareModeName = 'Cùng kỳ năm ngoái';
       compareLabel = `Cùng kỳ năm ngoái (${formatIsoToVN(prevStart)} – ${formatIsoToVN(prevEnd)})`;
-    } else if (v3State.compareMode === 'prev_quarter' || v3State.preset === 'quarter') {
+    } else if (compareMode === 'prev_quarter' || (preset === 'quarter' && compareMode !== 'prev_exact')) {
       prevStart = shiftIsoMonths(start, -3);
       prevEnd = shiftIsoDays(prevStart, dayCount - 1);
       compareModeName = 'Quý trước';
@@ -317,13 +339,15 @@
       compareLabel = `Kỳ liền trước (${formatIsoToVN(prevStart)} – ${formatIsoToVN(prevEnd)})`;
     }
 
-    const compareRangeShort = v3State.compareMode === 'yoy'
+    const compareRangeShort = compareMode === 'yoy'
       ? `${formatIsoToShortVN(prevStart)}/${prevStart.slice(2, 4)}–${formatIsoToShortVN(prevEnd)}/${prevEnd.slice(2, 4)}`
       : `${formatIsoToShortVN(prevStart)}–${formatIsoToShortVN(prevEnd)}`;
     const compareShortTag = `vs ${compareModeName} (${compareRangeShort})`;
     const compareTableColHeader = `So với ${compareModeName} (${compareRangeShort})`;
 
     return {
+      preset,
+      shortPresetName,
       start,
       end,
       dayCount,
@@ -341,6 +365,10 @@
       isPartialQuarter,
       quarterCalendarDays
     };
+  }
+
+  function getPeriodWindow() {
+    return buildPeriodWindow();
   }
 
   function getActiveScenarioId() {
@@ -917,6 +945,39 @@
             <span class="v3-scope-text">${availText} ${helpBadge('guide-timezone', 'Múi giờ báo cáo chuẩn Pacific Time (PT), đồng bộ với YouTube Analytics (trễ 48–72h)')}</span>
           </div>
           <div class="v3-scope-right">
+            ${activeViewId === 'view-report-team' ? `
+              <div class="v3-compact-period-bar" id="v3-compact-global-period">
+                <div class="v3-preset-group" role="group" aria-label="Bộ chọn kỳ chung">
+                  <button type="button" class="v3-preset-btn ${v3State.preset === '7d' ? 'active' : ''}" data-v3-preset="7d">7 ngày</button>
+                  <button type="button" class="v3-preset-btn ${(v3State.preset === '30d' || v3State.preset === '28d') ? 'active' : ''}" data-v3-preset="30d">30 ngày</button>
+                  <button type="button" class="v3-preset-btn ${v3State.preset === 'month' ? 'active' : ''}" data-v3-preset="month">Tháng</button>
+                  <button type="button" class="v3-preset-btn ${v3State.preset === 'quarter' ? 'active' : ''}" data-v3-preset="quarter">Quý</button>
+                  <button type="button" class="v3-preset-btn ${v3State.preset === 'custom' ? 'active' : ''}" data-v3-preset="custom">Tùy chỉnh</button>
+                </div>
+                ${v3State.preset === 'month' ? `
+                  <select id="v3-month-select" class="v3-select v3-select-sm">
+                    <option value="2026-10" ${v3State.monthKey === '2026-10' ? 'selected' : ''}>Tháng 10/2026 (26/31 ngày)</option>
+                    <option value="2026-09" ${v3State.monthKey === '2026-09' ? 'selected' : ''}>Tháng 09/2026 (30 ngày)</option>
+                    <option value="2026-08" ${v3State.monthKey === '2026-08' ? 'selected' : ''}>Tháng 08/2026 (31 ngày)</option>
+                  </select>
+                ` : v3State.preset === 'quarter' ? `
+                  <select id="v3-quarter-select" class="v3-select v3-select-sm">
+                    <option value="2026-Q4" ${v3State.quarterKey === '2026-Q4' ? 'selected' : ''}>Quý 4/2026 (26/92 ngày)</option>
+                    <option value="2026-Q3" ${v3State.quarterKey === '2026-Q3' ? 'selected' : ''}>Quý 3/2026 (92 ngày)</option>
+                    <option value="2026-Q2" ${v3State.quarterKey === '2026-Q2' ? 'selected' : ''}>Quý 2/2026 (91 ngày)</option>
+                  </select>
+                ` : v3State.preset === 'custom' ? `
+                  <div class="v3-date-inputs-wrap">
+                    <input type="date" id="v3-custom-start" class="v3-select v3-select-sm" value="${snap.win.start}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày">
+                    <span style="color:var(--text-dim);font-size:11px;">→</span>
+                    <input type="date" id="v3-custom-end" class="v3-select v3-select-sm" value="${snap.win.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
+                  </div>
+                ` : `
+                  <span class="v3-select v3-select-sm" style="display:inline-flex;align-items:center;font-family:var(--font-mono);color:var(--text-muted);cursor:default;" title="Khoảng ngày của kỳ đang chọn">${formatIsoToShortVN(snap.win.start)}–${formatIsoToVN(snap.win.end)}</span>
+                `}
+                <button type="button" class="v3-btn primary v3-btn-sm" id="v3-btn-apply-custom">Áp dụng</button>
+              </div>
+            ` : ''}
             <div class="v3-preset-group" role="group" aria-label="Đơn vị tiền tệ">
               <button type="button" class="v3-preset-btn ${currCode === 'USD' ? 'active' : ''}" data-v3-curr="USD" title="Hiển thị USD ($)">USD</button>
               <button type="button" class="v3-preset-btn ${currCode === 'VND' ? 'active' : ''}" data-v3-curr="VND" title="Hiển thị VND (₫)">VND</button>
@@ -952,53 +1013,55 @@
         </div>
       </div>
 
-      <div class="v3-time-filter-bar">
-        <div class="v3-filter-left">
-          <div class="v3-preset-group" role="group" aria-label="Bộ lọc thời gian duy nhất">
-            <button type="button" class="v3-preset-btn ${v3State.preset === '7d' ? 'active' : ''}" data-v3-preset="7d">7 ngày</button>
-            <button type="button" class="v3-preset-btn ${(v3State.preset === '30d' || v3State.preset === '28d') ? 'active' : ''}" data-v3-preset="30d">30 ngày</button>
-            <button type="button" class="v3-preset-btn ${v3State.preset === 'month' ? 'active' : ''}" data-v3-preset="month">Tháng</button>
-            <button type="button" class="v3-preset-btn ${v3State.preset === 'quarter' ? 'active' : ''}" data-v3-preset="quarter">Quý</button>
-            <button type="button" class="v3-preset-btn ${v3State.preset === 'custom' ? 'active' : ''}" data-v3-preset="custom">Tùy chỉnh</button>
+      ${activeViewId !== 'view-report-team' ? `
+        <div class="v3-time-filter-bar">
+          <div class="v3-filter-left">
+            <div class="v3-preset-group" role="group" aria-label="Bộ lọc thời gian duy nhất">
+              <button type="button" class="v3-preset-btn ${v3State.preset === '7d' ? 'active' : ''}" data-v3-preset="7d">7 ngày</button>
+              <button type="button" class="v3-preset-btn ${(v3State.preset === '30d' || v3State.preset === '28d') ? 'active' : ''}" data-v3-preset="30d">30 ngày</button>
+              <button type="button" class="v3-preset-btn ${v3State.preset === 'month' ? 'active' : ''}" data-v3-preset="month">Tháng</button>
+              <button type="button" class="v3-preset-btn ${v3State.preset === 'quarter' ? 'active' : ''}" data-v3-preset="quarter">Quý</button>
+              <button type="button" class="v3-preset-btn ${v3State.preset === 'custom' ? 'active' : ''}" data-v3-preset="custom">Tùy chỉnh</button>
+            </div>
+
+            ${v3State.preset === 'month' ? `
+              <select id="v3-month-select" class="v3-select v3-select-sm">
+                <option value="2026-10" ${v3State.monthKey === '2026-10' ? 'selected' : ''}>Tháng 10/2026 (26/31 ngày)</option>
+                <option value="2026-09" ${v3State.monthKey === '2026-09' ? 'selected' : ''}>Tháng 09/2026 (30 ngày)</option>
+                <option value="2026-08" ${v3State.monthKey === '2026-08' ? 'selected' : ''}>Tháng 08/2026 (31 ngày)</option>
+              </select>
+            ` : ''}
+
+            ${v3State.preset === 'quarter' ? `
+              <select id="v3-quarter-select" class="v3-select v3-select-sm">
+                <option value="2026-Q4" ${v3State.quarterKey === '2026-Q4' ? 'selected' : ''}>Quý 4/2026 (26/92 ngày)</option>
+                <option value="2026-Q3" ${v3State.quarterKey === '2026-Q3' ? 'selected' : ''}>Quý 3/2026 (92 ngày)</option>
+                <option value="2026-Q2" ${v3State.quarterKey === '2026-Q2' ? 'selected' : ''}>Quý 2/2026 (91 ngày)</option>
+              </select>
+            ` : ''}
+
+            <div class="v3-date-inputs-wrap">
+              <input type="date" id="v3-custom-start" class="v3-select v3-select-sm" value="${snap.win.start}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày">
+              <span style="color:var(--text-dim);font-size:11px;">→</span>
+              <input type="date" id="v3-custom-end" class="v3-select v3-select-sm" value="${snap.win.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
+              <button type="button" class="v3-btn primary v3-btn-sm" id="v3-btn-apply-custom">Áp dụng</button>
+            </div>
           </div>
 
-          ${v3State.preset === 'month' ? `
-            <select id="v3-month-select" class="v3-select v3-select-sm">
-              <option value="2026-10" ${v3State.monthKey === '2026-10' ? 'selected' : ''}>Tháng 10/2026 (26/31 ngày)</option>
-              <option value="2026-09" ${v3State.monthKey === '2026-09' ? 'selected' : ''}>Tháng 09/2026 (30 ngày)</option>
-              <option value="2026-08" ${v3State.monthKey === '2026-08' ? 'selected' : ''}>Tháng 08/2026 (31 ngày)</option>
-            </select>
-          ` : ''}
-
-          ${v3State.preset === 'quarter' ? `
-            <select id="v3-quarter-select" class="v3-select v3-select-sm">
-              <option value="2026-Q4" ${v3State.quarterKey === '2026-Q4' ? 'selected' : ''}>Quý 4/2026 (26/92 ngày)</option>
-              <option value="2026-Q3" ${v3State.quarterKey === '2026-Q3' ? 'selected' : ''}>Quý 3/2026 (92 ngày)</option>
-              <option value="2026-Q2" ${v3State.quarterKey === '2026-Q2' ? 'selected' : ''}>Quý 2/2026 (91 ngày)</option>
-            </select>
-          ` : ''}
-
-          <div class="v3-date-inputs-wrap">
-            <input type="date" id="v3-custom-start" class="v3-select v3-select-sm" value="${snap.win.start}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày">
-            <span style="color:var(--text-dim);font-size:11px;">→</span>
-            <input type="date" id="v3-custom-end" class="v3-select v3-select-sm" value="${snap.win.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
-            <button type="button" class="v3-btn primary v3-btn-sm" id="v3-btn-apply-custom">Áp dụng</button>
+          <div class="v3-filter-right">
+            <div class="v3-preset-group" role="group" aria-label="Chế độ đối chiếu kỳ">
+              <button type="button" class="v3-preset-btn ${v3State.compareMode === 'prev' ? 'active' : ''}" data-v3-compare="prev" title="${esc(snap.win.compareLabel)}">
+                So sánh kỳ trước
+              </button>
+              <button type="button" class="v3-preset-btn ${v3State.compareMode === 'yoy' ? 'active' : ''}" data-v3-compare="yoy"
+                ${!scopeCurr.allHaveYoY ? 'disabled' : ''}
+                title="${scopeCurr.allHaveYoY ? 'Đối chiếu với cùng kỳ năm ngoái (YoY)' : `Khóa YoY: Cần 100% kênh trong phạm vi có lịch sử năm trước (hiện có ${scopeCurr.yoyCount}/${scopeCurr.totalChannels} kênh)`}">
+                ${!scopeCurr.allHaveYoY ? '<i class="ri-lock-line"></i> ' : ''}Cùng kỳ năm ngoái
+              </button>
+            </div>
           </div>
         </div>
-
-        <div class="v3-filter-right">
-          <div class="v3-preset-group" role="group" aria-label="Chế độ đối chiếu kỳ">
-            <button type="button" class="v3-preset-btn ${v3State.compareMode === 'prev' ? 'active' : ''}" data-v3-compare="prev" title="${esc(snap.win.compareLabel)}">
-              So sánh kỳ trước
-            </button>
-            <button type="button" class="v3-preset-btn ${v3State.compareMode === 'yoy' ? 'active' : ''}" data-v3-compare="yoy"
-              ${!scopeCurr.allHaveYoY ? 'disabled' : ''}
-              title="${scopeCurr.allHaveYoY ? 'Đối chiếu với cùng kỳ năm ngoái (YoY)' : `Khóa YoY: Cần 100% kênh trong phạm vi có lịch sử năm trước (hiện có ${scopeCurr.yoyCount}/${scopeCurr.totalChannels} kênh)`}">
-              ${!scopeCurr.allHaveYoY ? '<i class="ri-lock-line"></i> ' : ''}Cùng kỳ năm ngoái (${scopeCurr.yoyCount}/${scopeCurr.totalChannels})
-            </button>
-          </div>
-        </div>
-      </div>
+      ` : ''}
     `;
 
     // Bind Shared Header Events
@@ -1012,6 +1075,8 @@
         } else if (nextPreset === '30d') {
           v3State.startDate = '2026-09-27';
           v3State.endDate = '2026-10-26';
+        } else if (nextPreset === 'quarter') {
+          v3State.teamSingleCompareMode = 'prev_quarter';
         }
         refreshActiveView();
       });
@@ -1675,7 +1740,7 @@
                 </span>
               </div>
               <div style="font-size:12.5px;color:var(--text-muted);margin-top:4px;">
-                Người phụ trách (PIC): <strong style="color:var(--text-main);">${esc(meta.employeeName)} (${esc(meta.employeeId)})</strong> •
+                Người phụ trách (PIC): <strong style="color:var(--text-main);">${esc(meta.employeeName)}</strong> •
                 Lần đăng gần nhất: <strong>${formatIsoToVN(meta.lastPublishedPt)} (${cp.daysSinceLastUpload} ngày trước)</strong> •
                 Quy mô kênh: <strong>${fmtInt(meta.subscribers)} subscribers</strong> (bước làm tròn: ${fmtInt(meta.subRoundingStep)})
               </div>
@@ -2523,7 +2588,6 @@
                     </td>
                     <td>
                       <strong>${esc(cp.meta.employeeName)}</strong>
-                      <div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">${esc(cp.meta.employeeId)}</div>
                     </td>
                     <td>
                       <span class="v3-badge" style="background:${cp.meta.teamColor}20;color:${cp.meta.teamColor};border:1px solid ${cp.meta.teamColor}55;">
@@ -2987,14 +3051,16 @@
     const teamNetShareMap = new Map();
     sortedTeamsByViews.forEach((t, i) => teamNetShareMap.set(t.id, teamNetShares[i]));
 
-    // Fastest growing and steepest declining team badges ("Tăng nhanh nhất / Giảm mạnh nhất")
+    // Item 1: Team badges ("Tăng nhanh nhất" only when delta > 0; "Giảm ít nhất" when no team > 0; "Giảm mạnh nhất" for steepest drop)
     const teamsWithGrowth = snap.teamPairs.filter(tp => tp.viewsGrowthPct !== null && tp.viewsGrowthPct !== undefined);
-    let fastestTeamId = null;
+    let topGrowthTeamId = null;
+    let topGrowthTeamPositive = false;
     let slowestTeamId = null;
     if (teamsWithGrowth.length >= 2) {
       const byGrowth = [...teamsWithGrowth].sort((a, b) => (b.viewsGrowthPct ?? -999) - (a.viewsGrowthPct ?? -999));
       if (byGrowth[0].viewsGrowthPct !== byGrowth[byGrowth.length - 1].viewsGrowthPct) {
-        fastestTeamId = byGrowth[0].id;
+        topGrowthTeamId = byGrowth[0].id;
+        topGrowthTeamPositive = (byGrowth[0].viewsGrowthPct ?? 0) > 0;
         slowestTeamId = byGrowth[byGrowth.length - 1].id;
       }
     }
@@ -3035,12 +3101,71 @@
       return (b.viewsGrowthPct ?? -999) - (a.viewsGrowthPct ?? -999);
     });
 
+    // Item 5: Chart A ("Lượt xem theo ngày") independent period or global period
+    const isCustomChartPeriod = !!v3State.teamChartCustomPeriod;
+    const effChartPreset = isCustomChartPeriod ? (v3State.teamChartPreset || '30d') : v3State.preset;
+    const effChartMonthKey = isCustomChartPeriod ? (v3State.teamChartMonthKey || '2026-10') : v3State.monthKey;
+    const effChartQuarterKey = isCustomChartPeriod ? (v3State.teamChartQuarterKey || '2026-Q4') : v3State.quarterKey;
+    const effChartStartDate = isCustomChartPeriod ? (v3State.teamChartStartDate || '2026-09-27') : v3State.startDate;
+    const effChartEndDate = isCustomChartPeriod ? (v3State.teamChartEndDate || '2026-10-26') : v3State.endDate;
+
+    const chartWin = isCustomChartPeriod
+      ? buildPeriodWindow({
+          preset: effChartPreset,
+          monthKey: effChartMonthKey,
+          quarterKey: effChartQuarterKey,
+          startDate: effChartStartDate,
+          endDate: effChartEndDate,
+          compareMode: 'prev'
+        })
+      : snap.win;
+
+    const c = core();
+    const teamsRaw = (c.DATA_STORE && c.DATA_STORE.teams) || [];
+    let chartTeamsByViews;
+    if (isCustomChartPeriod) {
+      const chChartCurr = snap.channelsMeta.map(m => computeChannelWindowMetrics(m, chartWin.start, chartWin.end, snap.scenarioId));
+      const customTeamList = teamsRaw.map(t => {
+        const tCurrList = chChartCurr.filter(ch => ch.meta.teamId === t.id);
+        return {
+          id: t.id,
+          name: t.name,
+          color: TEAM_COLORS[t.id] || '#38BDF8',
+          curr: aggregateChannelMetricsList(tCurrList, chartWin.days)
+        };
+      });
+      chartTeamsByViews = [...customTeamList].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
+    } else {
+      chartTeamsByViews = sortedTeamsByViews;
+    }
+
+    const chartTeamViewsSummary = {};
+    chartTeamsByViews.forEach(tp => { chartTeamViewsSummary[tp.id] = tp.curr.views; });
+
     const chartTitleMap = {
       views: 'Lượt xem theo ngày',
       watchHours: 'Giờ xem theo ngày [Analytics]',
       revenue: 'Doanh thu theo ngày [Analytics]'
     };
     const chartTitle = chartTitleMap[v3State.teamChartMetric] || 'Lượt xem theo ngày';
+
+    // Item 4 & 6: Block 3 ("Xu hướng một team") has its own reference period toggle (prev / prev_quarter / yoy)
+    let activeSingleCmp = v3State.teamSingleCompareMode || 'prev';
+    if (activeSingleCmp === 'yoy' && !snap.systemCurr.allHaveYoY) {
+      activeSingleCmp = 'prev';
+      v3State.teamSingleCompareMode = 'prev';
+    }
+    const singleWin = buildPeriodWindow({
+      preset: v3State.preset,
+      monthKey: v3State.monthKey,
+      quarterKey: v3State.quarterKey,
+      startDate: v3State.startDate,
+      endDate: v3State.endDate,
+      compareMode: activeSingleCmp === 'prev' ? 'prev_exact' : activeSingleCmp
+    });
+    const selTeamChannelsMeta = snap.channelsMeta.filter(m => m.teamId === selectedTeam.id);
+    const singlePrevChMetrics = selTeamChannelsMeta.map(m => computeChannelWindowMetrics(m, singleWin.prevStart, singleWin.prevEnd, snap.scenarioId));
+    const singleTeamPrevAgg = aggregateChannelMetricsList(singlePrevChMetrics, singleWin.prevDays);
 
     const singleMetric = v3State.teamSingleMetric || 'views';
     const singleMetricLabelMap = {
@@ -3061,7 +3186,7 @@
       return fmtInt(val);
     };
     const singleCurrTotal = getTeamMetricVal(selectedTeam.curr, singleMetric);
-    const singlePrevTotal = getTeamMetricVal(selectedTeam.prev, singleMetric);
+    const singlePrevTotal = getTeamMetricVal(singleTeamPrevAgg, singleMetric);
     const singleDiffVal = (singleCurrTotal !== null && singlePrevTotal !== null) ? (singleCurrTotal - singlePrevTotal) : null;
     const singleDiffFormatted = singleDiffVal === null
       ? '—'
@@ -3074,21 +3199,41 @@
       ? 'flat'
       : (singleDiffVal > 0 ? 'up' : 'down');
 
-    const activeCmpBtn = v3State.compareMode === 'yoy'
-      ? 'yoy'
-      : ((v3State.compareMode === 'prev_quarter' || v3State.preset === 'quarter') ? 'prev_quarter' : 'prev');
-
     const currRangeShort = `${formatIsoToShortVN(snap.win.start)}–${formatIsoToShortVN(snap.win.end)}`;
+    const currRangeFullVN = `${formatIsoToVN(snap.win.start)} – ${formatIsoToVN(snap.win.end)}`;
+    const chartRangeFullVN = `${formatIsoToVN(chartWin.start)} – ${formatIsoToVN(chartWin.end)}`;
+    const chartRangeShort = `${formatIsoToShortVN(chartWin.start)}–${formatIsoToShortVN(chartWin.end)}`;
     const sysCurr = snap.systemCurr;
     const sysPrev = snap.systemPrev;
+
+    const renderTeamSelectorChips = (containerId, ariaLabel) => `
+      <div class="v3-single-team-chips" id="${containerId}" role="tablist" aria-label="${esc(ariaLabel)}">
+        ${sortedTeamsByViews.map(tp => {
+          const active = tp.id === selectedTeam.id;
+          return `
+            <button type="button" class="v3-single-team-chip ${active ? 'active' : ''}" data-select-team-card="${tp.id}"
+              style="${active ? `border-color:${tp.color};background:${tp.color}1F;color:var(--text-main);box-shadow:0 0 0 1px ${tp.color}40;` : ''}">
+              <span class="v3-team-dot" style="background:${tp.color};"></span>
+              <span>${esc(tp.name)}</span>
+            </button>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    const growthSortActive = rankSortField === 'growth';
+    const growthSortArrow = growthSortActive ? (rankSortAsc ? ' ▲' : ' ▼') : '';
 
     root.innerHTML = `
       <!-- 1. TEAM RANKING TABLE (Replaces 3 team cards; sortable columns, sparkline, fixed "Toàn network" footer, no selection state) -->
       <section class="v3-panel" id="v3-team-ranking-panel">
-        <div class="v3-panel-header" style="margin-bottom:10px;">
-          <div class="v3-panel-title">
-            <i class="ri-trophy-line" style="color:#38BDF8;"></i>
-            Bảng xếp hạng 3 Team
+        <div class="v3-panel-header" style="margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div class="v3-panel-title">
+              <i class="ri-trophy-line" style="color:#38BDF8;"></i>
+              Bảng xếp hạng 3 Team <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
+            </div>
+            ${snap.win.isPartialQuarter ? `<span class="v3-badge partial">Chưa trọn quý (${snap.win.dayCount}/${snap.win.quarterCalendarDays} ngày)</span>` : ''}
           </div>
           <span style="font-size:11.5px;color:var(--text-muted);">Nhấn vào tiêu đề cột để sắp xếp · Dòng “Toàn network” cố định ở cuối</span>
         </div>
@@ -3099,7 +3244,18 @@
                 <th>Hạng</th>
                 <th>Team sản xuất</th>
                 ${teamRankHeader('views', 'Views & % Views Network', false, 'v3-bar-cell')}
-                ${teamRankHeader('growth', `<div>So với ${esc(snap.win.compareModeName)}</div><div class="v3-th-sub">(${esc(snap.win.compareRangeShort)})</div>`)}
+                <th class="num" style="vertical-align:middle;">
+                  <div style="display:inline-flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                    <div data-team-rank-sort="growth" style="cursor:pointer;user-select:none;${growthSortActive ? 'color:#38BDF8;' : ''}">
+                      <div>So với ${esc(snap.win.compareModeName)}${growthSortArrow}</div>
+                      <div class="v3-th-sub">(${esc(snap.win.compareRangeShort)}${snap.win.isPartialQuarter ? ` · ${snap.win.dayCount} ngày đầu` : ''})</div>
+                    </div>
+                    <div class="v3-th-cmp-switch" role="group" aria-label="Đổi kỳ đối chứng bảng xếp hạng">
+                      <button type="button" class="v3-th-cmp-btn ${v3State.compareMode !== 'yoy' ? 'active' : ''}" data-table-cmp="prev">Kỳ trước</button>
+                      <button type="button" class="v3-th-cmp-btn ${v3State.compareMode === 'yoy' ? 'active' : ''}" data-table-cmp="yoy" ${!snap.systemCurr.allHaveYoY ? 'disabled' : ''}>Cùng kỳ năm ngoái</button>
+                    </div>
+                  </div>
+                </th>
                 ${teamRankHeader('netSubs', 'Sub ròng')}
                 ${teamRankHeader('revenue', 'Doanh thu')}
                 ${teamRankHeader('channels', 'Số kênh')}
@@ -3110,10 +3266,12 @@
               ${rankedTeams.map((tp, idx) => {
                 const netShare = teamNetShareMap.get(tp.id) ?? tp.shareOfCompanyViews;
                 let growthTagHtml = '';
-                if (tp.id === fastestTeamId) {
-                  growthTagHtml = `<span class="v3-badge highest">Tăng nhanh nhất</span>`;
+                if (tp.id === topGrowthTeamId) {
+                  growthTagHtml = topGrowthTeamPositive
+                    ? `<span class="v3-badge highest" data-team-growth-badge="fastest">Tăng nhanh nhất</span>`
+                    : `<span class="v3-badge muted" data-team-growth-badge="least_drop">Giảm ít nhất</span>`;
                 } else if (tp.id === slowestTeamId) {
-                  growthTagHtml = `<span class="v3-badge lowest">Giảm mạnh nhất</span>`;
+                  growthTagHtml = `<span class="v3-badge lowest" data-team-growth-badge="steepest_drop">Giảm mạnh nhất</span>`;
                 }
                 return `
                   <tr data-team-rank-row="${tp.id}">
@@ -3127,13 +3285,13 @@
                         ${growthTagHtml}
                       </div>
                     </td>
-                    <td class="v3-bar-cell" style="min-width:210px;">
+                    <td class="v3-bar-cell" style="min-width:200px;">
                       <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:12px;">
                         <strong>${tp.curr.views !== null ? fmtInt(tp.curr.views) : '—'}</strong>
                         <span style="color:var(--text-muted);" data-team-net-share="${netShare.toFixed(1)}">${fmtDec(netShare, 1)}%</span>
                       </div>
                       <div class="v3-bar-track">
-                        <div class="v3-bar-fill" style="width:${Math.min(100, netShare)}%;background:${tp.color};"></div>
+                        <div class="v3-bar-fill" style="width:${Math.min(100, netShare)}%;min-width:2px;background:${tp.color};"></div>
                       </div>
                     </td>
                     <td class="num" style="white-space:nowrap;">${fmtDeltaBadge(tp.curr.views, tp.prev.views)}</td>
@@ -3157,15 +3315,15 @@
                     <span style="color:var(--text-main);font-weight:800;">100,0%</span>
                   </div>
                   <div class="v3-bar-track">
-                    <div class="v3-bar-fill" style="width:100%;background:#38BDF8;"></div>
+                    <div class="v3-bar-fill" style="width:100%;min-width:2px;background:#94A3B8;"></div>
                   </div>
                 </td>
                 <td class="num" style="white-space:nowrap;">${fmtDeltaBadge(sysCurr.views, sysPrev.views)}</td>
                 <td class="num" style="white-space:nowrap;"><strong>${sysCurr.netSubs !== null ? (sysCurr.netSubs > 0 ? '+' + fmtInt(sysCurr.netSubs) : fmtInt(sysCurr.netSubs)) : '—'}</strong></td>
                 <td class="num" style="white-space:nowrap;"><strong>${sysCurr.estimatedRevenue !== null ? fmtMoney(sysCurr.estimatedRevenue) : '—'}</strong></td>
                 <td class="num" style="white-space:nowrap;"><strong>${sysCurr.totalChannels} kênh</strong></td>
-                <td class="num" style="text-align:right;white-space:nowrap;">
-                  ${buildSparklineSvg(sysCurr.dailySeries, 'views', '#38BDF8')}
+                <td class="num" style="text-align:right;white-space:nowrap;" data-network-sparkline-color="#94A3B8">
+                  ${buildSparklineSvg(sysCurr.dailySeries, 'views', '#94A3B8')}
                 </td>
               </tr>
             </tfoot>
@@ -3173,47 +3331,79 @@
         </div>
       </section>
 
-      <!-- 2. TABLE/CHART A: FULL-WIDTH 3-TEAM TREND CHART -->
-      <section class="v3-panel" id="v3-team-chart-a-panel">
-        <div class="v3-panel-header" style="margin-bottom:10px;">
+      <!-- 2. TABLE/CHART A: FULL-WIDTH 3-TEAM TREND CHART (With its own independent period selector) -->
+      <section class="v3-panel" id="v3-team-chart-a-panel" style="padding-bottom:10px;" data-chart-period-mode="${isCustomChartPeriod ? 'custom' : 'global'}" data-chart-team-views='${esc(JSON.stringify(chartTeamViewsSummary))}'>
+        <div class="v3-panel-header" style="margin-bottom:8px;gap:8px;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <div class="v3-panel-title">
               <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
-              ${esc(chartTitle)}
+              ${esc(chartTitle)} <span class="v3-panel-date-tag">(${chartRangeFullVN})</span>
             </div>
-            ${snap.win.isPartialQuarter ? `<span class="v3-badge partial">Chưa trọn quý (${snap.win.dayCount}/${snap.win.quarterCalendarDays} ngày · ${currRangeShort})</span>` : ''}
+            ${chartWin.isPartialQuarter ? `<span class="v3-badge partial">Chưa trọn quý (${chartWin.dayCount}/${chartWin.quarterCalendarDays} ngày)</span>` : ''}
+            ${isCustomChartPeriod ? `
+              <span class="v3-badge warn" id="v3-team-chart-period-chip">Kỳ riêng: ${esc(chartWin.shortPresetName)} · ${chartRangeShort}</span>
+              <button type="button" class="v3-btn v3-btn-sm" id="v3-team-chart-reset-btn">Về kỳ chung</button>
+            ` : `
+              <span class="v3-badge muted" id="v3-team-chart-period-chip">Theo kỳ chung</span>
+            `}
           </div>
-          <div class="v3-preset-group">
-            <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'views' ? 'active' : ''}" data-tm-metric="views">Lượt xem</button>
-            <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'watchHours' ? 'active' : ''}" data-tm-metric="watchHours">Giờ xem [Analytics]</button>
-            <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'revenue' ? 'active' : ''}" data-tm-metric="revenue">Doanh thu [Analytics]</button>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <div class="v3-preset-group" id="v3-team-chart-period-presets" role="group" aria-label="Bộ chọn kỳ riêng biểu đồ Lượt xem theo ngày">
+              <button type="button" class="v3-preset-btn ${effChartPreset === '7d' ? 'active' : ''}" data-tm-chart-preset="7d">7 ngày</button>
+              <button type="button" class="v3-preset-btn ${(effChartPreset === '30d' || effChartPreset === '28d') ? 'active' : ''}" data-tm-chart-preset="30d">30 ngày</button>
+              <button type="button" class="v3-preset-btn ${effChartPreset === 'month' ? 'active' : ''}" data-tm-chart-preset="month">Tháng</button>
+              <button type="button" class="v3-preset-btn ${effChartPreset === 'quarter' ? 'active' : ''}" data-tm-chart-preset="quarter">Quý</button>
+              <button type="button" class="v3-preset-btn ${effChartPreset === 'custom' ? 'active' : ''}" data-tm-chart-preset="custom">Tùy chỉnh</button>
+            </div>
+            ${effChartPreset === 'month' ? `
+              <select id="v3-tm-chart-month-select" class="v3-select v3-select-sm">
+                <option value="2026-10" ${effChartMonthKey === '2026-10' ? 'selected' : ''}>Tháng 10/2026 (26/31 ngày)</option>
+                <option value="2026-09" ${effChartMonthKey === '2026-09' ? 'selected' : ''}>Tháng 09/2026 (30 ngày)</option>
+                <option value="2026-08" ${effChartMonthKey === '2026-08' ? 'selected' : ''}>Tháng 08/2026 (31 ngày)</option>
+              </select>
+            ` : effChartPreset === 'quarter' ? `
+              <select id="v3-tm-chart-quarter-select" class="v3-select v3-select-sm">
+                <option value="2026-Q4" ${effChartQuarterKey === '2026-Q4' ? 'selected' : ''}>Quý 4/2026 (26/92 ngày)</option>
+                <option value="2026-Q3" ${effChartQuarterKey === '2026-Q3' ? 'selected' : ''}>Quý 3/2026 (92 ngày)</option>
+                <option value="2026-Q2" ${effChartQuarterKey === '2026-Q2' ? 'selected' : ''}>Quý 2/2026 (91 ngày)</option>
+              </select>
+            ` : effChartPreset === 'custom' ? `
+              <div class="v3-date-inputs-wrap">
+                <input type="date" id="v3-tm-chart-start" class="v3-select v3-select-sm" value="${chartWin.start}" min="2025-01-01" max="2026-10-26">
+                <span style="color:var(--text-dim);font-size:11px;">→</span>
+                <input type="date" id="v3-tm-chart-end" class="v3-select v3-select-sm" value="${chartWin.end}" min="2025-01-01" max="2026-10-26">
+                <button type="button" class="v3-btn primary v3-btn-sm" id="v3-tm-chart-apply-custom">Áp dụng</button>
+              </div>
+            ` : ''}
+            <div class="v3-preset-group" role="group" aria-label="Chỉ số biểu đồ Lượt xem theo ngày">
+              <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'views' ? 'active' : ''}" data-tm-metric="views">Lượt xem</button>
+              <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'watchHours' ? 'active' : ''}" data-tm-metric="watchHours">Giờ xem [Analytics]</button>
+              <button type="button" class="v3-preset-btn ${v3State.teamChartMetric === 'revenue' ? 'active' : ''}" data-tm-metric="revenue">Doanh thu [Analytics]</button>
+            </div>
           </div>
         </div>
-        <div style="height:255px;position:relative;">
+        <div style="height:205px;position:relative;">
           <canvas id="v3-team-trend-canvas"></canvas>
         </div>
       </section>
 
       <!-- 3. TABLE/CHART B: SINGLE-TEAM PERIOD COMPARISON ("Xu hướng một team") -->
-      <section class="v3-panel" id="v3-single-team-card">
-        <div class="v3-panel-header" style="margin-bottom:10px;gap:8px;">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <section class="v3-panel" id="v3-single-team-card" style="padding-bottom:10px;">
+        <div class="v3-panel-header" style="margin-bottom:8px;gap:6px;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
             <div class="v3-panel-title" style="white-space:nowrap;">
               <i class="ri-focus-2-line" style="color:${selectedTeam.color};"></i>
-              Xu hướng một team:
-              <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:6px;border:1px solid ${selectedTeam.color};background:${selectedTeam.color}1A;font-size:12.5px;">
-                <span class="v3-team-dot" style="background:${selectedTeam.color};"></span>
-                <span>${esc(selectedTeam.name)}</span>
-              </span>
+              Xu hướng một team <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
             </div>
-            ${snap.win.isPartialQuarter ? `<span class="v3-badge partial">Chưa trọn quý · So với ${snap.win.dayCount} ngày đầu của quý đối chứng</span>` : ''}
+            ${renderTeamSelectorChips('v3-single-team-selector', 'Chọn team cho Xu hướng một team')}
+            ${singleWin.isPartialQuarter ? `<span class="v3-badge partial">Chưa trọn quý (${singleWin.dayCount}/${singleWin.quarterCalendarDays} ngày) · So với ${singleWin.dayCount} ngày đầu của quý đối chứng</span>` : ''}
           </div>
 
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <div class="v3-preset-group" role="group" aria-label="Kỳ đối chứng">
-              <button type="button" class="v3-preset-btn ${activeCmpBtn === 'prev' ? 'active' : ''}" data-tm-cmp="prev">Kỳ trước</button>
-              <button type="button" class="v3-preset-btn ${activeCmpBtn === 'prev_quarter' ? 'active' : ''}" data-tm-cmp="prev_quarter">Quý trước</button>
-              <button type="button" class="v3-preset-btn ${activeCmpBtn === 'yoy' ? 'active' : ''}" data-tm-cmp="yoy" ${!snap.systemCurr.allHaveYoY ? 'disabled' : ''}>Cùng kỳ năm ngoái</button>
+          <div style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;">
+            <div class="v3-preset-group" role="group" aria-label="Kỳ đối chứng Xu hướng một team">
+              <button type="button" class="v3-preset-btn ${activeSingleCmp === 'prev' ? 'active' : ''}" data-tm-cmp="prev">Kỳ trước</button>
+              <button type="button" class="v3-preset-btn ${activeSingleCmp === 'prev_quarter' ? 'active' : ''}" data-tm-cmp="prev_quarter">Quý trước</button>
+              <button type="button" class="v3-preset-btn ${activeSingleCmp === 'yoy' ? 'active' : ''}" data-tm-cmp="yoy" ${!snap.systemCurr.allHaveYoY ? 'disabled' : ''}>Cùng kỳ năm ngoái</button>
             </div>
             <div class="v3-preset-group" role="group" aria-label="Chỉ số xu hướng 1 team">
               <button type="button" class="v3-preset-btn ${singleMetric === 'views' ? 'active' : ''}" data-tm-single-metric="views">Views</button>
@@ -3227,7 +3417,7 @@
         <div class="v3-single-team-summary-strip" id="v3-single-team-summary">
           <div class="v3-st-summary-item">
             <span class="v3-st-summary-label">
-              Tổng kỳ này (${currRangeShort}${snap.win.isPartialQuarter ? ' · Chưa trọn quý' : ''})
+              Tổng kỳ này (${currRangeShort}${singleWin.isPartialQuarter ? ` · Chưa trọn quý (${singleWin.dayCount}/${singleWin.quarterCalendarDays} ngày)` : ''})
             </span>
             <strong class="v3-st-summary-val" data-st-curr-total="${singleCurrTotal ?? ''}" style="color:${selectedTeam.color};">
               ${fmtSingleMetricVal(singleCurrTotal, singleMetric)}
@@ -3235,7 +3425,7 @@
           </div>
           <div class="v3-st-summary-item">
             <span class="v3-st-summary-label">
-              Tổng kỳ đối chứng (${esc(snap.win.compareModeName)}: ${esc(snap.win.compareRangeShort)}${snap.win.isPartialQuarter ? ` · ${snap.win.dayCount} ngày đầu` : ''})
+              Tổng kỳ đối chứng (${esc(singleWin.compareModeName)}: ${esc(singleWin.compareRangeShort)}${(singleWin.isPartialQuarter || activeSingleCmp === 'prev_quarter') ? ` · ${singleWin.dayCount} ngày đầu` : ''})
             </span>
             <strong class="v3-st-summary-val" data-st-prev-total="${singlePrevTotal ?? ''}">
               ${fmtSingleMetricVal(singlePrevTotal, singleMetric)}
@@ -3248,12 +3438,12 @@
             </strong>
           </div>
           <div class="v3-st-summary-item">
-            <span class="v3-st-summary-label">% Thay đổi (${esc(snap.win.compareShortTag)})</span>
+            <span class="v3-st-summary-label">% Thay đổi (${esc(singleWin.compareShortTag)})</span>
             <div>${fmtDeltaBadge(singleCurrTotal, singlePrevTotal, singleMetric === 'revenue')}</div>
           </div>
         </div>
 
-        <div style="height:240px;position:relative;">
+        <div style="height:190px;position:relative;">
           <canvas id="v3-single-team-canvas"></canvas>
         </div>
       </section>
@@ -3265,7 +3455,7 @@
             <div>
               <div class="v3-panel-title">
                 <span class="v3-team-dot" style="width:11px;height:11px;background:${selectedTeam.color};"></span>
-                Bảng 5 kênh thuộc ${esc(selectedTeam.name)}
+                Bảng 5 kênh thuộc ${esc(selectedTeam.name)} <span class="v3-panel-date-tag">(${currRangeFullVN})</span>
               </div>
               ${selectedTeam.leader && selectedTeam.leader !== 'Trưởng nhóm' ? `
                 <div class="v3-panel-subtitle">
@@ -3273,18 +3463,8 @@
                 </div>
               ` : ''}
             </div>
-            <div class="v3-single-team-chips" id="v3-channel-table-team-selector" role="tablist" aria-label="Bộ chọn team duy nhất cho bảng 5 kênh">
-              ${sortedTeamsByViews.map(tp => {
-                const active = tp.id === selectedTeam.id;
-                return `
-                  <button type="button" class="v3-single-team-chip ${active ? 'active' : ''}" data-select-team-card="${tp.id}"
-                    style="${active ? `border-color:${tp.color};background:${tp.color}1F;color:var(--text-main);box-shadow:0 0 0 1px ${tp.color}40;` : ''}">
-                    <span class="v3-team-dot" style="background:${tp.color};"></span>
-                    <span>${esc(tp.name)}</span>
-                  </button>
-                `;
-              }).join('')}
-            </div>
+            ${renderTeamSelectorChips('v3-channel-table-team-selector', 'Bộ chọn team cho bảng 5 kênh')}
+            ${snap.win.isPartialQuarter ? `<span class="v3-badge partial">Chưa trọn quý (${snap.win.dayCount}/${snap.win.quarterCalendarDays} ngày)</span>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span style="font-size:12px;color:var(--text-muted);font-weight:600;">Sắp xếp:</span>
@@ -3308,57 +3488,84 @@
                 </th>
                 <th class="num">
                   <div>So với ${esc(snap.win.compareModeName)}</div>
-                  <div class="v3-th-sub">(${esc(snap.win.compareRangeShort)})</div>
+                  <div class="v3-th-sub">(${esc(snap.win.compareRangeShort)}${snap.win.isPartialQuarter ? ` · ${snap.win.dayCount} ngày đầu` : ''})</div>
                 </th>
-                <th class="num">Sub ròng</th>
-                <th class="num">Video</th>
+                <th class="num v3-col-sub-gap">Sub ròng</th>
+                <th class="num v3-col-vid-gap">Video</th>
                 <th class="num">Đăng gần nhất</th>
                 <th class="num">Doanh thu</th>
               </tr>
             </thead>
             <tbody>
-              ${teamChannelsSorted.map((cp, idx) => {
-                const topTag = sortMode === 'views' ? 'Lớn nhất' : 'Tăng nhanh nhất';
-                const lowTag = sortMode === 'views' ? 'Nhỏ nhất' : 'Chậm nhất';
-                const tagHtml = idx === 0
-                  ? `<span class="v3-badge highest">${topTag}</span>`
-                  : (idx === teamChannelsSorted.length - 1 ? `<span class="v3-badge lowest">${lowTag}</span>` : '');
-                const isSlowUpload = cp.daysSinceLastUpload > 7;
-                const chShare = channelShareMap.get(cp.id) ?? 0;
-                return `
-                  <tr class="clickable-row" data-goto-channel="${cp.id}">
-                    <td style="white-space:nowrap;">
-                      <span class="v3-rank-pill ${idx === 0 ? 'top1' : ''}">#${idx + 1}</span>
-                    </td>
-                    <td style="white-space:nowrap;">
-                      <div style="display:inline-flex;align-items:center;gap:6px;">
-                        <strong>${esc(cp.meta.title)}</strong>
-                        ${tagHtml}
-                      </div>
-                    </td>
-                    <td style="white-space:nowrap;" title="${esc(cp.meta.employeeName)} (${esc(cp.meta.employeeId)})">${esc(cp.meta.employeeName)}</td>
-                    <td class="num" style="white-space:nowrap;"><strong>${cp.curr.views !== null ? fmtInt(cp.curr.views) : '—'}</strong></td>
-                    <td class="v3-bar-cell" style="min-width:78px;" data-channel-team-share="${chShare.toFixed(1)}">
-                      <div style="display:flex;justify-content:flex-end;font-family:var(--font-mono);font-size:11.5px;font-weight:700;">
-                        <span>${fmtDec(chShare, 1)}%</span>
-                      </div>
-                      <div class="v3-bar-track">
-                        <div class="v3-bar-fill" style="width:${Math.min(100, chShare)}%;background:${selectedTeam.color};"></div>
-                      </div>
-                    </td>
-                    <td class="num" style="white-space:nowrap;">${fmtDeltaBadge(cp.curr.views, cp.prev.views)}</td>
-                    <td class="num" style="white-space:nowrap;">${cp.curr.netSubs !== null ? (cp.curr.netSubs > 0 ? '+' + fmtInt(cp.curr.netSubs) : fmtInt(cp.curr.netSubs)) : '—'}</td>
-                    <td class="num" style="white-space:nowrap;">${fmtInt(cp.curr.videosPublished)}</td>
-                    <td class="num" style="white-space:nowrap;font-family:var(--font-sans);">
-                      <span class="${isSlowUpload ? 'v3-slow-upload-pill' : ''}" title="${isSlowUpload ? 'Quá 7 ngày chưa đăng video mới' : 'Lịch đăng bình thường'}">
-                        <span style="font-family:var(--font-mono);">${formatIsoToVN(cp.lastPublishedCutoff)}</span>
-                        <span style="font-size:10.5px;${isSlowUpload ? '' : 'color:var(--text-muted);'}">(${cp.daysSinceLastUpload} ngày)</span>
-                      </span>
-                    </td>
-                    <td class="num" style="white-space:nowrap;"><strong>${cp.curr.estimatedRevenue !== null ? fmtMoney(cp.curr.estimatedRevenue) : '—'}</strong></td>
-                  </tr>
-                `;
-              }).join('')}
+              ${(() => {
+                const chWithGrowth = teamChannelsSorted.filter(cp => cp.viewsGrowthPct !== null && cp.viewsGrowthPct !== undefined);
+                let topChId = null;
+                let topChPositive = false;
+                let bottomChId = null;
+                if (sortMode === 'views') {
+                  if (teamChannelsSorted.length >= 2) {
+                    topChId = teamChannelsSorted[0].id;
+                    bottomChId = teamChannelsSorted[teamChannelsSorted.length - 1].id;
+                  }
+                } else if (chWithGrowth.length >= 2) {
+                  const byChG = [...chWithGrowth].sort((a, b) => (b.viewsGrowthPct ?? -999) - (a.viewsGrowthPct ?? -999));
+                  if (byChG[0].viewsGrowthPct !== byChG[byChG.length - 1].viewsGrowthPct) {
+                    topChId = byChG[0].id;
+                    topChPositive = (byChG[0].viewsGrowthPct ?? 0) > 0;
+                    bottomChId = byChG[byChG.length - 1].id;
+                  }
+                }
+                return teamChannelsSorted.map((cp, idx) => {
+                  let tagHtml = '';
+                  if (sortMode === 'views') {
+                    if (cp.id === topChId) tagHtml = `<span class="v3-badge highest">Lớn nhất</span>`;
+                    else if (cp.id === bottomChId) tagHtml = `<span class="v3-badge lowest">Nhỏ nhất</span>`;
+                  } else {
+                    if (cp.id === topChId) {
+                      tagHtml = topChPositive
+                        ? `<span class="v3-badge highest" data-channel-growth-badge="fastest">Tăng nhanh nhất</span>`
+                        : `<span class="v3-badge muted" data-channel-growth-badge="least_drop">Giảm ít nhất</span>`;
+                    } else if (cp.id === bottomChId) {
+                      tagHtml = `<span class="v3-badge lowest" data-channel-growth-badge="slowest">Chậm nhất</span>`;
+                    }
+                  }
+                  const isSlowUpload = cp.daysSinceLastUpload > 7;
+                  const chShare = channelShareMap.get(cp.id) ?? 0;
+                  return `
+                    <tr class="clickable-row" data-goto-channel="${cp.id}">
+                      <td style="white-space:nowrap;">
+                        <span class="v3-rank-pill ${idx === 0 ? 'top1' : ''}">#${idx + 1}</span>
+                      </td>
+                      <td style="white-space:nowrap;">
+                        <div style="display:inline-flex;align-items:center;gap:6px;">
+                          <strong>${esc(cp.meta.title)}</strong>
+                          ${tagHtml}
+                        </div>
+                      </td>
+                      <td style="white-space:nowrap;">${esc(cp.meta.employeeName)}</td>
+                      <td class="num" style="white-space:nowrap;"><strong>${cp.curr.views !== null ? fmtInt(cp.curr.views) : '—'}</strong></td>
+                      <td class="v3-bar-cell" style="min-width:78px;" data-channel-team-share="${chShare.toFixed(1)}">
+                        <div style="display:flex;justify-content:flex-end;font-family:var(--font-mono);font-size:11.5px;font-weight:700;">
+                          <span>${fmtDec(chShare, 1)}%</span>
+                        </div>
+                        <div class="v3-bar-track">
+                          <div class="v3-bar-fill" style="width:${Math.min(100, chShare)}%;min-width:2px;background:${selectedTeam.color};"></div>
+                        </div>
+                      </td>
+                      <td class="num" style="white-space:nowrap;">${fmtDeltaBadge(cp.curr.views, cp.prev.views)}</td>
+                      <td class="num v3-col-sub-gap" style="white-space:nowrap;">${cp.curr.netSubs !== null ? (cp.curr.netSubs > 0 ? '+' + fmtInt(cp.curr.netSubs) : fmtInt(cp.curr.netSubs)) : '—'}</td>
+                      <td class="num v3-col-vid-gap" style="white-space:nowrap;">${fmtInt(cp.curr.videosPublished)}</td>
+                      <td class="num" style="white-space:nowrap;font-family:var(--font-sans);">
+                        <span class="${isSlowUpload ? 'v3-slow-upload-pill' : ''}" title="${isSlowUpload ? 'Quá 7 ngày chưa đăng video mới' : 'Lịch đăng bình thường'}">
+                          <span style="font-family:var(--font-mono);">${formatIsoToVN(cp.lastPublishedCutoff)}</span>
+                          <span style="font-size:10.5px;${isSlowUpload ? '' : 'color:var(--text-muted);'}">(${cp.daysSinceLastUpload} ngày)</span>
+                        </span>
+                      </td>
+                      <td class="num" style="white-space:nowrap;"><strong>${cp.curr.estimatedRevenue !== null ? fmtMoney(cp.curr.estimatedRevenue) : '—'}</strong></td>
+                    </tr>
+                  `;
+                }).join('');
+              })()}
             </tbody>
             <tfoot>
               <tr id="v3-team-5channel-total-row">
@@ -3366,8 +3573,8 @@
                 <td class="num" style="white-space:nowrap;"><strong>${selectedTeam.curr.views !== null ? fmtInt(selectedTeam.curr.views) : '—'}</strong></td>
                 <td class="num" style="white-space:nowrap;" data-channel-team-share-total="100.0"><strong>100,0%</strong></td>
                 <td class="num" style="white-space:nowrap;">${fmtDeltaBadge(selectedTeam.curr.views, selectedTeam.prev.views)}</td>
-                <td class="num" style="white-space:nowrap;"><strong>${selectedTeam.curr.netSubs !== null ? (selectedTeam.curr.netSubs > 0 ? '+' + fmtInt(selectedTeam.curr.netSubs) : fmtInt(selectedTeam.curr.netSubs)) : '—'}</strong></td>
-                <td class="num" style="white-space:nowrap;"><strong>${fmtInt(selectedTeam.curr.videosPublished)}</strong></td>
+                <td class="num v3-col-sub-gap" style="white-space:nowrap;"><strong>${selectedTeam.curr.netSubs !== null ? (selectedTeam.curr.netSubs > 0 ? '+' + fmtInt(selectedTeam.curr.netSubs) : fmtInt(selectedTeam.curr.netSubs)) : '—'}</strong></td>
+                <td class="num v3-col-vid-gap" style="white-space:nowrap;"><strong>${fmtInt(selectedTeam.curr.videosPublished)}</strong></td>
                 <td class="num" style="white-space:nowrap;">—</td>
                 <td class="num" style="white-space:nowrap;"><strong>${selectedTeam.curr.estimatedRevenue !== null ? fmtMoney(selectedTeam.curr.estimatedRevenue) : '—'}</strong></td>
               </tr>
@@ -3377,14 +3584,14 @@
       </section>
     `;
 
-    // Render 3-Team Line Chart (no legend, Y starts at 0, Vietnamese ticks, direct end-of-line label "tên team · tổng kỳ X")
+    // Render 3-Team Line Chart (no legend, Y starts at 0, Vietnamese ticks, direct end-of-line label "tên team · tổng kỳ X", minGap >= 16px)
     destroyChart('teamTrend');
     const trendCanvas = document.getElementById('v3-team-trend-canvas');
     if (trendCanvas && typeof Chart !== 'undefined') {
       const metric = v3State.teamChartMetric;
-      const days = snap.win.days;
+      const days = chartWin.days;
       const labels = days.map(d => d.slice(8, 10) + '/' + d.slice(5, 7));
-      const datasets = sortedTeamsByViews.map(tp => {
+      const datasets = chartTeamsByViews.map(tp => {
         const series = (tp.curr.dailySeries || []).map(d => d[metric]);
         let periodTotalStr = '—';
         if (metric === 'views' && tp.curr.views !== null) {
@@ -3433,30 +3640,38 @@
           });
           if (!items.length) return;
           items.sort((a, b) => a.rawY - b.rawY);
-          const minGap = 22;
-          const minTop = chartArea.top + 10;
-          const maxBottom = chartArea.bottom - 10;
-          for (let i = 1; i < items.length; i++) {
-            if (items[i].y - items[i - 1].y < minGap) {
-              items[i].y = items[i - 1].y + minGap;
-            }
-          }
-          if (items[items.length - 1].y > maxBottom) {
-            items[items.length - 1].y = maxBottom;
-            for (let i = items.length - 2; i >= 0; i--) {
-              if (items[i + 1].y - items[i].y < minGap) {
-                items[i].y = items[i + 1].y - minGap;
-              }
-            }
-          }
-          if (items[0].y < minTop) {
-            items[0].y = minTop;
+          // Item 9: Push end-of-line labels apart whenever vertical distance is < 16px (enforce minGap = 18px)
+          const minGap = 18;
+          const minTop = chartArea.top + 8;
+          const maxBottom = chartArea.bottom - 8;
+          for (let pass = 0; pass < 4; pass++) {
             for (let i = 1; i < items.length; i++) {
-              if (items[i].y - items[i - 1].y < minGap) {
-                items[i].y = items[i - 1].y + minGap;
+              const diff = items[i].y - items[i - 1].y;
+              if (diff < minGap) {
+                const push = (minGap - diff) / 2;
+                items[i - 1].y -= push;
+                items[i].y += push;
+              }
+            }
+            if (items[0].y < minTop) {
+              items[0].y = minTop;
+              for (let i = 1; i < items.length; i++) {
+                if (items[i].y - items[i - 1].y < minGap) {
+                  items[i].y = items[i - 1].y + minGap;
+                }
+              }
+            }
+            if (items[items.length - 1].y > maxBottom) {
+              items[items.length - 1].y = maxBottom;
+              for (let i = items.length - 2; i >= 0; i--) {
+                if (items[i + 1].y - items[i].y < minGap) {
+                  items[i].y = items[i + 1].y - minGap;
+                }
               }
             }
           }
+          chart._lastEndLabelPositions = items.map(it => ({ text: it.text, y: Number(it.y.toFixed(1)), rawY: Number(it.rawY.toFixed(1)) }));
+
           ctx.save();
           ctx.font = '700 11.5px Inter, system-ui, sans-serif';
           ctx.textBaseline = 'middle';
@@ -3488,7 +3703,7 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          layout: { padding: { right: 205, top: 14, bottom: 6 } },
+          layout: { padding: { right: 205, top: 10, bottom: 0 } },
           interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: { display: false }
@@ -3498,7 +3713,7 @@
               afterBuildTicks: function (axis) {
                 const total = labels.length;
                 if (total <= 7) return;
-                const stepCount = 5; // 6 ticks total: 0, 20%, 40%, 60%, 80%, last (26/10)
+                const stepCount = 5;
                 const chosen = [];
                 for (let k = 0; k <= stepCount; k++) {
                   const idx = Math.round((k * (total - 1)) / stepCount);
@@ -3537,10 +3752,10 @@
     const singleCanvas = document.getElementById('v3-single-team-canvas');
     if (singleCanvas && typeof Chart !== 'undefined' && selectedTeam) {
       const currSeries = selectedTeam.curr.dailySeries || [];
-      const prevSeries = selectedTeam.prev.dailySeries || [];
-      const dayLabels = snap.win.days.map((_, idx) => `Ngày ${idx + 1}`);
-      const currData = snap.win.days.map((_, idx) => (currSeries[idx] ? currSeries[idx][singleMetric] : null));
-      const prevData = snap.win.days.map((_, idx) => (prevSeries[idx] ? prevSeries[idx][singleMetric] : null));
+      const prevSeries = singleTeamPrevAgg.dailySeries || [];
+      const dayLabels = singleWin.days.map((_, idx) => `Ngày ${idx + 1}`);
+      const currData = singleWin.days.map((_, idx) => (currSeries[idx] ? currSeries[idx][singleMetric] : null));
+      const prevData = singleWin.days.map((_, idx) => (prevSeries[idx] ? prevSeries[idx][singleMetric] : null));
 
       chartInstances['teamSingleTrend'] = new Chart(singleCanvas.getContext('2d'), {
         type: 'line',
@@ -3557,7 +3772,7 @@
               tension: 0.3
             },
             {
-              label: `${snap.win.compareModeName} (${snap.win.compareRangeShort})`,
+              label: `${singleWin.compareModeName} (${singleWin.compareRangeShort})`,
               data: prevData,
               borderColor: '#94A3B8',
               borderDash: [6, 4],
@@ -3571,6 +3786,7 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          layout: { padding: { top: 4, bottom: 0 } },
           interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: {
@@ -3589,15 +3805,15 @@
               callbacks: {
                 title: function (items) {
                   const idx = items && items[0] ? items[0].dataIndex : 0;
-                  const dCurr = snap.win.days[idx];
-                  const dPrev = snap.win.prevDays[idx];
+                  const dCurr = singleWin.days[idx];
+                  const dPrev = singleWin.prevDays[idx];
                   return `Ngày thứ ${idx + 1} của kỳ (${formatIsoToVN(dCurr)} vs ${formatIsoToVN(dPrev)})`;
                 },
                 label: function (ctx) {
                   const idx = ctx.dataIndex;
                   const isCurr = ctx.datasetIndex === 0;
-                  const realIso = isCurr ? snap.win.days[idx] : snap.win.prevDays[idx];
-                  const prefix = isCurr ? 'Kỳ này' : snap.win.compareModeName;
+                  const realIso = isCurr ? singleWin.days[idx] : singleWin.prevDays[idx];
+                  const prefix = isCurr ? 'Kỳ này' : singleWin.compareModeName;
                   return ` ${prefix} (${formatIsoToVN(realIso)}): ${fmtSingleMetricVal(ctx.parsed.y, singleMetric)}`;
                 }
               }
@@ -3609,7 +3825,8 @@
                 display: true,
                 text: 'Ngày thứ N của kỳ',
                 color: '#94A3B8',
-                font: { size: 11, weight: '600' }
+                font: { size: 11, weight: '600' },
+                padding: { top: 2, bottom: 0 }
               },
               afterBuildTicks: function (axis) {
                 const total = dayLabels.length;
@@ -3663,11 +3880,69 @@
       });
     });
 
+    root.querySelectorAll('[data-table-cmp]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (btn.disabled) return;
+        v3State.compareMode = btn.getAttribute('data-table-cmp');
+        refreshActiveView();
+      });
+    });
+
     root.querySelectorAll('[data-select-team-card]').forEach(card => {
       card.addEventListener('click', () => {
         v3State.selectedTeamId = card.getAttribute('data-select-team-card');
         renderTeamPage(snap);
       });
+    });
+
+    root.querySelectorAll('[data-tm-chart-preset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const nextPreset = btn.getAttribute('data-tm-chart-preset');
+        v3State.teamChartCustomPeriod = true;
+        v3State.teamChartPreset = nextPreset;
+        if (nextPreset === '7d') {
+          v3State.teamChartStartDate = '2026-10-20';
+          v3State.teamChartEndDate = '2026-10-26';
+        } else if (nextPreset === '30d') {
+          v3State.teamChartStartDate = '2026-09-27';
+          v3State.teamChartEndDate = '2026-10-26';
+        }
+        renderTeamPage(snap);
+      });
+    });
+
+    document.getElementById('v3-tm-chart-month-select')?.addEventListener('change', (e) => {
+      v3State.teamChartCustomPeriod = true;
+      v3State.teamChartPreset = 'month';
+      v3State.teamChartMonthKey = e.target.value;
+      renderTeamPage(snap);
+    });
+
+    document.getElementById('v3-tm-chart-quarter-select')?.addEventListener('change', (e) => {
+      v3State.teamChartCustomPeriod = true;
+      v3State.teamChartPreset = 'quarter';
+      v3State.teamChartQuarterKey = e.target.value;
+      renderTeamPage(snap);
+    });
+
+    document.getElementById('v3-tm-chart-apply-custom')?.addEventListener('click', () => {
+      const s = document.getElementById('v3-tm-chart-start')?.value;
+      const e = document.getElementById('v3-tm-chart-end')?.value;
+      if (s && e && s <= e) {
+        v3State.teamChartCustomPeriod = true;
+        v3State.teamChartPreset = 'custom';
+        v3State.teamChartStartDate = s;
+        v3State.teamChartEndDate = e;
+        renderTeamPage(snap);
+      } else if (c.showToast) {
+        c.showToast('Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc');
+      }
+    });
+
+    document.getElementById('v3-team-chart-reset-btn')?.addEventListener('click', () => {
+      v3State.teamChartCustomPeriod = false;
+      renderTeamPage(snap);
     });
 
     root.querySelectorAll('[data-tm-metric]').forEach(btn => {
@@ -3680,8 +3955,8 @@
     root.querySelectorAll('[data-tm-cmp]').forEach(btn => {
       btn.addEventListener('click', () => {
         if (btn.disabled) return;
-        v3State.compareMode = btn.getAttribute('data-tm-cmp');
-        refreshActiveView();
+        v3State.teamSingleCompareMode = btn.getAttribute('data-tm-cmp');
+        renderTeamPage(snap);
       });
     });
 

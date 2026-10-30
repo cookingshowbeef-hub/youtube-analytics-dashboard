@@ -344,6 +344,72 @@ def main():
             break
     check("page2_toan_network_row_and_channel_share_100_percent", toan_network_and_share_ok)
 
+    # Check 33: Page 2 Chart A ("Lượt xem theo ngày") global vs custom period totals, 5-channel table == team ranking row, and cross-page video count reconciliation
+    custom_chart_periods = [
+        ("2026-10-20", "2026-10-26"),  # 7d custom period
+        ("2026-09-27", "2026-10-26"),  # 30d period
+        ("2026-10-01", "2026-10-26"),  # Month 2026-10 / Q4 partial (26/92 days)
+        ("2026-09-01", "2026-09-30"),  # Month 2026-09
+        ("2026-07-01", "2026-09-30"),  # Q3 full (92/92 days)
+        ("2026-08-15", "2026-09-15"),  # Arbitrary custom date range
+    ]
+    chart_a_and_cross_page_ok = True
+    global_days = [r["day"] for r in daily if r["channel_id"] == baseline["channels"][0]["id"] and "2026-09-27" <= r["day"] <= "2026-10-26"]
+    for p_start, p_end in custom_chart_periods:
+        p_days = [r["day"] for r in daily if r["channel_id"] == baseline["channels"][0]["id"] and p_start <= r["day"] <= p_end]
+        if not p_days:
+            chart_a_and_cross_page_ok = False
+            break
+        # Cross-page video count check for this period (Page 1 system == Page 2 sum of teams == Page 4 sum of staff)
+        p1_vids = sum(index[c["id"], d]["daily_videos_published"] for c in baseline["channels"] for d in p_days)
+        p2_team_vids = sum(
+            sum(index[cid, d]["daily_videos_published"] for cid, tm in ch_to_team.items() if tm == t["id"] for d in p_days)
+            for t in baseline["teams"]
+        )
+        p4_staff_vids = sum(
+            sum(index[cid, d]["daily_videos_published"] for cid, eid in channel_to_employee.items() if eid == e["id"] for d in p_days)
+            for e in baseline["employees"]
+        )
+        if not (p1_vids == p2_team_vids == p4_staff_vids):
+            chart_a_and_cross_page_ok = False
+            break
+
+        for t in baseline["teams"]:
+            tid = t["id"]
+            team_cids = [cid for cid, tm in ch_to_team.items() if tm == tid]
+            rank_row_global_views = sum(index[cid, d]["views"] for cid in team_cids for d in global_days)
+            rank_row_global_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in team_cids for d in global_days)
+            rank_row_global_vids = sum(index[cid, d]["daily_videos_published"] for cid in team_cids for d in global_days)
+            rank_row_global_rev = sum(cents(index[cid, d]["estimatedRevenue"]) for cid in team_cids for d in global_days)
+
+            # 5-Channel table sum for this team
+            ch5_views = sum(sum(index[cid, d]["views"] for d in global_days) for cid in team_cids)
+            ch5_subs = sum(sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in global_days) for cid in team_cids)
+            ch5_vids = sum(sum(index[cid, d]["daily_videos_published"] for d in global_days) for cid in team_cids)
+            ch5_rev = sum(sum(cents(index[cid, d]["estimatedRevenue"]) for d in global_days) for cid in team_cids)
+            ch5_shares = allocate_exact_tenths_pct([sum(index[cid, d]["views"] for d in global_days) for cid in team_cids])
+
+            # Single-team trend ("Xu hướng một team") total
+            single_team_views = sum(sum(index[cid, d]["views"] for cid in team_cids) for d in global_days)
+
+            # Chart A ("Lượt xem theo ngày") in global mode vs custom period mode
+            chart_a_global_views = sum(sum(index[cid, d]["views"] for cid in team_cids) for d in global_days)
+            chart_a_custom_daily = [sum(index[cid, d]["views"] for cid in team_cids) for d in p_days]
+            chart_a_custom_total = sum(chart_a_custom_daily)
+            expected_custom_total = sum(index[cid, d]["views"] for cid in team_cids for d in p_days)
+
+            if not (
+                ch5_views == rank_row_global_views == single_team_views == chart_a_global_views and
+                ch5_subs == rank_row_global_subs and
+                ch5_vids == rank_row_global_vids and
+                ch5_rev == rank_row_global_rev and
+                round(sum(ch5_shares) * 10) == 1000 and
+                chart_a_custom_total == expected_custom_total
+            ):
+                chart_a_and_cross_page_ok = False
+                break
+    check("page2_chart_a_custom_vs_global_period_and_5channel_table_reconcile", chart_a_and_cross_page_ok)
+
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())
     (HERE / "independent_validation.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

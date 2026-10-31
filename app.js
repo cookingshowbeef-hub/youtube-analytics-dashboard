@@ -562,7 +562,7 @@
       const netChannel = {
         id: 'network',
         title: 'Toàn Bộ Hệ Thống (3 Team · 15 Kênh)',
-        handle: `@bgmedia_network (${allActive.length} Kênh)`,
+        handle: `@cmedia_network (${allActive.length} Kênh)`,
         avatar: 'https://cdn-icons-png.flaticon.com/512/8140/8140283.png',
         subscribers: totalSubs,
         views: totalViews,
@@ -1470,7 +1470,7 @@
       } else {
         const isOAuth = state.oauthConnected === true;
         if (isOAuth) {
-          elements.dataSourceLabel.textContent = `Dữ Liệu Thật (OAuth): ${state.channelInfo.title || 'BgMedia'}`;
+          elements.dataSourceLabel.textContent = `Dữ Liệu Thật (OAuth): ${state.channelInfo.title || 'CMedia'}`;
           elements.dataSourceLabel.style.color = '#10B981';
           if (elements.apiStatusIndicator) {
             elements.apiStatusIndicator.classList.add('connected');
@@ -1481,7 +1481,7 @@
             elements.dataSourceBadge.style.borderColor = '';
           }
         } else {
-          elements.dataSourceLabel.textContent = `Dữ Liệu Công Khai (Snapshot): ${state.channelInfo.title || 'BgMedia'}`;
+          elements.dataSourceLabel.textContent = `Dữ Liệu Công Khai (Snapshot): ${state.channelInfo.title || 'CMedia'}`;
           elements.dataSourceLabel.style.color = '#94A3B8';
           if (elements.apiStatusIndicator) {
             elements.apiStatusIndicator.classList.remove('connected');
@@ -3298,7 +3298,7 @@
                 <img src="${ch.avatar || ch.thumbnailUrl || ''}" style="width:26px; height:26px; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'">
                 <div>
                   <div style="font-weight:700; color:var(--text-main); font-size:12px;">${escapeHtml(ch.title)}</div>
-                  <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(ch.team || 'BgMedia')} • ${escapeHtml(ch.picName || ch.pic || '')}</div>
+                  <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(ch.team || 'CMedia')} • ${escapeHtml(ch.picName || ch.pic || '')}</div>
                 </div>
               </div>
             </td>
@@ -3376,7 +3376,7 @@
           <tr>
             <td><code>${emp.id}</code></td>
             <td><strong>${escapeHtml(emp.name)}</strong></td>
-            <td>${escapeHtml(team.name || 'BgMedia')}</td>
+            <td>${escapeHtml(team.name || 'CMedia')}</td>
             <td><span style="color:var(--accent-cyan); font-weight:600;">${escapeHtml(ch.title || emp.channelId)}</span></td>
             <td class="text-right font-mono">${formatNumber(ch.videoCount || 0)} video</td>
             <td class="text-right font-mono">${formatNumber(ch.viewCount || 0)}</td>
@@ -4452,7 +4452,7 @@ function switchView(viewId) {
               <img src="${ch.avatar || ch.thumbnailUrl || ''}" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
               <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 <div style="font-weight: 600; color: var(--text-main);">${escapeHtml(ch.title)}</div>
-                <div style="font-size: 10px; color: var(--text-muted);">${escapeHtml(ch.team || 'BgMedia')}</div>
+                <div style="font-size: 10px; color: var(--text-muted);">${escapeHtml(ch.team || 'CMedia')}</div>
               </div>
             </div>
             <input type="checkbox" class="compare-chan-checkbox" data-channel-id="${ch.id}" ${isSelected ? 'checked' : ''} ${isMax ? 'disabled' : ''} style="cursor: pointer; margin-left: 8px;">
@@ -4577,7 +4577,7 @@ function switchView(viewId) {
               ${(() => {
                 const reg = CHANNELS_REGISTRY.find(c => c.id === ch.id) || ch;
                 return `<div style="font-weight:600; color:var(--text-main); font-size:12px;">${escapeHtml(reg.pic || ch.picName || 'Chưa phân công')}</div>
-                        <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(reg.team || ch.team || 'BgMedia')}</div>`;
+                        <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(reg.team || ch.team || 'CMedia')}</div>`;
               })()}
             </td>
             <td class="text-right font-mono">${viewsKy}</td>
@@ -4807,7 +4807,7 @@ function switchView(viewId) {
       const row = [
         idx + 1,
         `"${ch.title.replace(/"/g, '""')}"`,
-        `"${ch.team || 'BgMedia'}"`,
+        `"${ch.team || 'CMedia'}"`,
         `"${ch.picName || ''}"`,
         hasData ? rowSum : '—',
         ...cells
@@ -4858,7 +4858,7 @@ function switchView(viewId) {
 
   function exportNetworkCsv() {
     let csv = '\uFEFF';
-    csv += `# BAO CAO TOAN MANG LUOI BGMEDIA NETWORK\n`;
+    csv += `# BAO CAO TOAN MANG LUOI CMEDIA NETWORK\n`;
     csv += `# Nguon: ${state.viewMode === 'demo' ? 'Du lieu minh hoa tong hop 15 kenh (data/demo-analytics)' : 'Du lieu cong khai YouTube'}\n`;
     csv += `# Pham vi ky: ${state.startDate} den ${state.endDate}\n`;
     csv += `# Tien te: ${state.currency}\n\n`;
@@ -4901,7 +4901,7 @@ function switchView(viewId) {
         idx + 1,
         `"${ch.title.replace(/"/g, '""')}"`,
         `"${ch.handle || ''}"`,
-        `"${ch.team || 'BgMedia'}"`,
+        `"${ch.team || 'CMedia'}"`,
         `"${ch.picName || ''}"`,
         ch.subscriberCount || 0,
         ch.viewCount || 0,
@@ -4930,7 +4930,7 @@ function switchView(viewId) {
     const employees = DATA_STORE.employees;
     const isDemo = state.viewMode === 'demo';
     let csv = '\uFEFF';
-    csv += `# BAO CAO NHAN VIEN BGMEDIA\n`;
+    csv += `# BAO CAO NHAN VIEN CMEDIA\n`;
     csv += `# Nguon: ${isDemo ? 'Du lieu minh hoa (synthetic_demo - data/demo-analytics)' : 'Du lieu cong khai YouTube & OAuth'}\n`;
     csv += `# is_demo: ${isDemo}\n`;
     csv += `# Kich ban: ${isDemo ? state.demoScenario : 'live'}\n`;
@@ -4952,7 +4952,7 @@ function switchView(viewId) {
         `"${emp.id}"`,
         `"${(emp.name || '').replace(/"/g, '""')}"`,
         `"${emp.username || emp.id}"`,
-        `"${(team.name || 'BgMedia').replace(/"/g, '""')}"`,
+        `"${(team.name || 'CMedia').replace(/"/g, '""')}"`,
         `"${(ch.title || emp.channelId).replace(/"/g, '""')}"`,
         ch.videoCount || 0,
         ch.viewCount || 0,
@@ -5287,7 +5287,7 @@ function switchView(viewId) {
     let html = '';
 
     // Show Rollup option when filter is all or query matches network
-    if (catFilter === 'all' && (!query || 'toàn bộ network bgmedia mcn hop nhat'.includes(query))) {
+    if (catFilter === 'all' && (!query || 'toàn bộ network cmedia bgmedia mcn hop nhat'.includes(query))) {
       const isNetActive = state.activeChannel === 'network';
       html += `
         <div class="picker-channel-item ${isNetActive ? 'active' : ''}" data-channel="network" role="option" aria-selected="${isNetActive}">
@@ -6219,7 +6219,7 @@ function switchView(viewId) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `BgMedia_Channels_List_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `CMedia_Channels_List_${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -6238,13 +6238,13 @@ function switchView(viewId) {
     const subEl = document.getElementById('mgmt-view-sub');
     if (!container) return;
 
-    if (titleEl) titleEl.textContent = 'Danh Mục Quản Trị Hệ Thống BgMedia';
+    if (titleEl) titleEl.textContent = 'Danh Mục Quản Trị Hệ Thống CMedia';
     if (subEl) subEl.textContent = 'Hệ sinh thái MCN tự động hóa quy trình quản trị đa kênh YouTube';
     container.innerHTML = `
       <div style="padding: 24px; text-align: center; color: var(--text-muted);">
         <i class="ri-checkbox-circle-line" style="font-size: 40px; color: #F53F3F; display: block; margin-bottom: 12px;"></i>
         <h3 style="font-size: 16px; color: var(--text-main); margin-bottom: 6px;">Phân Hệ Sẵn Sàng Vận Hành</h3>
-        <p style="max-width: 500px; margin: 0 auto 16px auto; font-size: 13px;">Hệ sinh thái BgMedia đang quản lý ${CHANNELS_REGISTRY.length} kênh YouTube hoạt động trên toàn hệ thống.</p>
+        <p style="max-width: 500px; margin: 0 auto 16px auto; font-size: 13px;">Hệ sinh thái CMedia đang quản lý ${CHANNELS_REGISTRY.length} kênh YouTube hoạt động trên toàn hệ thống.</p>
         <button class="action-btn-primary" onclick="window.appSwitchView('view-mgmt-channel')"><i class="ri-tv-line"></i> Quản Lý ${CHANNELS_REGISTRY.length} Kênh</button>
       </div>
     `;

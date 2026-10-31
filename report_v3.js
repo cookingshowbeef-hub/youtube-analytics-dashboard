@@ -1370,7 +1370,7 @@
       <div class="v3-scope-bar">
         <div class="v3-scope-row-1">
           <div class="v3-scope-left">
-            <span class="v3-scope-brand"><i class="ri-bar-chart-box-line" style="color:#38BDF8;"></i> BgMedia Analytics</span>
+            <span class="v3-scope-brand"><i class="ri-bar-chart-box-line" style="color:#38BDF8;"></i> CMedia Analytics</span>
             ${scopeLabel ? `
               <span class="v3-scope-sep">·</span>
               <span class="v3-scope-text"><strong>${esc(scopeLabel)}</strong></span>
@@ -7498,7 +7498,7 @@
           <div>
             <div class="v3-panel-title">
               <i class="ri-book-read-line" style="color:#38BDF8;"></i>
-              Từ điển Chỉ số, Múi giờ PT & Quy chuẩn Dữ liệu BgMedia
+              Từ điển Chỉ số, Múi giờ PT & Quy chuẩn Dữ liệu CMedia
             </div>
             <div class="v3-panel-subtitle">
               Giải đáp câu hỏi: "Con số này nghĩa là gì, lấy từ đâu?" — Nhấn vào bất kỳ biểu tượng (?) nào trên các trang báo cáo để nhảy thẳng tới mục tương ứng tại đây.
@@ -7618,7 +7618,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `bgmedia_${activeViewId || 'report'}_${snap.win.start}_${snap.win.end}.csv`;
+    a.download = `cmedia_${activeViewId || 'report'}_${snap.win.start}_${snap.win.end}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

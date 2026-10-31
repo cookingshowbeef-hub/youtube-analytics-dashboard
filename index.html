@@ -29,7 +29,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
         <div class="brand-logo-wrap">
-          <span class="bgmedia-logo-text">BgMedia</span>
+          <span class="bgmedia-logo-text">CMedia</span>
         </div>
         <i class="ri-menu-3-line bgmedia-menu-icon" id="sidebar-toggle-btn" title="Thu gọn menu"></i>
       </div>
@@ -1101,7 +1101,7 @@
               Báo Cáo Theo Nhân Viên (Biểu Đồ)
             </h2>
             <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
-              Theo dõi biến động và so sánh hiệu suất sản xuất của từng nhân sự phụ trách kênh (chuẩn BgMedia)
+              Theo dõi biến động và so sánh hiệu suất sản xuất của từng nhân sự phụ trách kênh (chuẩn CMedia)
             </p>
           </div>
 
@@ -1283,7 +1283,7 @@
                 Báo cáo theo nhân viên (Số liệu)
               </h2>
               <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
-                Bảng đối soát chỉ số và doanh thu ước tính theo nhân viên và ngày/tháng (chuẩn đối soát BgMedia)
+                Bảng đối soát chỉ số và doanh thu ước tính theo nhân viên và ngày/tháng (chuẩn đối soát CMedia)
               </p>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -1448,7 +1448,7 @@
                 Báo cáo theo nhóm
               </h2>
               <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
-                Theo dõi và đối chiếu xu hướng lượt xem, doanh thu giữa các team sản xuất nội dung BgMedia
+                Theo dõi và đối chiếu xu hướng lượt xem, doanh thu giữa các team sản xuất nội dung CMedia
               </p>
             </div>
             <button id="team-refresh-btn" class="icon-btn" title="Làm mới dữ liệu biểu đồ" style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-card); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 17px; transition: var(--trans-fast);">
@@ -1886,10 +1886,10 @@
             <div>
               <h2 style="font-size: 20px; font-weight: 800; color: #F53F3F; display: flex; align-items: center; gap: 8px;">
                 <i class="ri-global-line"></i>
-                Báo Cáo Tổng Quan Toàn Mạng Lưới BgMedia
+                Báo Cáo Tổng Quan Toàn Mạng Lưới CMedia
               </h2>
               <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
-                Hợp nhất dữ liệu danh mục kênh theo phân công tổ chức BgMedia
+                Hợp nhất dữ liệu danh mục kênh theo phân công tổ chức CMedia
               </p>
             </div>
             <button type="button" class="action-btn-primary" id="btn-export-network-report" style="font-size: 13px; padding: 6px 14px;">
@@ -1903,7 +1903,7 @@
               <label><i class="ri-global-line"></i> Mạng Lưới / MCN</label>
               <div class="filter-input-wrap">
                 <select id="network-filter-select">
-                  <option value="net-bgmedia" selected>BgMedia Music Network (Mạng lưới chính)</option>
+                  <option value="net-bgmedia" selected>CMedia Music Network (Mạng lưới chính)</option>
                   <option value="net-global">Global Music Distribution Network</option>
                   <option value="all">Tất cả network liên kết</option>
                 </select>
@@ -2049,7 +2049,7 @@
           <div class="section-title-wrap" style="margin-bottom: 24px;">
             <h2 style="font-size: 20px; font-weight: 800; color: #F53F3F; display: flex; align-items: center; gap: 8px;">
               <i class="ri-questionnaire-line"></i>
-              Hướng Dẫn Sử Dụng & Quy Chuẩn Số Liệu Báo Cáo BgMedia
+              Hướng Dẫn Sử Dụng & Quy Chuẩn Số Liệu Báo Cáo CMedia
             </h2>
             <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
               Tài liệu kỹ thuật giải thích nguồn dữ liệu API, từ điển chỉ số, múi giờ Pacific Time, độ trễ 48–72h và nguyên tắc đối soát 7 màn hình
@@ -2079,7 +2079,7 @@
               <!-- Section 1 -->
               <div class="guide-section-block" id="guide-sec-1">
                 <h3 class="guide-section-title"><i class="ri-database-2-line" style="color: #38BDF8;"></i> 1. Kiến Trúc Dữ Liệu & Nguồn Kết Nối API</h3>
-                <p>Hệ thống báo cáo BgMedia được thiết kế chuẩn mực trên 2 nguồn API chính thức từ Google Developers:</p>
+                <p>Hệ thống báo cáo CMedia được thiết kế chuẩn mực trên 2 nguồn API chính thức từ Google Developers:</p>
                 <ul>
                   <li><strong>YouTube Data API v3:</strong> Là nguồn cung cấp danh mục (Catalog), metadata video (tiêu đề, thumbnail, thời lượng ISO 8601, ngày phát hành) và bộ đếm công khai tích lũy trọn đời (Lifetime public counters: subscribers, lifetime views, video count). <em>Bộ đếm này tách biệt hoàn toàn với số liệu phát sinh trong kỳ báo cáo.</em></li>
                   <li><strong>YouTube Analytics API v2:</strong> Là nguồn hiệu suất lịch sử theo kỳ thời gian: views, phút xem (estimatedMinutesWatched), likes, comments, shares, subscribersGained, subscribersLost, và doanh thu ước tính (estimatedRevenue).</li>
@@ -2129,7 +2129,7 @@
                   <li><strong>Báo cáo theo team:</strong> Biểu đồ xếp dọc so sánh sản lượng từng team, bảng nhóm hỗ trợ click mở rộng xem danh sách kênh và video.</li>
                   <li><strong>Báo cáo theo dự án:</strong> Theo dõi danh mục nội dung dự án âm nhạc trên các kênh, phân tích views và doanh thu kỳ.</li>
                   <li><strong>Báo cáo theo kênh:</strong> Chế độ xem sâu 1 kênh (với hồ sơ lifetime vs số kỳ) hoặc so sánh đối đầu 2 kênh song song. Click bất kỳ video nào để mở <em>Drawer Giữ chân khán giả</em>.</li>
-                  <li><strong>Báo cáo theo network:</strong> Hợp nhất toàn mạng lưới MCN BgMedia, đánh giá tỷ trọng đóng góp của từng kênh.</li>
+                  <li><strong>Báo cáo theo network:</strong> Hợp nhất toàn mạng lưới MCN CMedia, đánh giá tỷ trọng đóng góp của từng kênh.</li>
                   <li><strong>Báo cáo theo NV (Biểu đồ):</strong> Biểu đồ đường xếp dọc (Views, Doanh thu, Subs, Likes, Comments) theo từng nhân viên phụ trách.</li>
                   <li><strong>Báo cáo theo NV (Số liệu):</strong> Bảng ma trận Pivot nhân viên × timeline ngày/tháng, đối soát doanh thu chi tiết từng ngày.</li>
                 </ol>
@@ -2244,7 +2244,7 @@
               <div>
                 <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
                   <i class="ri-tv-line" style="color: #F53F3F;"></i>
-                  Quản Lý Hệ Thống Kênh MCN BgMedia
+                  Quản Lý Hệ Thống Kênh MCN CMedia
                 </h2>
                 <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
                   Quản lý tập trung toàn bộ danh mục kênh YouTube, phân công phụ trách, theo dõi trạng thái kết nối API và số liệu tăng trưởng
@@ -2489,7 +2489,7 @@
               Quản Lý Hệ Thống
             </h2>
             <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;" id="mgmt-view-sub">
-              Danh mục quản trị tài nguyên BgMedia
+              Danh mục quản trị tài nguyên CMedia
             </p>
           </div>
           <div class="chart-panel" id="mgmt-content-panel">
@@ -2582,7 +2582,7 @@
           <i class="ri-youtube-line modal-icon" style="background: rgba(245,63,63,0.15); color: #F53F3F;"></i>
           <div>
             <h3 class="modal-title">Thêm Kênh YouTube Mới</h3>
-            <p class="modal-sub">Đưa kênh vào mạng lưới MCN BgMedia để theo dõi & phân tích số liệu</p>
+            <p class="modal-sub">Đưa kênh vào mạng lưới MCN CMedia để theo dõi & phân tích số liệu</p>
           </div>
         </div>
         <button class="modal-close-btn" id="btn-close-add-channel-modal" aria-label="Đóng"><i class="ri-close-line"></i></button>

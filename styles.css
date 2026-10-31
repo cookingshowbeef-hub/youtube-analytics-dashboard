@@ -6302,39 +6302,49 @@ input:checked + .slider:before {
 }
 
 #v3-single-team-header-row2 {
-  gap: 6px;
+  gap: 4px;
+}
+
+#v3-single-team-header-row2 .v3-single-team-chips {
+  gap: 3px;
 }
 
 #v3-single-team-header-row2 .v3-single-team-chip {
-  padding: 3px 7px;
-  font-size: 11px;
+  padding: 2px 5px;
+  font-size: 9.8px;
   height: 24px;
+  gap: 3px;
   box-sizing: border-box;
 }
 
 #v3-single-team-header-row2 .v3-preset-btn {
-  padding: 3px 6.5px;
-  font-size: 10.6px;
+  padding: 2px 5px;
+  font-size: 9.9px;
+}
+
+#v3-single-team-header-row2 .v3-ch-inline-legend {
+  gap: 6px;
+  font-size: 10.1px;
+}
+
+#v3-single-team-header-row2 .v3-ch-legend-line {
+  width: 14px;
 }
 
 #v3-single-team-ref-slot {
-  width: 244px;
-  min-width: 244px;
-  max-width: 244px;
+  width: 198px;
+  min-width: 198px;
+  max-width: 198px;
 }
 
-#v3-single-team-ref-slot .v3-chart-date-input {
-  width: 114px;
-  min-width: 114px;
-  max-width: 114px;
-}
-
-/* Fixed 2-Row Header & Fixed-Width Period Controls for "Lượt xem theo ngày" (#v3-team-chart-a-panel) */
+/* Fixed 2-Row Header & Fixed-Width Period Controls across Page 2, Page 3, Page 4 */
 .v3-chart-a-header {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 35;
 }
 
 .v3-chart-a-header-row1 {
@@ -6346,22 +6356,43 @@ input:checked + .slider:before {
   max-height: 28px;
   flex-wrap: nowrap;
   white-space: nowrap;
-  gap: 10px;
+  gap: 8px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .v3-chart-a-header-row2 {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 28px;
-  min-height: 28px;
-  max-height: 28px;
+  gap: 6px;
+  height: 34px;
+  min-height: 34px;
+  max-height: 34px;
+  padding-top: 2px;
+  padding-bottom: 4px;
   flex-wrap: nowrap;
   white-space: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
+  box-sizing: border-box;
+}
+
+.v3-chart-a-header-row2::-webkit-scrollbar {
+  height: 4px;
+}
+
+/* When a dropdown picker inside Row 2 is open, allow the absolute menu to escape overflow clipping */
+#v3-staff-chart-header-row2 {
+  overflow-x: visible;
+  overflow-y: hidden;
+}
+
+@media (max-width: 1279px) {
+  #v3-staff-chart-header-row2 {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
 }
 
 .v3-chart-a-header .v3-preset-group {
@@ -6371,19 +6402,22 @@ input:checked + .slider:before {
 }
 
 .v3-chart-a-header .v3-preset-btn {
-  padding: 3px 8px;
-  font-size: 11px;
+  padding: 2.5px 6.5px;
+  font-size: 10.6px;
   white-space: nowrap;
-  height: 24px;
+  height: 25px;
   display: inline-flex;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .v3-chart-period-slot {
-  width: 248px;
-  min-width: 248px;
-  max-width: 248px;
+  width: 214px;
+  min-width: 214px;
+  max-width: 214px;
   height: 26px;
+  min-height: 26px;
+  max-height: 26px;
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
@@ -6395,45 +6429,85 @@ input:checked + .slider:before {
   height: 26px;
   min-height: 26px;
   max-height: 26px;
-  padding: 2px 8px;
-  font-size: 11.2px;
+  padding: 2px 7px;
+  font-size: 10.8px;
   box-sizing: border-box;
+  margin: 0;
 }
 
 .v3-chart-slot-control:disabled {
-  opacity: 0.82;
+  opacity: 0.85;
   cursor: default;
 }
 
+/* Single Unified Date-Range Box (replaces two separate date boxes in the exact same slot & width) */
 .v3-chart-custom-dates {
   width: 100%;
   height: 26px;
   min-height: 26px;
   max-height: 26px;
+  padding: 0 6px;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
+  gap: 2px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid var(--border-medium);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.v3-chart-custom-dates:focus-within {
+  border-color: #38BDF8;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35);
+}
+
+.v3-date-range-icon {
+  font-size: 11.5px;
+  color: #38BDF8;
+  flex-shrink: 0;
+  margin-right: 1px;
+}
+
+.v3-date-range-part,
+.v3-chart-date-input {
+  width: 92px;
+  min-width: 0;
+  flex: 1 1 0;
+  height: 22px;
+  min-height: 22px;
+  max-height: 22px;
+  padding: 0 1px;
+  margin: 0;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: var(--text-main);
+  font-size: 10.3px;
+  font-family: var(--font-mono);
+  line-height: 22px;
   box-sizing: border-box;
 }
 
-.v3-chart-date-input {
-  width: 116px;
-  min-width: 116px;
-  max-width: 116px;
-  height: 26px;
-  min-height: 26px;
-  max-height: 26px;
-  padding: 2px 5px;
-  font-size: 11px;
-  font-family: var(--font-mono);
-  box-sizing: border-box;
+.v3-date-range-part::-webkit-calendar-picker-indicator,
+.v3-chart-date-input::-webkit-calendar-picker-indicator {
+  width: 11px;
+  height: 11px;
+  padding: 0;
+  margin-left: 1px;
+  cursor: pointer;
+  opacity: 0.72;
+  filter: invert(0.8);
 }
 
 .v3-chart-date-sep {
-  color: var(--text-dim);
-  font-size: 11px;
+  color: #38BDF8;
+  font-size: 10.5px;
+  font-weight: 700;
   flex-shrink: 0;
+  padding: 0 1px;
 }
 
 .v3-chart-status-chip {
@@ -6485,9 +6559,9 @@ input:checked + .slider:before {
 }
 
 .v3-chart-a-canvas-wrap {
-  height: 205px;
-  min-height: 205px;
-  max-height: 205px;
+  height: 201px;
+  min-height: 201px;
+  max-height: 201px;
   position: relative;
 }
 
@@ -7226,8 +7300,8 @@ input:checked + .slider:before {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 11px;
+  gap: 8px;
+  font-size: 10.6px;
   font-weight: 600;
   color: #CBD5E1;
   white-space: nowrap;
@@ -7667,30 +7741,61 @@ input:checked + .slider:before {
   z-index: 60;
 }
 
-.v3-staff-picker-btn {
-  width: 246px;
-  min-width: 246px;
-  max-width: 246px;
-  height: 26px;
-  justify-content: space-between;
+#v3-staff-chart-header-row2 {
+  gap: 5px !important;
+}
+
+#v3-staff-chart-period-presets .v3-preset-btn {
+  padding: 0 7px !important;
+  font-size: 10.6px !important;
+}
+
+.v3-staff-picker-trigger {
+  height: 26px !important;
+  min-height: 26px !important;
+  max-height: 26px !important;
+  padding: 0 7px !important;
+  font-size: 10.6px !important;
+  gap: 4px !important;
   box-sizing: border-box;
+}
+
+.v3-staff-row2-status-chip {
+  height: 25px !important;
+  min-height: 25px !important;
+  max-height: 25px !important;
+  padding: 0 4.5px !important;
+  font-size: 9.4px !important;
+  gap: 3px !important;
+  max-width: 194px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.v3-staff-row2-status-chip .v3-chart-status-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .v3-staff-prev-ref-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 24px;
-  padding: 0 8px;
+  gap: 3.5px;
+  height: 25px !important;
+  min-height: 25px !important;
+  max-height: 25px !important;
+  padding: 0 6px !important;
   border-radius: 5px;
   border: 1px solid var(--border-subtle);
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-muted);
-  font-size: 10.8px;
+  font-size: 10.2px !important;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  box-sizing: border-box;
   transition: all 0.14s ease;
 }
 

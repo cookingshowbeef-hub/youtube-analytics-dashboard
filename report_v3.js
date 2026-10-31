@@ -2385,10 +2385,11 @@
 
             <div class="v3-chart-period-slot" id="v3-channel-ref-date-slot">
               ${refWin.mode === 'custom' ? `
-                <div class="v3-chart-custom-dates" id="v3-ch-ref-custom-dates">
-                  <input type="date" id="v3-ch-ref-start" class="v3-select v3-select-sm v3-chart-date-input" value="${refWin.refStart}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày đối chứng">
+                <div class="v3-chart-custom-dates" id="v3-ch-ref-custom-dates" title="Khoảng ngày đối chứng tùy chỉnh">
+                  <i class="ri-calendar-event-line v3-date-range-icon"></i>
+                  <input type="date" id="v3-ch-ref-start" class="v3-date-range-part" value="${refWin.refStart}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày đối chứng">
                   <span class="v3-chart-date-sep">→</span>
-                  <input type="date" id="v3-ch-ref-end" class="v3-select v3-select-sm v3-chart-date-input" value="${refWin.refEnd}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày đối chứng">
+                  <input type="date" id="v3-ch-ref-end" class="v3-date-range-part" value="${refWin.refEnd}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày đối chứng">
                 </div>
               ` : `
                 <select id="v3-ch-ref-fixed-select" class="v3-select v3-select-sm v3-chart-slot-control" disabled aria-label="Khoảng ngày kỳ đối chứng">
@@ -2402,7 +2403,7 @@
               <button type="button" class="v3-preset-btn ${v3State.channelUnequalMode === 'total' ? 'active' : ''}" data-ch-unequal-mode="total">Tổng</button>
             </div>
 
-            <!-- Mục 6: Gộp chú giải "Kỳ này / Kỳ trước" lên hàng "So với" để tiết kiệm chiều cao -->
+            <!-- Mục 6: Gộp chú giải "Kỳ này / Kỳ đối chứng" lên hàng "So với" để tiết kiệm chiều cao -->
             <div class="v3-ch-inline-legend" id="v3-channel-inline-legend">
               <span class="v3-ch-legend-item">
                 <span class="v3-ch-legend-line solid" style="background:${meta.channelColor};"></span>
@@ -2410,7 +2411,7 @@
               </span>
               <span class="v3-ch-legend-item">
                 <span class="v3-ch-legend-line dashed"></span>
-                <span>${esc(refWin.refModeName)} (${refWin.refRangeShort})</span>
+                <span>${refWin.mode === 'yoy' ? 'Năm ngoái' : esc(refWin.refModeName)} (${refWin.refRangeShort})</span>
               </span>
             </div>
           </div>
@@ -4258,20 +4259,24 @@
     const chartRangeShort = `${formatIsoToShortVN(chartWin.start)}–${formatIsoToShortVN(chartWin.end)}`;
     const prevRangeShort = chartWin.compareRangeShort || `${formatIsoToShortVN(chartWin.prevStart)}–${formatIsoToShortVN(chartWin.prevEnd)}`;
 
-    // Status chip in Row 1 (always occupies space via visibility)
+    // Status chip in Row 2 (compact so Row 2 never overflows at 1280px, always occupies space via visibility)
     let statusChipVisible = false;
     let statusChipText = '';
+    let statusChipTooltip = 'Đang theo kỳ chung của báo cáo';
     let statusChipHasReset = false;
     if (isCustomChartPeriod) {
       statusChipVisible = true;
-      statusChipText = `Kỳ riêng · ${chartWin.shortPresetName} · ${chartRangeShort}${chartWin.isPartialPeriod ? ` · chưa trọn ${chartWin.dayCount}/${chartWin.totalCalendarDays} ngày` : ''}`;
+      statusChipText = `Kỳ riêng · ${chartWin.shortPresetName}${chartWin.isPartialPeriod ? ` (${chartWin.dayCount}/${chartWin.totalCalendarDays}d)` : ` (${chartRangeShort})`}`;
+      statusChipTooltip = `Kỳ riêng · ${chartWin.shortPresetName} · ${chartRangeShort}${chartWin.isPartialPeriod ? ` · chưa trọn ${chartWin.dayCount}/${chartWin.totalCalendarDays} ngày` : ''}`;
       statusChipHasReset = true;
     } else if (chartWin.isPartialQuarter) {
       statusChipVisible = true;
       statusChipText = `Chưa trọn quý (${chartWin.dayCount}/${chartWin.quarterCalendarDays} ngày)`;
+      statusChipTooltip = statusChipText;
     } else if (chartWin.isPartialPeriod) {
       statusChipVisible = true;
       statusChipText = `Chưa trọn tháng (${chartWin.dayCount}/${chartWin.totalCalendarDays} ngày)`;
+      statusChipTooltip = statusChipText;
     }
 
     // Calculate daily sums per employee & group total for reconciliation & legend display
@@ -4332,7 +4337,7 @@
                data-staff-daily-sums='${esc(JSON.stringify(dailySumByEmp))}'
                data-staff-group-sum="${groupDailySum}">
         <div class="v3-chart-a-header" id="v3-staff-chart-header">
-          <!-- Hàng 1 cố định: Tên khối + ngày thật + chip trạng thái (luôn giữ chỗ) + Công tắc Thực tế|Chuẩn hóa + Công tắc Views|Sub ròng|Doanh thu -->
+          <!-- Hàng 1 cố định: Tên khối + ngày thật + Công tắc Thực tế|Chuẩn hóa + Công tắc Views|Sub ròng|Doanh thu -->
           <div class="v3-chart-a-header-row1" id="v3-staff-chart-header-row1">
             <div class="v3-panel-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.2px;">
               <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
@@ -4340,10 +4345,6 @@
               <span class="v3-panel-date-tag">(${chartRangeFullVN})</span>
             </div>
             <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap;flex-shrink:0;">
-              <span class="v3-chart-status-chip ${statusChipVisible ? 'is-visible' : 'is-hidden'}" id="v3-staff-chart-period-chip" data-custom-active="${isCustomChartPeriod ? 'true' : 'false'}">
-                <span class="v3-chart-status-chip-text">${esc(statusChipText || 'Kỳ chung')}</span>
-                ${statusChipHasReset ? `<button type="button" class="v3-chart-status-chip-close" id="v3-staff-chart-reset-btn" title="Về kỳ chung" aria-label="Về kỳ chung">×</button>` : ''}
-              </span>
               <div class="v3-preset-group" id="v3-staff-scale-switch" role="group" aria-label="Chế độ thang đo Thực tế hoặc Chuẩn hóa">
                 <button type="button" class="v3-preset-btn ${scaleMode === 'actual' ? 'active' : ''}" data-staff-scale="actual" title="Hiển thị giá trị thực tế theo ngày">Thực tế</button>
                 <button type="button" class="v3-preset-btn ${scaleMode === 'index100' ? 'active' : ''}" data-staff-scale="index100" title="Quy chuẩn ngày đầu tiên của kỳ = 100 để nhân viên nhỏ không bị nhân viên lớn làm chìm">Chuẩn hóa (ngày đầu = 100)</button>
@@ -4356,13 +4357,13 @@
             </div>
           </div>
 
-          <!-- Hàng 2 cố định: Ô chọn nhiều nhân viên (tìm kiếm + lọc team, tối đa 5) + Đối chứng kỳ trước (nét đứt, chỉ bật khi 1 NV) + Bộ chọn kỳ riêng -->
+          <!-- Hàng 2 cố định (chiều cao đủ chứa nội dung, không cần cuộn từ 1280px): Ô chọn nhân viên + Nút Kỳ trước + Chip Kỳ riêng (chiếm chỗ cố định) + Nhóm nút kỳ + Một ô khoảng ngày cố định -->
           <div class="v3-chart-a-header-row2" id="v3-staff-chart-header-row2">
             <div class="v3-ch-search-picker" id="v3-staff-multi-picker">
               <button type="button" class="v3-ch-picker-btn v3-staff-picker-trigger" id="v3-staff-picker-btn" aria-haspopup="listbox" aria-expanded="${v3State.staffPickerOpen ? 'true' : 'false'}" title="Chọn từ 1 đến 5 nhân viên để vẽ đường xu hướng">
                 <i class="ri-user-search-line" style="color:#38BDF8;font-size:13.5px;"></i>
                 <span class="v3-ch-picker-btn-text">
-                  <strong>Nhân viên (${selectedStaff.length}/5 đang chọn)</strong>
+                  <strong>Nhân viên (${selectedStaff.length}/5)</strong>
                 </span>
                 <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:14px;margin-left:auto;"></i>
               </button>
@@ -4415,11 +4416,15 @@
                     ${!isSingleStaff ? 'disabled' : ''}
                     title="${isSingleStaff ? `Bật/tắt đường nét đứt đối chứng kỳ trước (${prevRangeShort})` : 'Đối chứng kỳ trước (nét đứt) chỉ bật khi chọn đúng 1 nhân viên'}">
               <i class="${isSingleStaff ? 'ri-git-commit-line' : 'ri-lock-line'}"></i>
-              <span>${isSingleStaff ? `Kỳ trước (${prevRangeShort}) · Nét đứt` : 'Kỳ trước (chọn 1 NV để bật)'}</span>
+              <span>Kỳ trước (${isSingleStaff ? prevRangeShort : '1 NV'})</span>
             </button>
 
-            <span class="v3-chart-row-label" style="margin-left:auto;">Kỳ hiển thị:</span>
-            <div class="v3-preset-group" id="v3-staff-chart-period-presets" role="group" aria-label="Bộ chọn kỳ riêng biểu đồ nhân viên">
+            <span class="v3-chart-status-chip v3-staff-row2-status-chip ${statusChipVisible ? 'is-visible' : 'is-hidden'}" id="v3-staff-chart-period-chip" data-custom-active="${isCustomChartPeriod ? 'true' : 'false'}" title="${esc(statusChipTooltip)}">
+              <span class="v3-chart-status-chip-text">${esc(statusChipText || 'Theo kỳ chung')}</span>
+              <button type="button" class="v3-chart-status-chip-close" id="v3-staff-chart-reset-btn" title="Về kỳ chung" aria-label="Về kỳ chung" style="display:${statusChipHasReset ? 'inline-flex' : 'none'};" ${statusChipHasReset ? '' : 'tabindex="-1"'}>×</button>
+            </span>
+
+            <div class="v3-preset-group" id="v3-staff-chart-period-presets" style="margin-left:auto;" role="group" aria-label="Bộ chọn kỳ riêng biểu đồ nhân viên">
               <button type="button" class="v3-preset-btn ${effPreset === '7d' ? 'active' : ''}" data-stf-chart-preset="7d">7 ngày</button>
               <button type="button" class="v3-preset-btn ${(effPreset === '30d' || effPreset === '28d') ? 'active' : ''}" data-stf-chart-preset="30d">30 ngày</button>
               <button type="button" class="v3-preset-btn ${effPreset === 'month' ? 'active' : ''}" data-stf-chart-preset="month">Tháng</button>
@@ -4440,10 +4445,11 @@
                   <option value="2026-Q2" ${effQuarterKey === '2026-Q2' ? 'selected' : ''}>Quý 2/2026 (91 ngày)</option>
                 </select>
               ` : effPreset === 'custom' ? `
-                <div class="v3-chart-custom-dates" id="v3-stf-chart-custom-wrap">
-                  <input type="date" id="v3-stf-chart-start" class="v3-select v3-select-sm v3-chart-date-input" value="${chartWin.start}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày">
+                <div class="v3-chart-custom-dates" id="v3-stf-chart-custom-wrap" title="Khoảng ngày tùy chỉnh">
+                  <i class="ri-calendar-event-line v3-date-range-icon"></i>
+                  <input type="date" id="v3-stf-chart-start" class="v3-date-range-part" value="${chartWin.start}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày">
                   <span class="v3-chart-date-sep">→</span>
-                  <input type="date" id="v3-stf-chart-end" class="v3-select v3-select-sm v3-chart-date-input" value="${chartWin.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
+                  <input type="date" id="v3-stf-chart-end" class="v3-date-range-part" value="${chartWin.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
                 </div>
               ` : `
                 <select id="v3-stf-chart-fixed-select" class="v3-select v3-select-sm v3-chart-slot-control" disabled aria-label="Khoảng ngày kỳ đang chọn">
@@ -5353,7 +5359,6 @@
             </div>
           </div>
           <div class="v3-chart-a-header-row2" id="v3-team-chart-a-header-row2">
-            <span class="v3-chart-row-label" id="v3-tm-chart-a-period-label">Kỳ hiển thị:</span>
             <div class="v3-preset-group" id="v3-team-chart-period-presets" role="group" aria-label="Bộ chọn kỳ riêng biểu đồ Lượt xem theo ngày">
               <button type="button" class="v3-preset-btn ${effChartPreset === '7d' ? 'active' : ''}" data-tm-chart-preset="7d">7 ngày</button>
               <button type="button" class="v3-preset-btn ${(effChartPreset === '30d' || effChartPreset === '28d') ? 'active' : ''}" data-tm-chart-preset="30d">30 ngày</button>
@@ -5375,10 +5380,11 @@
                   <option value="2026-Q2" ${effChartQuarterKey === '2026-Q2' ? 'selected' : ''}>Quý 2/2026 (91 ngày)</option>
                 </select>
               ` : effChartPreset === 'custom' ? `
-                <div class="v3-chart-custom-dates" id="v3-tm-chart-custom-wrap">
-                  <input type="date" id="v3-tm-chart-start" class="v3-select v3-select-sm v3-chart-date-input" value="${chartWin.start}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày">
+                <div class="v3-chart-custom-dates" id="v3-tm-chart-custom-wrap" title="Khoảng ngày tùy chỉnh">
+                  <i class="ri-calendar-event-line v3-date-range-icon"></i>
+                  <input type="date" id="v3-tm-chart-start" class="v3-date-range-part" value="${chartWin.start}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày">
                   <span class="v3-chart-date-sep">→</span>
-                  <input type="date" id="v3-tm-chart-end" class="v3-select v3-select-sm v3-chart-date-input" value="${chartWin.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
+                  <input type="date" id="v3-tm-chart-end" class="v3-date-range-part" value="${chartWin.end}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày">
                 </div>
               ` : `
                 <select id="v3-tm-chart-fixed-select" class="v3-select v3-select-sm v3-chart-slot-control" disabled aria-label="Khoảng ngày kỳ đang chọn">
@@ -5435,10 +5441,11 @@
             </div>
             <div class="v3-chart-period-slot" id="v3-single-team-ref-slot">
               ${activeSingleCmp === 'custom' ? `
-                <div class="v3-chart-custom-dates" id="v3-tm-ref-custom-wrap">
-                  <input type="date" id="v3-tm-ref-start" class="v3-select v3-select-sm v3-chart-date-input" value="${singleRefStart}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày đối chứng">
+                <div class="v3-chart-custom-dates" id="v3-tm-ref-custom-wrap" title="Khoảng ngày đối chứng tùy chỉnh">
+                  <i class="ri-calendar-event-line v3-date-range-icon"></i>
+                  <input type="date" id="v3-tm-ref-start" class="v3-date-range-part" value="${singleRefStart}" min="2025-01-01" max="2026-10-26" aria-label="Từ ngày đối chứng">
                   <span class="v3-chart-date-sep">→</span>
-                  <input type="date" id="v3-tm-ref-end" class="v3-select v3-select-sm v3-chart-date-input" value="${singleRefEnd}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày đối chứng">
+                  <input type="date" id="v3-tm-ref-end" class="v3-date-range-part" value="${singleRefEnd}" min="2025-01-01" max="2026-10-26" aria-label="Đến ngày đối chứng">
                 </div>
               ` : `
                 <select id="v3-tm-ref-fixed-select" class="v3-select v3-select-sm v3-chart-slot-control" disabled aria-label="Khoảng ngày kỳ đối chứng">

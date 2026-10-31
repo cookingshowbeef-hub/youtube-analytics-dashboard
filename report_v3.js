@@ -102,6 +102,9 @@
     teamSingleRefError: '',
     teamSingleUnequalMode: 'avg', // 'avg' | 'total'
     teamTableSort: 'growth',      // 'growth' | 'views'
+    teamQuickPickerOpen: false,
+    teamQuickPickerQuery: '',
+    teamQuickPickerTeamFilter: 'ALL',
     // Page 3 (Channel)
     channelMode: 'single',  // 'single' | 'compare'
     selectedChannelId: 'UCSJ4gkVC6NrvII8umztf0Ow',
@@ -113,6 +116,7 @@
     channelUnequalMode: 'avg',   // 'avg' | 'total'
     channelPickerOpen: false,
     channelPickerQuery: '',
+    channelPickerTeamFilter: 'ALL',
     deepAnalyticsOpen: false,
     compareChannelIds: ['UCSJ4gkVC6NrvII8umztf0Ow', 'UCJhjE7wbdYAae1G25m0tHAA', 'UCM9KEEuzacwVlkt9JfJad7g'],
     compareChannelMetric: 'views',
@@ -130,9 +134,11 @@
     staffChartMetric: 'views',      // 'views' | 'netSubs' | 'revenue'
     staffChartScale: 'actual',      // 'actual' | 'index100'
     staffSelectedIds: ['EMP-005', 'EMP-012', 'EMP-011'], // Default top 3 by 30d views (max 5)
+    staffClearedEmpty: false,
     staffPickerOpen: false,
     staffPickerQuery: '',
     staffPickerTeamFilter: 'ALL',   // 'ALL' | 'TEAM-01' | 'TEAM-02' | 'TEAM-03'
+    _pickerListScrollTop: 0,
     staffShowTotalLine: true,
     staffShowPrevLine: true,        // Enabled only when selectedStaff.length === 1
     staffHiddenKeys: [],            // Dataset keys toggled off on legend ('EMP-xxx', 'TOTAL', 'PREV')
@@ -970,6 +976,271 @@
       systemPrev,
       teamPairs
     };
+  }
+
+  // =========================================================================
+  // SHARED FLOATING SEARCHABLE PICKER COMPONENT (Page 2, Page 3, Page 4)
+  // - Position: fixed (z-index: 9999) so it is never clipped by parent overflow
+  //   and never occupies space in layout flow or shifts chart positions.
+  // - Sticky search input + team filter bar at top; scrollable list (max 320px).
+  // - Each row: checkbox, fixed color dot, name, team badge, period views.
+  // - Multi-select up to 5: when 5 are selected, remaining rows dim & show "Tối đa 5".
+  // - Closes on outside click or Escape key.
+  // =========================================================================
+  function positionFloatingPickerMenu(btnEl, menuEl) {
+    if (!btnEl || !menuEl) return;
+    const rect = btnEl.getBoundingClientRect();
+    const vw = window.innerWidth || document.documentElement.clientWidth || 1440;
+    const menuWidth = menuEl.offsetWidth || 520;
+    const targetLeft = Math.max(12, Math.min(Math.round(rect.left), vw - menuWidth - 12));
+    const targetTop = Math.round(rect.bottom + 6);
+
+    menuEl.style.left = '0px';
+    menuEl.style.top = '0px';
+    const originRect = menuEl.getBoundingClientRect();
+    menuEl.style.left = `${Math.round(targetLeft - originRect.left)}px`;
+    menuEl.style.top = `${Math.round(targetTop - originRect.top)}px`;
+  }
+
+  function repositionOpenFloatingPickers() {
+    document.querySelectorAll('.v3-ch-search-picker').forEach(wrap => {
+      const btn = wrap.querySelector('.v3-ch-picker-btn');
+      const menu = wrap.querySelector('.v3-ch-picker-menu.open');
+      if (btn && menu) {
+        positionFloatingPickerMenu(btn, menu);
+      }
+    });
+  }
+
+  function closeAllFloatingPickers(exceptWrapperId) {
+    if (exceptWrapperId !== 'v3-channel-search-picker') v3State.channelPickerOpen = false;
+    if (exceptWrapperId !== 'v3-compare-channel-picker') v3State.comparePickerOpen = false;
+    if (exceptWrapperId !== 'v3-staff-multi-picker') v3State.staffPickerOpen = false;
+    if (exceptWrapperId !== 'v3-team-channel-quick-picker') v3State.teamQuickPickerOpen = false;
+    document.querySelectorAll('.v3-ch-search-picker').forEach(wrap => {
+      if (exceptWrapperId && wrap.id === exceptWrapperId) return;
+      const menu = wrap.querySelector('.v3-ch-picker-menu');
+      const btn = wrap.querySelector('.v3-ch-picker-btn');
+      if (menu) menu.classList.remove('open');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function renderUnifiedFloatingPicker(cfg) {
+    const selectedIds = Array.isArray(cfg.selectedIds) ? cfg.selectedIds : [];
+    const maxSelect = cfg.maxSelect || 5;
+    const isMulti = !!cfg.isMulti;
+    const isMaxReached = isMulti && selectedIds.length >= maxSelect;
+    const teamFilter = cfg.teamFilter || 'ALL';
+    const searchQuery = cfg.searchQuery || '';
+
+    return `
+      <div class="v3-ch-search-picker" id="${cfg.wrapperId}">
+        <button type="button"
+                class="${cfg.btnClass || 'v3-ch-picker-btn'}"
+                id="${cfg.btnId}"
+                aria-haspopup="listbox"
+                aria-expanded="${cfg.isOpen ? 'true' : 'false'}"
+                title="${esc(cfg.btnTitle || '')}">
+          ${cfg.triggerHtml}
+        </button>
+
+        <div class="v3-ch-picker-menu ${cfg.isOpen ? 'open' : ''}"
+             id="${cfg.menuId}"
+             role="listbox"
+             aria-multiselectable="${isMulti ? 'true' : 'false'}">
+          <div class="v3-ch-picker-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text"
+                   id="${cfg.searchId}"
+                   placeholder="${esc(cfg.searchPlaceholder || 'Tìm kiếm...')}"
+                   value="${esc(searchQuery)}"
+                   autocomplete="off"
+                   aria-label="${esc(cfg.searchPlaceholder || 'Tìm kiếm')}">
+            <button type="button"
+                    class="v3-picker-search-clear"
+                    data-picker-clear-search="${cfg.searchId}"
+                    title="Xóa từ khóa tìm kiếm"
+                    style="display:${searchQuery ? 'inline-flex' : 'none'};">×</button>
+          </div>
+
+          <div class="v3-cmp-team-filter-bar" id="${cfg.teamBarId}">
+            <button type="button" class="v3-cmp-team-chip ${teamFilter === 'ALL' ? 'active' : ''}" ${cfg.teamChipAttr}="ALL">Tất cả (15)</button>
+            <button type="button" class="v3-cmp-team-chip ${teamFilter === 'TEAM-01' ? 'active' : ''}" ${cfg.teamChipAttr}="TEAM-01">Jazz &amp; Lo-fi (5)</button>
+            <button type="button" class="v3-cmp-team-chip ${teamFilter === 'TEAM-02' ? 'active' : ''}" ${cfg.teamChipAttr}="TEAM-02">Retro &amp; Electronic (5)</button>
+            <button type="button" class="v3-cmp-team-chip ${teamFilter === 'TEAM-03' ? 'active' : ''}" ${cfg.teamChipAttr}="TEAM-03">Indie &amp; Chill (5)</button>
+            ${cfg.showTop3AndClear ? `
+              <span class="v3-picker-actions-group">
+                <button type="button" class="v3-cmp-team-chip v3-picker-act-btn" id="${cfg.top3BtnId}" data-picker-action="top3" title="Chọn nhanh Top 3 theo lượt xem trong kỳ">Chọn top 3</button>
+                <button type="button" class="v3-cmp-team-chip v3-picker-act-btn is-clear" id="${cfg.clearBtnId}" data-picker-action="clear" title="Xóa chọn / đặt lại bộ lọc">Xóa</button>
+              </span>
+            ` : ''}
+          </div>
+
+          <div class="v3-ch-picker-list" id="${cfg.listId}">
+            ${(cfg.items || []).map(item => {
+              const isChecked = selectedIds.includes(item.id);
+              const isMaxDisabled = isMaxReached && !isChecked;
+              return `
+                <div class="v3-ch-picker-item ${isChecked ? 'active' : ''} ${isMaxDisabled ? 'is-max-disabled' : ''}"
+                     ${cfg.rowToggleAttr}="${esc(item.id)}"
+                     ${cfg.rowTeamAttr}="${esc(item.teamId)}"
+                     data-search-text="${esc(item.searchBlob)}"
+                     data-max-disabled="${isMaxDisabled ? 'true' : 'false'}"
+                     role="option"
+                     aria-selected="${isChecked ? 'true' : 'false'}"
+                     aria-disabled="${isMaxDisabled ? 'true' : 'false'}">
+                  <span class="v3-cmp-check ${isChecked ? 'checked' : ''}">${isChecked ? '✓' : ''}</span>
+                  <span class="v3-team-dot" style="background:${item.color};" data-picker-dot-color="${item.color}"></span>
+                  <span class="v3-ch-picker-item-main">
+                    <strong class="v3-picker-row-title">${esc(item.title)}${item.badgeHtml || ''}</strong>
+                    <span class="v3-ch-picker-item-sub">${esc(item.subtitle || '')}</span>
+                  </span>
+                  <span class="v3-badge v3-picker-team-chip" style="background:${item.teamColor}18;color:${item.teamColor};border:1px solid ${item.teamColor}44;">
+                    ${esc(item.teamName)}
+                  </span>
+                  <span class="v3-picker-views-col" data-picker-views="${item.views ?? 0}">
+                    <strong>${item.views !== null && item.views !== undefined ? fmtInt(item.views) : '—'}</strong>
+                    <small>views</small>
+                  </span>
+                  ${isMaxDisabled ? `
+                    <span class="v3-picker-max-tag" data-max-tag="true">Tối đa ${maxSelect}</span>
+                  ` : (item.onlyBtnHtml || '')}
+                </div>
+              `;
+            }).join('')}
+            <div id="${cfg.emptyId}" class="v3-picker-empty-msg" style="display:none;">
+              ${esc(cfg.emptyText || 'Không tìm thấy kết quả phù hợp')}
+            </div>
+          </div>
+        </div>
+        ${cfg.extraHtml || ''}
+      </div>
+    `;
+  }
+
+  function bindUnifiedFloatingPicker(containerEl, cfg) {
+    const wrapEl = document.getElementById(cfg.wrapperId);
+    const btnEl = document.getElementById(cfg.btnId);
+    const menuEl = document.getElementById(cfg.menuId);
+    const searchEl = document.getElementById(cfg.searchId);
+    const listEl = document.getElementById(cfg.listId);
+    const emptyEl = document.getElementById(cfg.emptyId);
+    const clearSearchBtn = wrapEl ? wrapEl.querySelector(`[data-picker-clear-search="${cfg.searchId}"]`) : null;
+    if (!wrapEl || !btnEl || !menuEl) return;
+
+    const filterDom = () => {
+      const q = String(cfg.getSearchQuery() || '').trim().toLowerCase();
+      const tf = cfg.getTeamFilter() || 'ALL';
+      let visibleCount = 0;
+      menuEl.querySelectorAll(`[${cfg.rowToggleAttr}]`).forEach(el => {
+        const blob = el.getAttribute('data-search-text') || '';
+        const tid = el.getAttribute(cfg.rowTeamAttr) || '';
+        const matchQ = !q || blob.includes(q);
+        const matchT = tf === 'ALL' || tid === tf;
+        const show = matchQ && matchT;
+        el.style.display = show ? 'flex' : 'none';
+        if (show) visibleCount++;
+      });
+      if (emptyEl) emptyEl.style.display = visibleCount === 0 ? 'block' : 'none';
+      if (clearSearchBtn) clearSearchBtn.style.display = q ? 'inline-flex' : 'none';
+    };
+
+    filterDom();
+
+    if (cfg.getOpenState()) {
+      positionFloatingPickerMenu(btnEl, menuEl);
+      if (listEl && v3State._pickerListScrollTop) {
+        listEl.scrollTop = v3State._pickerListScrollTop;
+      }
+    }
+
+    btnEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const nextOpen = !cfg.getOpenState();
+      if (nextOpen) {
+        closeAllFloatingPickers(cfg.wrapperId);
+      }
+      cfg.setOpenState(nextOpen);
+      menuEl.classList.toggle('open', nextOpen);
+      btnEl.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+      if (nextOpen) {
+        positionFloatingPickerMenu(btnEl, menuEl);
+        filterDom();
+        if (searchEl) {
+          setTimeout(() => searchEl.focus({ preventScroll: true }), 15);
+        }
+      }
+    });
+
+    menuEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    if (searchEl) {
+      searchEl.addEventListener('input', (e) => {
+        cfg.setSearchQuery(e.target.value);
+        filterDom();
+      });
+      searchEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          closeAllFloatingPickers();
+        }
+      });
+    }
+
+    if (clearSearchBtn) {
+      clearSearchBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cfg.setSearchQuery('');
+        if (searchEl) {
+          searchEl.value = '';
+          searchEl.focus({ preventScroll: true });
+        }
+        filterDom();
+      });
+    }
+
+    menuEl.querySelectorAll(`[${cfg.teamChipAttr}]`).forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const nextTeam = chip.getAttribute(cfg.teamChipAttr) || 'ALL';
+        cfg.setTeamFilter(nextTeam);
+        menuEl.querySelectorAll(`[${cfg.teamChipAttr}]`).forEach(c => {
+          c.classList.toggle('active', c.getAttribute(cfg.teamChipAttr) === nextTeam);
+        });
+        filterDom();
+      });
+    });
+
+    if (cfg.top3BtnId && typeof cfg.onSelectTop3 === 'function') {
+      document.getElementById(cfg.top3BtnId)?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        v3State._pickerListScrollTop = listEl ? listEl.scrollTop : 0;
+        cfg.onSelectTop3();
+      });
+    }
+
+    if (cfg.clearBtnId && typeof cfg.onClear === 'function') {
+      document.getElementById(cfg.clearBtnId)?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        v3State._pickerListScrollTop = 0;
+        cfg.onClear();
+      });
+    }
+
+    menuEl.querySelectorAll(`[${cfg.rowToggleAttr}]`).forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('[data-stf-only-id]')) return;
+        e.stopPropagation();
+        const itemId = row.getAttribute(cfg.rowToggleAttr);
+        if (!itemId) return;
+        v3State._pickerListScrollTop = listEl ? listEl.scrollTop : 0;
+        cfg.onRowClick(itemId, row);
+      });
+    });
   }
 
   // =========================================================================
@@ -2151,9 +2422,13 @@
               <button type="button" class="v3-preset-btn" data-ch-mode="compare">So sánh kênh</button>
             </div>
 
-            <!-- Ô chọn kênh duy nhất đặt cố định ở vị trí riêng, không đè lên chip "Dữ liệu Analytics có độ trễ" -->
-            <div class="v3-ch-search-picker" id="v3-channel-search-picker">
-              <button type="button" class="v3-ch-picker-btn" id="v3-channel-picker-btn" aria-haspopup="listbox" aria-expanded="${v3State.channelPickerOpen ? 'true' : 'false'}" title="Chọn hoặc tìm kiếm kênh YouTube">
+            <!-- Ô chọn kênh duy nhất đặt cố định ở vị trí riêng, dùng chung component dropdown nổi -->
+            ${renderUnifiedFloatingPicker({
+              wrapperId: 'v3-channel-search-picker',
+              btnId: 'v3-channel-picker-btn',
+              btnClass: 'v3-ch-picker-btn',
+              btnTitle: 'Chọn hoặc tìm kiếm kênh YouTube',
+              triggerHtml: `
                 <span class="v3-team-dot" style="background:${meta.channelColor};"></span>
                 <span class="v3-ch-picker-btn-text">
                   <strong>${esc(meta.title)}</strong>
@@ -2161,38 +2436,43 @@
                 </span>
                 <i class="ri-search-eye-line" style="color:#38BDF8;font-size:14px;margin-left:4px;"></i>
                 <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:15px;"></i>
-              </button>
-              <div class="v3-ch-picker-menu ${v3State.channelPickerOpen ? 'open' : ''}" id="v3-channel-picker-menu" role="listbox">
-                <div class="v3-ch-picker-search-wrap">
-                  <i class="ri-search-line"></i>
-                  <input type="text" id="v3-channel-picker-search" placeholder="Tìm tên kênh, @handle, PIC, team..." value="${esc(v3State.channelPickerQuery)}" autocomplete="off" aria-label="Tìm kiếm kênh">
-                </div>
-                <div class="v3-ch-picker-list" id="v3-channel-picker-list">
-                  ${snap.channelPairs.map(item => {
-                    const searchBlob = `${item.meta.title} ${item.meta.handle} ${item.meta.employeeName} ${item.meta.teamName}`.toLowerCase();
-                    const isSelected = item.id === cp.id;
-                    return `
-                      <button type="button" class="v3-ch-picker-item ${isSelected ? 'active' : ''}" data-pick-channel-id="${item.id}" data-search-text="${esc(searchBlob)}" role="option" aria-selected="${isSelected ? 'true' : 'false'}">
-                        <span class="v3-team-dot" style="background:${item.meta.channelColor};"></span>
-                        <span class="v3-ch-picker-item-main">
-                          <strong>${esc(item.meta.title)}</strong>
-                          <span class="v3-ch-picker-item-sub">${esc(item.meta.handle)} · PIC: ${esc(item.meta.employeeName)}</span>
-                        </span>
-                        <span class="v3-badge" style="background:${item.meta.teamColor}18;color:${item.meta.teamColor};border:1px solid ${item.meta.teamColor}44;font-size:10px;">${esc(item.meta.teamName)}</span>
-                      </button>
-                    `;
-                  }).join('')}
-                  <div id="v3-channel-picker-empty" style="display:none;padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">
-                    Không tìm thấy kênh phù hợp
-                  </div>
-                </div>
-              </div>
-              <select id="v3-single-channel-select" style="display:none;" aria-hidden="true">
-                ${snap.channelPairs.map(item => `
-                  <option value="${item.id}" ${item.id === cp.id ? 'selected' : ''}>${esc(item.meta.title)}</option>
-                `).join('')}
-              </select>
-            </div>
+              `,
+              menuId: 'v3-channel-picker-menu',
+              searchId: 'v3-channel-picker-search',
+              searchPlaceholder: 'Tìm tên kênh, @handle, PIC, team...',
+              searchQuery: v3State.channelPickerQuery,
+              teamBarId: 'v3-channel-picker-team-bar',
+              teamChipAttr: 'data-ch-picker-team',
+              teamFilter: v3State.channelPickerTeamFilter,
+              showTop3AndClear: false,
+              listId: 'v3-channel-picker-list',
+              emptyId: 'v3-channel-picker-empty',
+              emptyText: 'Không tìm thấy kênh phù hợp',
+              isOpen: v3State.channelPickerOpen,
+              isMulti: false,
+              maxSelect: 1,
+              selectedIds: [cp.id],
+              rowToggleAttr: 'data-pick-channel-id',
+              rowTeamAttr: 'data-pick-team-id',
+              items: snap.channelPairs.map(item => ({
+                id: item.id,
+                title: item.meta.title,
+                subtitle: `${item.meta.handle} · PIC: ${item.meta.employeeName}`,
+                color: item.meta.channelColor,
+                teamId: item.meta.teamId,
+                teamName: item.meta.teamName.replace(/^Team\s+/i, ''),
+                teamColor: item.meta.teamColor,
+                views: item.curr.views,
+                searchBlob: `${item.meta.title} ${item.meta.handle} ${item.meta.employeeName} ${item.meta.teamName}`.toLowerCase()
+              })),
+              extraHtml: `
+                <select id="v3-single-channel-select" style="display:none;" aria-hidden="true">
+                  ${snap.channelPairs.map(item => `
+                    <option value="${item.id}" ${item.id === cp.id ? 'selected' : ''}>${esc(item.meta.title)}</option>
+                  `).join('')}
+                </select>
+              `
+            })}
           </div>
 
           <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
@@ -2570,57 +2850,30 @@
       });
     });
 
-    // Bind Single Searchable Channel Picker Events
-    const pickerBtn = document.getElementById('v3-channel-picker-btn');
-    const pickerMenu = document.getElementById('v3-channel-picker-menu');
-    const pickerSearch = document.getElementById('v3-channel-picker-search');
-    const pickerEmpty = document.getElementById('v3-channel-picker-empty');
-
-    const filterPickerList = (q) => {
-      const norm = String(q || '').trim().toLowerCase();
-      let visibleCount = 0;
-      body.querySelectorAll('.v3-ch-picker-item').forEach(item => {
-        const blob = item.getAttribute('data-search-text') || '';
-        const match = !norm || blob.includes(norm);
-        item.style.display = match ? 'flex' : 'none';
-        if (match) visibleCount++;
-      });
-      if (pickerEmpty) {
-        pickerEmpty.style.display = visibleCount === 0 ? 'block' : 'none';
-      }
-    };
-
-    if (pickerSearch) {
-      filterPickerList(v3State.channelPickerQuery);
-      pickerSearch.addEventListener('input', (e) => {
-        v3State.channelPickerQuery = e.target.value;
-        filterPickerList(v3State.channelPickerQuery);
-      });
-      pickerSearch.addEventListener('click', (e) => e.stopPropagation());
-    }
-
-    if (pickerBtn && pickerMenu) {
-      pickerBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        v3State.channelPickerOpen = !v3State.channelPickerOpen;
-        pickerMenu.classList.toggle('open', v3State.channelPickerOpen);
-        pickerBtn.setAttribute('aria-expanded', v3State.channelPickerOpen ? 'true' : 'false');
-        if (v3State.channelPickerOpen && pickerSearch) {
-          setTimeout(() => pickerSearch.focus(), 10);
-        }
-      });
-    }
-
-    body.querySelectorAll('[data-pick-channel-id]').forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const nextId = item.getAttribute('data-pick-channel-id');
+    // Bind Unified Floating Single-Channel Picker
+    bindUnifiedFloatingPicker(body, {
+      wrapperId: 'v3-channel-search-picker',
+      btnId: 'v3-channel-picker-btn',
+      menuId: 'v3-channel-picker-menu',
+      searchId: 'v3-channel-picker-search',
+      listId: 'v3-channel-picker-list',
+      emptyId: 'v3-channel-picker-empty',
+      teamChipAttr: 'data-ch-picker-team',
+      rowToggleAttr: 'data-pick-channel-id',
+      rowTeamAttr: 'data-pick-team-id',
+      getOpenState: () => v3State.channelPickerOpen,
+      setOpenState: (v) => { v3State.channelPickerOpen = v; },
+      getSearchQuery: () => v3State.channelPickerQuery,
+      setSearchQuery: (v) => { v3State.channelPickerQuery = v; },
+      getTeamFilter: () => v3State.channelPickerTeamFilter,
+      setTeamFilter: (v) => { v3State.channelPickerTeamFilter = v; },
+      onRowClick: (nextId) => {
         v3State.selectedChannelId = nextId;
         v3State.channelPickerOpen = false;
         v3State.channelPickerQuery = '';
         renderSharedHeader(snap, 'view-report-channel');
         renderChannelPage(snap);
-      });
+      }
     });
 
     const chSel = document.getElementById('v3-single-channel-select');
@@ -3037,9 +3290,13 @@
               <button type="button" class="v3-preset-btn active" data-ch-mode="compare">So sánh kênh</button>
             </div>
 
-            <!-- Ô chọn nhiều kênh có tìm kiếm và lọc theo team, tối đa 5 kênh (Mục 8) -->
-            <div class="v3-ch-search-picker" id="v3-compare-channel-picker">
-              <button type="button" class="v3-ch-picker-btn" id="v3-compare-picker-btn" aria-haspopup="listbox" aria-expanded="${v3State.comparePickerOpen ? 'true' : 'false'}" title="Chọn từ 2 đến 5 kênh để so sánh">
+            <!-- Ô chọn nhiều kênh có tìm kiếm và lọc theo team, tối đa 5 kênh, dùng chung component dropdown nổi -->
+            ${renderUnifiedFloatingPicker({
+              wrapperId: 'v3-compare-channel-picker',
+              btnId: 'v3-compare-picker-btn',
+              btnClass: 'v3-ch-picker-btn',
+              btnTitle: 'Chọn từ 2 đến 5 kênh để so sánh',
+              triggerHtml: `
                 <i class="ri-scales-3-line" style="color:#38BDF8;font-size:14px;"></i>
                 <span class="v3-ch-picker-btn-text">
                   <strong>Chọn kênh so sánh (${selectedPairs.length}/5 kênh)</strong>
@@ -3047,48 +3304,42 @@
                 </span>
                 <i class="ri-search-eye-line" style="color:#38BDF8;font-size:14px;margin-left:4px;"></i>
                 <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:15px;"></i>
-              </button>
-
-              <div class="v3-ch-picker-menu ${v3State.comparePickerOpen ? 'open' : ''}" id="v3-compare-picker-menu" style="width:450px;" role="listbox">
-                <div class="v3-ch-picker-search-wrap">
-                  <i class="ri-search-line"></i>
-                  <input type="text" id="v3-compare-picker-search" placeholder="Tìm tên kênh, @handle, PIC..." value="${esc(v3State.comparePickerQuery)}" autocomplete="off" aria-label="Tìm kiếm kênh so sánh">
-                </div>
-                <div class="v3-cmp-team-filter-bar" id="v3-compare-team-filter">
-                  <button type="button" class="v3-cmp-team-chip ${v3State.compareTeamFilter === 'ALL' ? 'active' : ''}" data-cmp-team-filter="ALL">Tất cả (15)</button>
-                  <button type="button" class="v3-cmp-team-chip ${v3State.compareTeamFilter === 'TEAM-01' ? 'active' : ''}" data-cmp-team-filter="TEAM-01">Jazz & Lo-fi (5)</button>
-                  <button type="button" class="v3-cmp-team-chip ${v3State.compareTeamFilter === 'TEAM-02' ? 'active' : ''}" data-cmp-team-filter="TEAM-02">Retro & Electronic (5)</button>
-                  <button type="button" class="v3-cmp-team-chip ${v3State.compareTeamFilter === 'TEAM-03' ? 'active' : ''}" data-cmp-team-filter="TEAM-03">Indie & Chill (5)</button>
-                </div>
-                <div class="v3-ch-picker-list" id="v3-compare-picker-list">
-                  ${snap.channelPairs.map(item => {
-                    const searchBlob = `${item.meta.title} ${item.meta.handle} ${item.meta.employeeName} ${item.meta.teamName}`.toLowerCase();
-                    const isChecked = v3State.compareChannelIds.includes(item.id);
-                    const isBase = item.id === baseCp.id;
-                    const shortPickerTeam = item.meta.teamName.replace(/^Team\s+/i, '');
-                    return `
-                      <div class="v3-ch-picker-item ${isChecked ? 'active' : ''}"
-                           data-cmp-toggle-id="${item.id}"
-                           data-cmp-team-id="${item.meta.teamId}"
-                           data-search-text="${esc(searchBlob)}"
-                           role="option"
-                           aria-selected="${isChecked ? 'true' : 'false'}">
-                        <span class="v3-cmp-check ${isChecked ? 'checked' : ''}">${isChecked ? '✓' : ''}</span>
-                        <span class="v3-team-dot" style="background:${item.meta.channelColor};"></span>
-                        <span class="v3-ch-picker-item-main">
-                          <strong>${esc(item.meta.title)} ${isBase ? '<span class="v3-badge highest" style="font-size:9.5px;padding:1px 5px;">Kênh gốc</span>' : ''}</strong>
-                          <span class="v3-ch-picker-item-sub">${esc(item.meta.handle)} · PIC: ${esc(item.meta.employeeName)}</span>
-                        </span>
-                        <span class="v3-badge" style="background:${item.meta.teamColor}18;color:${item.meta.teamColor};border:1px solid ${item.meta.teamColor}44;font-size:9.8px;flex-shrink:0;white-space:nowrap;">${esc(shortPickerTeam)}</span>
-                      </div>
-                    `;
-                  }).join('')}
-                  <div id="v3-compare-picker-empty" style="display:none;padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">
-                    Không tìm thấy kênh phù hợp
-                  </div>
-                </div>
-              </div>
-            </div>
+              `,
+              menuId: 'v3-compare-picker-menu',
+              searchId: 'v3-compare-picker-search',
+              searchPlaceholder: 'Tìm tên kênh, @handle, PIC, team...',
+              searchQuery: v3State.comparePickerQuery,
+              teamBarId: 'v3-compare-team-filter',
+              teamChipAttr: 'data-cmp-team-filter',
+              teamFilter: v3State.compareTeamFilter,
+              showTop3AndClear: true,
+              top3BtnId: 'v3-compare-pick-top3',
+              clearBtnId: 'v3-compare-pick-clear',
+              listId: 'v3-compare-picker-list',
+              emptyId: 'v3-compare-picker-empty',
+              emptyText: 'Không tìm thấy kênh phù hợp',
+              isOpen: v3State.comparePickerOpen,
+              isMulti: true,
+              maxSelect: 5,
+              selectedIds: v3State.compareChannelIds,
+              rowToggleAttr: 'data-cmp-toggle-id',
+              rowTeamAttr: 'data-cmp-team-id',
+              items: snap.channelPairs.map(item => {
+                const isBase = item.id === baseCp.id;
+                return {
+                  id: item.id,
+                  title: item.meta.title,
+                  badgeHtml: isBase ? ' <span class="v3-badge highest" style="font-size:9.5px;padding:1px 5px;">Kênh gốc</span>' : '',
+                  subtitle: `${item.meta.handle} · PIC: ${item.meta.employeeName}`,
+                  color: item.meta.channelColor,
+                  teamId: item.meta.teamId,
+                  teamName: item.meta.teamName.replace(/^Team\s+/i, ''),
+                  teamColor: item.meta.teamColor,
+                  views: item.curr.views,
+                  searchBlob: `${item.meta.title} ${item.meta.handle} ${item.meta.employeeName} ${item.meta.teamName}`.toLowerCase()
+                };
+              })
+            })}
           </div>
 
           <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
@@ -3403,67 +3654,40 @@
       });
     });
 
-    // Bind Multi-Channel Picker Dropdown + Search + Team Filter
-    const cmpBtn = document.getElementById('v3-compare-picker-btn');
-    const cmpMenu = document.getElementById('v3-compare-picker-menu');
-    const cmpSearch = document.getElementById('v3-compare-picker-search');
-    const cmpEmpty = document.getElementById('v3-compare-picker-empty');
-
-    const filterCompareList = () => {
-      const norm = String(v3State.comparePickerQuery || '').trim().toLowerCase();
-      const tf = v3State.compareTeamFilter || 'ALL';
-      let visibleCount = 0;
-      body.querySelectorAll('[data-cmp-toggle-id]').forEach(item => {
-        const blob = item.getAttribute('data-search-text') || '';
-        const teamId = item.getAttribute('data-cmp-team-id') || '';
-        const matchQuery = !norm || blob.includes(norm);
-        const matchTeam = tf === 'ALL' || teamId === tf;
-        const show = matchQuery && matchTeam;
-        item.style.display = show ? 'flex' : 'none';
-        if (show) visibleCount++;
-      });
-      if (cmpEmpty) {
-        cmpEmpty.style.display = visibleCount === 0 ? 'block' : 'none';
-      }
-    };
-
-    if (cmpSearch) {
-      filterCompareList();
-      cmpSearch.addEventListener('input', (e) => {
-        v3State.comparePickerQuery = e.target.value;
-        filterCompareList();
-      });
-      cmpSearch.addEventListener('click', (e) => e.stopPropagation());
-    }
-
-    body.querySelectorAll('[data-cmp-team-filter]').forEach(chip => {
-      chip.addEventListener('click', (e) => {
-        e.stopPropagation();
-        v3State.compareTeamFilter = chip.getAttribute('data-cmp-team-filter') || 'ALL';
-        body.querySelectorAll('[data-cmp-team-filter]').forEach(c => {
-          c.classList.toggle('active', c.getAttribute('data-cmp-team-filter') === v3State.compareTeamFilter);
-        });
-        filterCompareList();
-      });
-    });
-
-    if (cmpBtn && cmpMenu) {
-      cmpBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        v3State.comparePickerOpen = !v3State.comparePickerOpen;
-        cmpMenu.classList.toggle('open', v3State.comparePickerOpen);
-        cmpBtn.setAttribute('aria-expanded', v3State.comparePickerOpen ? 'true' : 'false');
-        if (v3State.comparePickerOpen && cmpSearch) {
-          setTimeout(() => cmpSearch.focus(), 10);
-        }
-      });
-    }
-
-    body.querySelectorAll('[data-cmp-toggle-id]').forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const chId = item.getAttribute('data-cmp-toggle-id');
-        if (!chId) return;
+    // Bind Unified Floating Multi-Channel Picker
+    bindUnifiedFloatingPicker(body, {
+      wrapperId: 'v3-compare-channel-picker',
+      btnId: 'v3-compare-picker-btn',
+      menuId: 'v3-compare-picker-menu',
+      searchId: 'v3-compare-picker-search',
+      listId: 'v3-compare-picker-list',
+      emptyId: 'v3-compare-picker-empty',
+      teamChipAttr: 'data-cmp-team-filter',
+      rowToggleAttr: 'data-cmp-toggle-id',
+      rowTeamAttr: 'data-cmp-team-id',
+      top3BtnId: 'v3-compare-pick-top3',
+      clearBtnId: 'v3-compare-pick-clear',
+      getOpenState: () => v3State.comparePickerOpen,
+      setOpenState: (v) => { v3State.comparePickerOpen = v; },
+      getSearchQuery: () => v3State.comparePickerQuery,
+      setSearchQuery: (v) => { v3State.comparePickerQuery = v; },
+      getTeamFilter: () => v3State.compareTeamFilter,
+      setTeamFilter: (v) => { v3State.compareTeamFilter = v; },
+      onSelectTop3: () => {
+        const top3Ch = [...snap.channelPairs].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0)).slice(0, 3).map(c => c.id);
+        v3State.compareChannelIds = top3Ch;
+        v3State.selectedChannelId = top3Ch[0];
+        v3State.comparePickerOpen = true;
+        renderChannelPage(snap);
+      },
+      onClear: () => {
+        v3State.comparePickerQuery = '';
+        v3State.compareTeamFilter = 'ALL';
+        v3State.compareChannelIds = v3State.compareChannelIds.slice(0, 2);
+        v3State.comparePickerOpen = true;
+        renderChannelPage(snap);
+      },
+      onRowClick: (chId) => {
         if (v3State.compareChannelIds.includes(chId)) {
           if (v3State.compareChannelIds.length <= 2) {
             if (core().showToast) core().showToast('Cần giữ tối thiểu 2 kênh để so sánh');
@@ -3478,7 +3702,7 @@
           v3State.compareChannelIds.push(chId);
         }
         renderChannelPage(snap);
-      });
+      }
     });
 
     body.querySelectorAll('[data-set-base-ch]').forEach(btn => {
@@ -4233,9 +4457,9 @@
     const staffDs = buildStaffDataset(snap, chartWin);
     const allStaffByViews = [...staffDs.staffList].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
 
-    // Validate selected employee IDs (1..5 employees; default top 3 by period views)
+    // Validate selected employee IDs (0..5 employees when explicitly cleared; default top 3 by period views)
     const validSelectedIds = (v3State.staffSelectedIds || []).filter(id => allStaffByViews.some(st => st.empId === id)).slice(0, 5);
-    if (validSelectedIds.length === 0) {
+    if (validSelectedIds.length === 0 && !v3State.staffClearedEmpty) {
       allStaffByViews.slice(0, 3).forEach(st => validSelectedIds.push(st.empId));
     }
     v3State.staffSelectedIds = validSelectedIds;
@@ -4359,56 +4583,50 @@
 
           <!-- Hàng 2 cố định (chiều cao đủ chứa nội dung, không cần cuộn từ 1280px): Ô chọn nhân viên + Nút Kỳ trước + Chip Kỳ riêng (chiếm chỗ cố định) + Nhóm nút kỳ + Một ô khoảng ngày cố định -->
           <div class="v3-chart-a-header-row2" id="v3-staff-chart-header-row2">
-            <div class="v3-ch-search-picker" id="v3-staff-multi-picker">
-              <button type="button" class="v3-ch-picker-btn v3-staff-picker-trigger" id="v3-staff-picker-btn" aria-haspopup="listbox" aria-expanded="${v3State.staffPickerOpen ? 'true' : 'false'}" title="Chọn từ 1 đến 5 nhân viên để vẽ đường xu hướng">
+            ${renderUnifiedFloatingPicker({
+              wrapperId: 'v3-staff-multi-picker',
+              btnId: 'v3-staff-picker-btn',
+              btnClass: 'v3-ch-picker-btn v3-staff-picker-trigger',
+              btnTitle: 'Chọn từ 1 đến 5 nhân viên để vẽ đường xu hướng',
+              triggerHtml: `
                 <i class="ri-user-search-line" style="color:#38BDF8;font-size:13.5px;"></i>
                 <span class="v3-ch-picker-btn-text">
                   <strong>Nhân viên (${selectedStaff.length}/5)</strong>
                 </span>
                 <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:14px;margin-left:auto;"></i>
-              </button>
-
-              <div class="v3-ch-picker-menu ${v3State.staffPickerOpen ? 'open' : ''}" id="v3-staff-picker-menu" style="width:450px;" role="listbox">
-                <div class="v3-ch-picker-search-wrap">
-                  <i class="ri-search-line"></i>
-                  <input type="text" id="v3-staff-picker-search" placeholder="Tìm tên nhân viên, tên kênh demo..." value="${esc(v3State.staffPickerQuery)}" autocomplete="off" aria-label="Tìm kiếm nhân viên">
-                </div>
-                <div class="v3-cmp-team-filter-bar" id="v3-staff-picker-team-bar">
-                  <button type="button" class="v3-cmp-team-chip ${v3State.staffPickerTeamFilter === 'ALL' ? 'active' : ''}" data-stf-picker-team="ALL">Tất cả (15)</button>
-                  <button type="button" class="v3-cmp-team-chip ${v3State.staffPickerTeamFilter === 'TEAM-01' ? 'active' : ''}" data-stf-picker-team="TEAM-01">Jazz & Lo-fi (5)</button>
-                  <button type="button" class="v3-cmp-team-chip ${v3State.staffPickerTeamFilter === 'TEAM-02' ? 'active' : ''}" data-stf-picker-team="TEAM-02">Retro & Electronic (5)</button>
-                  <button type="button" class="v3-cmp-team-chip ${v3State.staffPickerTeamFilter === 'TEAM-03' ? 'active' : ''}" data-stf-picker-team="TEAM-03">Indie & Chill (5)</button>
-                  <button type="button" class="v3-cmp-team-chip" id="v3-staff-pick-top3" style="margin-left:auto;color:#38BDF8;border-color:rgba(56,189,248,0.4);">Mặc định Top 3</button>
-                </div>
-                <div class="v3-ch-picker-list" id="v3-staff-picker-list">
-                  ${allStaffByViews.map(item => {
-                    const isChecked = v3State.staffSelectedIds.includes(item.empId);
-                    const searchBlob = `${item.empName} ${item.allChannelTitles} ${item.teamName}`.toLowerCase();
-                    const shortTeam = item.teamName.replace(/^Team\s+/i, '');
-                    return `
-                      <div class="v3-ch-picker-item ${isChecked ? 'active' : ''}"
-                           data-stf-toggle-id="${item.empId}"
-                           data-stf-team-id="${item.teamId}"
-                           data-search-text="${esc(searchBlob)}"
-                           role="option"
-                           aria-selected="${isChecked ? 'true' : 'false'}">
-                        <span class="v3-cmp-check ${isChecked ? 'checked' : ''}">${isChecked ? '✓' : ''}</span>
-                        <span class="v3-team-dot" style="background:${item.color};"></span>
-                        <span class="v3-ch-picker-item-main">
-                          <strong>${esc(item.empName)}</strong>
-                          <span class="v3-ch-picker-item-sub">${esc(item.channelTitleSummary)} · ${fmtInt(item.curr.views)} views</span>
-                        </span>
-                        <button type="button" class="v3-staff-only-btn" data-stf-only-id="${item.empId}" title="Chỉ chọn riêng nhân viên này để bật đường đối chứng kỳ trước">Chỉ 1 NV</button>
-                        <span class="v3-badge" style="background:${item.teamColor}18;color:${item.teamColor};border:1px solid ${item.teamColor}44;font-size:9.8px;">${esc(shortTeam)}</span>
-                      </div>
-                    `;
-                  }).join('')}
-                  <div id="v3-staff-picker-empty" style="display:none;padding:12px;text-align:center;color:var(--text-muted);font-size:12px;">
-                    Không tìm thấy nhân viên phù hợp
-                  </div>
-                </div>
-              </div>
-            </div>
+              `,
+              menuId: 'v3-staff-picker-menu',
+              searchId: 'v3-staff-picker-search',
+              searchPlaceholder: 'Tìm tên nhân viên, tên kênh demo, team...',
+              searchQuery: v3State.staffPickerQuery,
+              teamBarId: 'v3-staff-picker-team-bar',
+              teamChipAttr: 'data-stf-picker-team',
+              teamFilter: v3State.staffPickerTeamFilter,
+              showTop3AndClear: true,
+              top3BtnId: 'v3-staff-pick-top3',
+              clearBtnId: 'v3-staff-pick-clear',
+              listId: 'v3-staff-picker-list',
+              emptyId: 'v3-staff-picker-empty',
+              emptyText: 'Không tìm thấy nhân viên phù hợp',
+              isOpen: v3State.staffPickerOpen,
+              isMulti: true,
+              maxSelect: 5,
+              selectedIds: v3State.staffSelectedIds,
+              rowToggleAttr: 'data-stf-toggle-id',
+              rowTeamAttr: 'data-stf-team-id',
+              items: allStaffByViews.map(item => ({
+                id: item.empId,
+                title: item.empName,
+                subtitle: item.channelTitleSummary,
+                color: item.color,
+                teamId: item.teamId,
+                teamName: item.teamName.replace(/^Team\s+/i, ''),
+                teamColor: item.teamColor,
+                views: item.curr.views,
+                searchBlob: `${item.empName} ${item.allChannelTitles} ${item.teamName}`.toLowerCase(),
+                onlyBtnHtml: `<button type="button" class="v3-staff-only-btn" data-stf-only-id="${item.empId}" title="Chỉ chọn riêng nhân viên này để bật đường đối chứng kỳ trước">Chỉ 1 NV</button>`
+              }))
+            })}
 
             <button type="button"
                     class="v3-preset-btn v3-staff-prev-ref-btn ${prevLineActive ? 'active' : ''}"
@@ -4542,62 +4760,58 @@
       });
     });
 
-    // Bind Multi-Staff Picker Open/Close & Search/Team Filter
-    const pickerBtn = document.getElementById('v3-staff-picker-btn');
-    const pickerMenu = document.getElementById('v3-staff-picker-menu');
-    const pickerSearch = document.getElementById('v3-staff-picker-search');
-    const filterStaffPickerDom = () => {
-      const q = (v3State.staffPickerQuery || '').trim().toLowerCase();
-      const tf = v3State.staffPickerTeamFilter || 'ALL';
-      let visibleCount = 0;
-      body.querySelectorAll('#v3-staff-picker-list [data-stf-toggle-id]').forEach(el => {
-        const blob = el.getAttribute('data-search-text') || '';
-        const tid = el.getAttribute('data-stf-team-id') || '';
-        const matchQ = !q || blob.includes(q);
-        const matchT = tf === 'ALL' || tid === tf;
-        const show = matchQ && matchT;
-        el.style.display = show ? 'flex' : 'none';
-        if (show) visibleCount++;
-      });
-      const emptyEl = document.getElementById('v3-staff-picker-empty');
-      if (emptyEl) emptyEl.style.display = visibleCount === 0 ? 'block' : 'none';
-    };
-
-    if (pickerBtn && pickerMenu) {
-      pickerBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        v3State.staffPickerOpen = !v3State.staffPickerOpen;
-        pickerMenu.classList.toggle('open', v3State.staffPickerOpen);
-        pickerBtn.setAttribute('aria-expanded', v3State.staffPickerOpen ? 'true' : 'false');
-        if (v3State.staffPickerOpen && pickerSearch) {
-          filterStaffPickerDom();
-          setTimeout(() => pickerSearch.focus(), 20);
+    // Bind Unified Floating Multi-Staff Picker
+    bindUnifiedFloatingPicker(body, {
+      wrapperId: 'v3-staff-multi-picker',
+      btnId: 'v3-staff-picker-btn',
+      menuId: 'v3-staff-picker-menu',
+      searchId: 'v3-staff-picker-search',
+      listId: 'v3-staff-picker-list',
+      emptyId: 'v3-staff-picker-empty',
+      teamChipAttr: 'data-stf-picker-team',
+      rowToggleAttr: 'data-stf-toggle-id',
+      rowTeamAttr: 'data-stf-team-id',
+      top3BtnId: 'v3-staff-pick-top3',
+      clearBtnId: 'v3-staff-pick-clear',
+      getOpenState: () => v3State.staffPickerOpen,
+      setOpenState: (v) => { v3State.staffPickerOpen = v; },
+      getSearchQuery: () => v3State.staffPickerQuery,
+      setSearchQuery: (v) => { v3State.staffPickerQuery = v; },
+      getTeamFilter: () => v3State.staffPickerTeamFilter,
+      setTeamFilter: (v) => { v3State.staffPickerTeamFilter = v; },
+      onSelectTop3: () => {
+        v3State.staffClearedEmpty = false;
+        v3State.staffSelectedIds = allStaffByViews.slice(0, 3).map(st => st.empId);
+        v3State.staffHiddenKeys = [];
+        v3State.staffPickerOpen = true;
+        renderStaffPage(snap);
+      },
+      onClear: () => {
+        v3State.staffClearedEmpty = true;
+        v3State.staffSelectedIds = [];
+        v3State.staffHiddenKeys = [];
+        v3State.staffPickerQuery = '';
+        v3State.staffPickerTeamFilter = 'ALL';
+        v3State.staffPickerOpen = true;
+        renderStaffPage(snap);
+      },
+      onRowClick: (empId) => {
+        const curr = [...(v3State.staffSelectedIds || [])];
+        const idx = curr.indexOf(empId);
+        if (idx >= 0) {
+          curr.splice(idx, 1);
+          v3State.staffClearedEmpty = (curr.length === 0);
+        } else {
+          if (curr.length >= 5) {
+            if (core().showToast) core().showToast('Tối đa 5 nhân viên trên biểu đồ để tránh rối mắt.');
+            return;
+          }
+          curr.push(empId);
+          v3State.staffClearedEmpty = false;
         }
-      });
-    }
-
-    if (pickerSearch) {
-      pickerSearch.addEventListener('input', (e) => {
-        v3State.staffPickerQuery = e.target.value;
-        filterStaffPickerDom();
-      });
-      pickerSearch.addEventListener('click', e => e.stopPropagation());
-    }
-
-    body.querySelectorAll('[data-stf-picker-team]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        v3State.staffPickerTeamFilter = btn.getAttribute('data-stf-picker-team') || 'ALL';
-        body.querySelectorAll('[data-stf-picker-team]').forEach(b => b.classList.toggle('active', b === btn));
-        filterStaffPickerDom();
-      });
-    });
-
-    document.getElementById('v3-staff-pick-top3')?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      v3State.staffSelectedIds = allStaffByViews.slice(0, 3).map(st => st.empId);
-      v3State.staffHiddenKeys = [];
-      renderStaffPage(snap);
+        v3State.staffSelectedIds = curr;
+        renderStaffPage(snap);
+      }
     });
 
     body.querySelectorAll('[data-stf-only-id]').forEach(btn => {
@@ -4605,34 +4819,10 @@
         e.stopPropagation();
         const empId = btn.getAttribute('data-stf-only-id');
         if (!empId) return;
+        v3State.staffClearedEmpty = false;
         v3State.staffSelectedIds = [empId];
         v3State.staffHiddenKeys = (v3State.staffHiddenKeys || []).filter(k => k !== 'PREV' && k !== empId);
         v3State.staffPickerOpen = false;
-        renderStaffPage(snap);
-      });
-    });
-
-    body.querySelectorAll('[data-stf-toggle-id]').forEach(row => {
-      row.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const empId = row.getAttribute('data-stf-toggle-id');
-        if (!empId) return;
-        const curr = [...(v3State.staffSelectedIds || [])];
-        const idx = curr.indexOf(empId);
-        if (idx >= 0) {
-          if (curr.length <= 1) {
-            if (core().showToast) core().showToast('Cần chọn tối thiểu 1 nhân viên trên biểu đồ.');
-            return;
-          }
-          curr.splice(idx, 1);
-        } else {
-          if (curr.length >= 5) {
-            if (core().showToast) core().showToast('Tối đa 5 nhân viên trên biểu đồ để tránh rối mắt.');
-            return;
-          }
-          curr.push(empId);
-        }
-        v3State.staffSelectedIds = curr;
         renderStaffPage(snap);
       });
     });
@@ -5517,6 +5707,47 @@
               ` : ''}
             </div>
             ${renderTeamSelectorChips('v3-channel-table-team-selector', 'Bộ chọn team cho bảng 5 kênh')}
+            ${renderUnifiedFloatingPicker({
+              wrapperId: 'v3-team-channel-quick-picker',
+              btnId: 'v3-team-picker-btn',
+              btnClass: 'v3-ch-picker-btn v3-staff-picker-trigger',
+              btnTitle: 'Tìm kiếm nhanh kênh hoặc chuyển nhanh tới team phụ trách',
+              triggerHtml: `
+                <i class="ri-search-eye-line" style="color:#38BDF8;font-size:13.5px;"></i>
+                <span class="v3-ch-picker-btn-text">
+                  <strong>Tìm kênh (${selectedTeam.channels.length}/15)</strong>
+                </span>
+                <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:14px;margin-left:auto;"></i>
+              `,
+              menuId: 'v3-team-picker-menu',
+              searchId: 'v3-team-picker-search',
+              searchPlaceholder: 'Tìm tên kênh, @handle, PIC, team...',
+              searchQuery: v3State.teamQuickPickerQuery,
+              teamBarId: 'v3-team-picker-team-bar',
+              teamChipAttr: 'data-tm-picker-team',
+              teamFilter: v3State.teamQuickPickerTeamFilter,
+              showTop3AndClear: false,
+              listId: 'v3-team-picker-list',
+              emptyId: 'v3-team-picker-empty',
+              emptyText: 'Không tìm thấy kênh phù hợp',
+              isOpen: v3State.teamQuickPickerOpen,
+              isMulti: false,
+              maxSelect: 5,
+              selectedIds: selectedTeam.channels.map(c => c.id),
+              rowToggleAttr: 'data-tm-pick-channel-id',
+              rowTeamAttr: 'data-tm-pick-team-id',
+              items: snap.channelPairs.map(item => ({
+                id: item.id,
+                title: item.meta.title,
+                subtitle: `${item.meta.handle} · PIC: ${item.meta.employeeName}`,
+                color: item.meta.channelColor,
+                teamId: item.meta.teamId,
+                teamName: item.meta.teamName.replace(/^Team\s+/i, ''),
+                teamColor: item.meta.teamColor,
+                views: item.curr.views,
+                searchBlob: `${item.meta.title} ${item.meta.handle} ${item.meta.employeeName} ${item.meta.teamName}`.toLowerCase()
+              }))
+            })}
             ${snap.win.isPartialQuarter ? `<span class="v3-badge partial">Chưa trọn quý (${snap.win.dayCount}/${snap.win.quarterCalendarDays} ngày)</span>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -5955,6 +6186,33 @@
         v3State.selectedTeamId = card.getAttribute('data-select-team-card');
         renderTeamPage(snap);
       });
+    });
+
+    bindUnifiedFloatingPicker(root, {
+      wrapperId: 'v3-team-channel-quick-picker',
+      btnId: 'v3-team-picker-btn',
+      menuId: 'v3-team-picker-menu',
+      searchId: 'v3-team-picker-search',
+      listId: 'v3-team-picker-list',
+      emptyId: 'v3-team-picker-empty',
+      teamChipAttr: 'data-tm-picker-team',
+      rowToggleAttr: 'data-tm-pick-channel-id',
+      rowTeamAttr: 'data-tm-pick-team-id',
+      getOpenState: () => v3State.teamQuickPickerOpen,
+      setOpenState: (v) => { v3State.teamQuickPickerOpen = v; },
+      getSearchQuery: () => v3State.teamQuickPickerQuery,
+      setSearchQuery: (v) => { v3State.teamQuickPickerQuery = v; },
+      getTeamFilter: () => v3State.teamQuickPickerTeamFilter,
+      setTeamFilter: (v) => { v3State.teamQuickPickerTeamFilter = v; },
+      onRowClick: (chId, rowEl) => {
+        const pickedTeamId = rowEl ? rowEl.getAttribute('data-tm-pick-team-id') : null;
+        if (pickedTeamId) {
+          v3State.selectedTeamId = pickedTeamId;
+        }
+        v3State.teamQuickPickerOpen = false;
+        v3State.teamQuickPickerQuery = '';
+        renderTeamPage(snap);
+      }
     });
 
     root.querySelectorAll('[data-tm-chart-preset]').forEach(btn => {
@@ -6729,28 +6987,25 @@
   function init() {
     syncNetworkMenuVisibility();
     document.addEventListener('click', (e) => {
-      if (v3State.channelPickerOpen && !e.target.closest('#v3-channel-search-picker')) {
-        v3State.channelPickerOpen = false;
-        const menu = document.getElementById('v3-channel-picker-menu');
-        const btn = document.getElementById('v3-channel-picker-btn');
-        if (menu) menu.classList.remove('open');
-        if (btn) btn.setAttribute('aria-expanded', 'false');
-      }
-      if (v3State.comparePickerOpen && !e.target.closest('#v3-compare-channel-picker')) {
-        v3State.comparePickerOpen = false;
-        const cMenu = document.getElementById('v3-compare-picker-menu');
-        const cBtn = document.getElementById('v3-compare-picker-btn');
-        if (cMenu) cMenu.classList.remove('open');
-        if (cBtn) cBtn.setAttribute('aria-expanded', 'false');
-      }
-      if (v3State.staffPickerOpen && !e.target.closest('#v3-staff-multi-picker')) {
-        v3State.staffPickerOpen = false;
-        const sMenu = document.getElementById('v3-staff-picker-menu');
-        const sBtn = document.getElementById('v3-staff-picker-btn');
-        if (sMenu) sMenu.classList.remove('open');
-        if (sBtn) sBtn.setAttribute('aria-expanded', 'false');
+      if (!e.target.closest('.v3-ch-search-picker')) {
+        closeAllFloatingPickers();
       }
     });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (v3State.channelPickerOpen || v3State.comparePickerOpen || v3State.staffPickerOpen || v3State.teamQuickPickerOpen || document.querySelector('.v3-ch-picker-menu.open')) {
+          e.preventDefault();
+          closeAllFloatingPickers();
+        }
+      }
+    });
+    window.addEventListener('resize', () => {
+      repositionOpenFloatingPickers();
+    });
+    window.addEventListener('scroll', (e) => {
+      if (e.target && e.target.closest && e.target.closest('.v3-ch-picker-menu')) return;
+      repositionOpenFloatingPickers();
+    }, true);
     // Pre-render Guide page so #guide-... anchors exist in DOM at all times
     renderGuidePage();
     refreshActiveView();

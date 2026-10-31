@@ -131,11 +131,12 @@
     compareSortAsc: false,
     compareChartScale: 'actual', // 'actual' | 'index100' | 'log'
     // Page 4 (Staff)
-    staffTab: 'ranking',            // 'ranking' ("Báo cáo NV theo số liệu") | 'compare' ("Báo cáo NV theo biểu đồ")
+    staffTab: 'ranking',            // 'ranking' ("Báo cáo NV theo số liệu") | 'compare' ("Báo cáo NV theo biểu đồ") | 'daily' ("Số liệu theo ngày")
     staffSortField: 'views',        // 'views' | 'growth' | 'netSubs' | 'videos' | 'engagement' | 'revenue'
     staffSortAsc: false,
     staffTeamFilter: 'ALL',         // 'ALL' | 'TEAM-01' | 'TEAM-02' | 'TEAM-03'
-    staffChartMetric: 'views',      // 'views' | 'netSubs' | 'revenue'
+    staffChartMetric: 'views',      // 'views' | 'netSubs' | 'revenue' | 'likes' | 'dislikes' | 'comments'
+    staffChartGranularity: 'day',   // 'day' ("Ngày") | 'month' ("Tháng")
     staffChartScale: 'actual',      // 'actual' | 'index100'
     staffSelectedIds: ['EMP-005', 'EMP-012', 'EMP-011'], // Default top 3 by 30d views (max 5)
     staffClearedEmpty: false,
@@ -152,6 +153,16 @@
     staffChartQuarterKey: '2026-Q4',
     staffChartStartDate: '2026-09-27',
     staffChartEndDate: '2026-10-26',
+    // Page 4 Tab 3 ("Số liệu theo ngày")
+    staffDailyMetric: 'views',      // 'views' | 'netSubs' | 'revenue' | 'likes' | 'dislikes' | 'comments'
+    staffDailyTeamFilter: 'ALL',    // 'ALL' | 'TEAM-01' | 'TEAM-02' | 'TEAM-03'
+    staffDailySelectedIds: [],      // Default all 15 employees when empty & !staffDailyClearedEmpty
+    staffDailyClearedEmpty: false,
+    staffDailyPickerOpen: false,
+    staffDailyPickerQuery: '',
+    staffDailyPickerTeamFilter: 'ALL',
+    staffDailySortAsc: false,       // Sort by "Tổng kỳ" column (false = desc, true = asc)
+    staffDailyHeatmap: false,       // Optional "Tô màu theo giá trị" (off by default, normalized per day column)
     // Page 5 (Project)
     projectConfigured: false,
     selectedProjectId: 'PRJ-01',
@@ -623,6 +634,7 @@
         watchHours: null,
         avdSeconds: null,
         likes: null,
+        dislikes: null,
         comments: null,
         shares: null,
         engagementRate: null,
@@ -662,6 +674,7 @@
             subsGained: null,
             subsLost: null,
             likes: dLk,
+            dislikes: null,
             comments: dCm,
             shares: null,
             interactions: dInt,
@@ -694,6 +707,7 @@
         watchHours: null,
         avdSeconds: null,
         likes: likesSum,
+        dislikes: null, // Dislikes require Analytics OAuth
         comments: commentsSum,
         shares: null, // Shares require Analytics API
         engagementRate: engRate,
@@ -716,6 +730,7 @@
     let viewsWithMon = 0;
     let minSum = 0;
     let likesSum = 0;
+    let dislikesSum = 0;
     let commentsSum = 0;
     let sharesSum = 0;
     let subsGained = 0;
@@ -729,6 +744,7 @@
       let v = r.views || 0;
       let m = r.estimatedMinutesWatched || 0;
       let lk = r.likes || 0;
+      let dl = r.dislikes || 0;
       let cm = r.comments || 0;
       let sh = r.shares || 0;
       let sg = r.subscribersGained || 0;
@@ -737,7 +753,7 @@
 
       if (override && override.metrics) {
         const om = override.metrics;
-        if (om.views === 0) { v = 0; m = 0; lk = 0; cm = 0; sh = 0; sg = 0; sl = 0; }
+        if (om.views === 0) { v = 0; m = 0; lk = 0; dl = 0; cm = 0; sh = 0; sg = 0; sl = 0; }
         if (om.estimatedRevenue === 0) { rev = 0; }
       }
 
@@ -745,6 +761,7 @@
       viewsSum += v;
       minSum += m;
       likesSum += lk;
+      dislikesSum += dl;
       commentsSum += cm;
       sharesSum += sh;
       subsGained += sg;
@@ -763,6 +780,7 @@
         subsGained: sg,
         subsLost: sl,
         likes: lk,
+        dislikes: dl,
         comments: cm,
         shares: sh,
         interactions: dInt,
@@ -799,6 +817,7 @@
       watchHours,
       avdSeconds,
       likes: likesSum,
+      dislikes: dislikesSum,
       comments: commentsSum,
       shares: sharesSum,
       engagementRate,
@@ -846,6 +865,7 @@
     const avdSeconds = (watchMinutes !== null && analyticsViews > 0) ? Number(((watchMinutes * 60) / analyticsViews).toFixed(1)) : null;
 
     const likes = hasAnyViews ? validViewChannels.reduce((s, c) => s + (c.likes || 0), 0) : null;
+    const dislikes = hasAnyAnalytics ? analyticsChannels.reduce((s, c) => s + (c.dislikes || 0), 0) : null;
     const comments = hasAnyViews ? validViewChannels.reduce((s, c) => s + (c.comments || 0), 0) : null;
     const shares = hasAnyAnalytics ? analyticsChannels.reduce((s, c) => s + (c.shares || 0), 0) : null;
 
@@ -877,6 +897,10 @@
       let dViews = 0;
       let dWatchHours = 0;
       let dNetSubs = 0;
+      let dLikes = 0;
+      let dDislikes = 0;
+      let dComments = 0;
+      let dShares = 0;
       let dRevCents = 0;
       let dHasRev = false;
       let dVideosPublished = 0;
@@ -886,6 +910,10 @@
           dViews += (pt.views || 0);
           dWatchHours += (pt.watchHours || 0);
           dNetSubs += (pt.netSubs || 0);
+          dLikes += (pt.likes || 0);
+          dDislikes += (pt.dislikes || 0);
+          dComments += (pt.comments || 0);
+          dShares += (pt.shares || 0);
           dVideosPublished += (pt.videosPublished || 0);
           if (pt.revenue !== null && pt.revenue !== undefined) {
             dHasRev = true;
@@ -893,11 +921,18 @@
           }
         }
       });
+      const dInt = dLikes + dComments + (hasAnyAnalytics ? dShares : 0);
       return {
         day: dayIso,
         views: hasAnyViews ? dViews : null,
         watchHours: hasAnyAnalytics ? Number(dWatchHours.toFixed(2)) : null,
         netSubs: validSubChannels.length > 0 ? dNetSubs : null,
+        likes: hasAnyViews ? dLikes : null,
+        dislikes: hasAnyAnalytics ? dDislikes : null,
+        comments: hasAnyViews ? dComments : null,
+        shares: hasAnyAnalytics ? dShares : null,
+        interactions: hasAnyViews ? dInt : null,
+        engagementRate: (hasAnyViews && dViews > 0) ? Number(((dInt / dViews) * 100).toFixed(2)) : null,
         revenue: dHasRev ? Number((dRevCents / 100).toFixed(2)) : null,
         videosPublished: dVideosPublished
       };
@@ -919,6 +954,7 @@
       watchHours,
       avdSeconds,
       likes,
+      dislikes,
       comments,
       shares,
       engagementRate,
@@ -1048,6 +1084,7 @@
     if (exceptWrapperId !== 'v3-channel-search-picker') v3State.channelPickerOpen = false;
     if (exceptWrapperId !== 'v3-compare-channel-picker') v3State.comparePickerOpen = false;
     if (exceptWrapperId !== 'v3-staff-multi-picker') v3State.staffPickerOpen = false;
+    if (exceptWrapperId !== 'v3-staff-daily-picker') v3State.staffDailyPickerOpen = false;
     if (exceptWrapperId !== 'v3-team-channel-quick-picker') v3State.teamQuickPickerOpen = false;
     document.querySelectorAll('.v3-ch-search-picker').forEach(wrap => {
       if (exceptWrapperId && wrap.id === exceptWrapperId) return;
@@ -1103,6 +1140,7 @@
             <button type="button" class="v3-cmp-team-chip ${teamFilter === 'TEAM-03' ? 'active' : ''}" ${cfg.teamChipAttr}="TEAM-03">Indie &amp; Chill (5)</button>
             ${cfg.showTop3AndClear ? `
               <span class="v3-picker-actions-group">
+                ${cfg.selectAllBtnId ? `<button type="button" class="v3-cmp-team-chip v3-picker-act-btn" id="${cfg.selectAllBtnId}" data-picker-action="all" title="Chọn tất cả 15 nhân viên">Chọn tất cả</button>` : ''}
                 <button type="button" class="v3-cmp-team-chip v3-picker-act-btn" id="${cfg.top3BtnId}" data-picker-action="top3" title="Chọn nhanh Top 3 theo lượt xem trong kỳ">Chọn top 3</button>
                 <button type="button" class="v3-cmp-team-chip v3-picker-act-btn is-clear" id="${cfg.clearBtnId}" data-picker-action="clear" title="Xóa chọn / đặt lại bộ lọc">Xóa</button>
               </span>
@@ -1246,6 +1284,14 @@
         filterDom();
       });
     });
+
+    if (cfg.selectAllBtnId && typeof cfg.onSelectAll === 'function') {
+      document.getElementById(cfg.selectAllBtnId)?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        v3State._pickerListScrollTop = listEl ? listEl.scrollTop : 0;
+        cfg.onSelectAll();
+      });
+    }
 
     if (cfg.top3BtnId && typeof cfg.onSelectTop3 === 'function') {
       document.getElementById(cfg.top3BtnId)?.addEventListener('click', (e) => {
@@ -4820,16 +4866,116 @@
     return `<span class="v3-delta ${cls} v3-staff-eng-delta">${arrow} ${sign}${Math.abs(diff).toFixed(2).replace('.', ',')} điểm %</span>`;
   }
 
+  function getShortWeekdayVN(isoStr) {
+    if (!isoStr || isoStr.length < 10) return '';
+    const dt = new Date(isoStr.slice(0, 10) + 'T00:00:00Z');
+    const dow = dt.getUTCDay(); // 0=CN, 1=T2..6=T7
+    const names = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    return names[dow] || '';
+  }
+
+  function isWeekendIso(isoStr) {
+    if (!isoStr || isoStr.length < 10) return false;
+    const dt = new Date(isoStr.slice(0, 10) + 'T00:00:00Z');
+    const dow = dt.getUTCDay();
+    return dow === 0 || dow === 6;
+  }
+
+  function isAnalyticsDelayDayIso(isoStr) {
+    return Boolean(isoStr && isoStr >= '2026-10-24' && isoStr <= '2026-10-26');
+  }
+
+  function buildStaffMonthlyBuckets(chartWin, dailyMapByEmp, allStaffList, selectedStaff, metric, getPointMetricVal) {
+    const days = chartWin.days || [];
+    const prevDays = chartWin.prevDays || [];
+    const bucketsMap = new Map();
+    days.forEach((d, dayIdx) => {
+      const ym = d.slice(0, 7);
+      if (!bucketsMap.has(ym)) {
+        bucketsMap.set(ym, { ym, days: [], dayIndices: [] });
+      }
+      const b = bucketsMap.get(ym);
+      b.days.push(d);
+      b.dayIndices.push(dayIdx);
+    });
+
+    const singleSt = selectedStaff.length === 1 ? selectedStaff[0] : null;
+    const singlePrevMap = new Map();
+    if (singleSt && singleSt.prev && Array.isArray(singleSt.prev.dailySeries)) {
+      singleSt.prev.dailySeries.forEach(pt => singlePrevMap.set(pt.day, pt));
+    }
+
+    const buckets = [];
+    bucketsMap.forEach((b, ym) => {
+      const year = Number(ym.slice(0, 4));
+      const monthNum = Number(ym.slice(5, 7));
+      const totalCalendarDays = new Date(Date.UTC(year, monthNum, 0)).getUTCDate();
+      const coveredDays = b.days.length;
+      const isPartial = coveredDays < totalCalendarDays;
+      const mmStr = String(monthNum).padStart(2, '0');
+      const shortMonthTag = `Tháng ${mmStr}/${year}`;
+      const axisLabel = isPartial
+        ? `${shortMonthTag} · Chưa trọn kỳ (${coveredDays}/${totalCalendarDays} ngày)`
+        : `${shortMonthTag} (${coveredDays}/${totalCalendarDays} ngày)`;
+
+      const empSums = {};
+      allStaffList.forEach(st => {
+        const sMap = dailyMapByEmp.get(st.empId) || new Map();
+        const sumVal = b.days.reduce((acc, d) => {
+          const v = getPointMetricVal(sMap.get(d), metric);
+          return metric === 'revenue' ? Number((acc + v).toFixed(2)) : (acc + v);
+        }, 0);
+        empSums[st.empId] = sumVal;
+      });
+
+      const groupTotal = selectedStaff.reduce((acc, st) => {
+        const v = empSums[st.empId] || 0;
+        return metric === 'revenue' ? Number((acc + v).toFixed(2)) : (acc + v);
+      }, 0);
+
+      let prevSumSingle = null;
+      const prevSliceDays = b.dayIndices.map(idx => prevDays[idx]).filter(Boolean);
+      if (singleSt) {
+        prevSumSingle = prevSliceDays.reduce((acc, pd) => {
+          const v = getPointMetricVal(singlePrevMap.get(pd), metric);
+          return metric === 'revenue' ? Number((acc + v).toFixed(2)) : (acc + v);
+        }, 0);
+      }
+
+      buckets.push({
+        ym,
+        year,
+        monthNum,
+        totalCalendarDays,
+        coveredDays,
+        isPartial,
+        partialNote: isPartial ? `Chưa trọn kỳ (${coveredDays}/${totalCalendarDays} ngày)` : `Trọn tháng (${coveredDays}/${totalCalendarDays} ngày)`,
+        shortMonthTag,
+        axisLabel,
+        startDay: b.days[0],
+        endDay: b.days[b.days.length - 1],
+        days: b.days,
+        prevSliceDays,
+        empSums,
+        groupTotal,
+        prevSumSingle
+      });
+    });
+
+    return buckets;
+  }
+
   function renderStaffPage(snap) {
     const root = document.getElementById('v3-staff-root');
     if (!root) return;
 
     const c = core();
     if (c.state && c.state.staffActiveTab) {
-      v3State.staffTab = c.state.staffActiveTab === 'compare' ? 'compare' : 'ranking';
+      const requestedTab = c.state.staffActiveTab;
+      v3State.staffTab = (requestedTab === 'compare' || requestedTab === 'daily') ? requestedTab : 'ranking';
       delete c.state.staffActiveTab;
     }
-    if (v3State.staffTab !== 'ranking' && v3State.staffTab !== 'compare') {
+    if (!['ranking', 'compare', 'daily'].includes(v3State.staffTab)) {
       v3State.staffTab = 'ranking';
     }
 
@@ -4841,6 +4987,9 @@
         <button type="button" class="v3-tab-btn ${v3State.staffTab === 'compare' ? 'active' : ''}" data-staff-tab="compare" role="tab" aria-selected="${v3State.staffTab === 'compare' ? 'true' : 'false'}">
           <i class="ri-line-chart-line"></i> Báo cáo NV theo biểu đồ
         </button>
+        <button type="button" class="v3-tab-btn ${v3State.staffTab === 'daily' ? 'active' : ''}" data-staff-tab="daily" role="tab" aria-selected="${v3State.staffTab === 'daily' ? 'true' : 'false'}">
+          <i class="ri-calendar-todo-line"></i> Số liệu theo ngày
+        </button>
       </div>
       <div id="v3-staff-tab-body"></div>
     `;
@@ -4848,9 +4997,10 @@
     root.querySelectorAll('[data-staff-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
         const nextTab = btn.getAttribute('data-staff-tab');
-        if (nextTab === v3State.staffTab) return;
-        v3State.staffTab = nextTab === 'compare' ? 'compare' : 'ranking';
+        if (!nextTab || nextTab === v3State.staffTab) return;
+        v3State.staffTab = ['ranking', 'compare', 'daily'].includes(nextTab) ? nextTab : 'ranking';
         v3State.staffPickerOpen = false;
+        v3State.staffDailyPickerOpen = false;
         renderStaffPage(snap);
       });
     });
@@ -4858,6 +5008,8 @@
     const body = document.getElementById('v3-staff-tab-body');
     if (v3State.staffTab === 'compare') {
       renderStaffCompareTab(body, snap);
+    } else if (v3State.staffTab === 'daily') {
+      renderStaffDailyTab(body, snap);
     } else {
       renderStaffRankingTab(body, snap);
     }
@@ -5035,6 +5187,10 @@
                       data-emp-videos="${st.curr.videosPublished ?? 0}"
                       data-emp-eng="${st.curr.engagementRate ?? ''}"
                       data-emp-rev="${st.curr.estimatedRevenue ?? ''}"
+                      data-emp-likes="${st.curr.likes ?? ''}"
+                      data-emp-dislikes="${st.curr.dislikes ?? ''}"
+                      data-emp-comments="${st.curr.comments ?? ''}"
+                      data-emp-shares="${st.curr.shares ?? ''}"
                       title="Nhấn để mở Báo cáo theo kênh: ${esc(st.allChannelTitles)}">
                     <td>
                       <span class="v3-badge v3-staff-rank-badge ${idx === 0 ? 'highest' : (idx === sorted.length - 1 && sorted.length > 2 ? 'lowest' : 'muted')}">
@@ -5090,7 +5246,11 @@
                   data-total-subs="${groupCurr.netSubs ?? ''}"
                   data-total-videos="${groupCurr.videosPublished ?? 0}"
                   data-total-eng="${groupCurr.engagementRate ?? ''}"
-                  data-total-rev="${groupCurr.estimatedRevenue ?? ''}">
+                  data-total-rev="${groupCurr.estimatedRevenue ?? ''}"
+                  data-total-likes="${groupCurr.likes ?? ''}"
+                  data-total-dislikes="${groupCurr.dislikes ?? ''}"
+                  data-total-comments="${groupCurr.comments ?? ''}"
+                  data-total-shares="${groupCurr.shares ?? ''}">
                 <td colspan="4" style="white-space:nowrap;">
                   <strong>TỔNG CỘNG (${sorted.length === 15 ? 'TẤT CẢ 15 NHÂN VIÊN = TOÀN NETWORK' : `${sorted.length} NHÂN VIÊN ĐANG HIỂN THỊ`})</strong>
                 </td>
@@ -5202,15 +5362,29 @@
       .map(id => allStaffByViews.find(st => st.empId === id))
       .filter(Boolean);
 
-    const metric = ['views', 'netSubs', 'revenue'].includes(v3State.staffChartMetric) ? v3State.staffChartMetric : 'views';
+    const VALID_STAFF_METRICS = ['views', 'netSubs', 'revenue', 'likes', 'dislikes', 'comments'];
+    const metric = VALID_STAFF_METRICS.includes(v3State.staffChartMetric) ? v3State.staffChartMetric : 'views';
     v3State.staffChartMetric = metric;
+    const granularity = v3State.staffChartGranularity === 'month' ? 'month' : 'day';
+    v3State.staffChartGranularity = granularity;
     const scaleMode = v3State.staffChartScale === 'index100' ? 'index100' : 'actual';
     v3State.staffChartScale = scaleMode;
 
     const metricLabelMap = {
       views: 'Lượt xem (Views)',
       netSubs: 'Sub ròng',
-      revenue: 'Doanh thu [Analytics]'
+      revenue: 'Doanh thu [Analytics]',
+      likes: 'Lượt thích (Like)',
+      dislikes: 'Không thích (Dislike)',
+      comments: 'Bình luận (Comment)'
+    };
+    const metricShortUnit = {
+      views: 'Views',
+      netSubs: 'Sub ròng',
+      revenue: 'Doanh thu',
+      likes: 'Like',
+      dislikes: 'Dislike',
+      comments: 'Comment'
     };
 
     const chartRangeFullVN = `${formatIsoToVN(chartWin.start)} – ${formatIsoToVN(chartWin.end)}`;
@@ -5244,6 +5418,9 @@
       if (!pt) return 0;
       if (m === 'revenue') return pt.revenue !== null && pt.revenue !== undefined ? Number(pt.revenue) : 0;
       if (m === 'netSubs') return pt.netSubs !== null && pt.netSubs !== undefined ? Number(pt.netSubs) : 0;
+      if (m === 'likes') return pt.likes !== null && pt.likes !== undefined ? Number(pt.likes) : 0;
+      if (m === 'dislikes') return pt.dislikes !== null && pt.dislikes !== undefined ? Number(pt.dislikes) : 0;
+      if (m === 'comments') return pt.comments !== null && pt.comments !== undefined ? Number(pt.comments) : 0;
       return pt.views !== null && pt.views !== undefined ? Number(pt.views) : 0;
     };
 
@@ -5264,6 +5441,25 @@
       const v = dailySumByEmp[st.empId] || 0;
       return metric === 'revenue' ? Number((acc + v).toFixed(2)) : (acc + v);
     }, 0);
+
+    // Monthly buckets for "Tháng" grouping mode (Item 13 & Item 17)
+    const monthlyBuckets = buildStaffMonthlyBuckets(chartWin, dailyMapByEmp, allStaffByViews, selectedStaff, metric, getPointMetricVal);
+    const monthlyBucketsSummary = monthlyBuckets.map(b => ({
+      ym: b.ym,
+      coveredDays: b.coveredDays,
+      totalCalendarDays: b.totalCalendarDays,
+      isPartial: b.isPartial,
+      partialNote: b.partialNote,
+      axisLabel: b.axisLabel,
+      startDay: b.startDay,
+      endDay: b.endDay,
+      groupTotal: b.groupTotal,
+      empSums: b.empSums
+    }));
+    const partialMonthsSummary = monthlyBuckets
+      .filter(b => b.isPartial)
+      .map(b => `${b.shortMonthTag}: Chưa trọn kỳ (${b.coveredDays}/${b.totalCalendarDays} ngày)`)
+      .join(' · ');
 
     // Single-staff previous period sum (for dashed line when selectedStaff.length === 1)
     let singlePrevSum = null;
@@ -5291,26 +5487,41 @@
     body.innerHTML = `
       <section class="v3-panel v3-staff-panel-locked is-compare-tab" id="v3-staff-main-panel"
                data-staff-active-tab="compare"
+               data-staff-metric-active="${metric}"
+               data-staff-granularity-active="${granularity}"
                data-chart-period-mode="${isCustomChartPeriod ? 'custom' : 'global'}"
                data-staff-daily-sums='${esc(JSON.stringify(dailySumByEmp))}'
+               data-staff-monthly-buckets='${esc(JSON.stringify(monthlyBucketsSummary))}'
                data-staff-group-sum="${groupDailySum}">
         <div class="v3-chart-a-header" id="v3-staff-chart-header">
-          <!-- Hàng 1 cố định: Tên khối + ngày thật + Công tắc Thực tế|Chuẩn hóa + Công tắc Views|Sub ròng|Doanh thu -->
+          <!-- Hàng 1 cố định: Tên khối + ngày thật + Công tắc Ngày|Tháng + Công tắc Thực tế|Chuẩn hóa + Công tắc 6 chỉ số -->
           <div class="v3-chart-a-header-row1" id="v3-staff-chart-header-row1">
-            <div class="v3-panel-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.2px;">
+            <div class="v3-panel-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.4px;min-width:140px;flex:1 1 auto;">
               <i class="ri-line-chart-line" style="color:#38BDF8;"></i>
-              <span>Xu hướng nhân viên — ${esc(metricLabelMap[metric])}</span>
-              <span class="v3-panel-date-tag">(${chartRangeFullVN})</span>
+              <span>Xu hướng NV — ${esc(granularity === 'month' && partialMonthsSummary ? metricShortUnit[metric] : metricLabelMap[metric])}</span>
+              <span class="v3-panel-date-tag">(${formatIsoToShortVN(chartWin.start)}–${formatIsoToVN(chartWin.end)})</span>
+              ${granularity === 'month' && partialMonthsSummary ? `
+                <span class="v3-badge v3-daily-unstable-badge" id="v3-staff-partial-month-badge" style="margin-left:3px;font-size:9.3px;padding:1px 5px;" title="${esc(partialMonthsSummary)}">
+                  <i class="ri-time-line"></i> Chưa trọn kỳ (${esc(monthlyBuckets.filter(b => b.isPartial).map(b => `${b.ym.slice(5)}/${b.ym.slice(2, 4)}: ${b.coveredDays}/${b.totalCalendarDays}d`).join(', '))})
+                </span>
+              ` : ''}
             </div>
-            <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap;flex-shrink:0;">
-              <div class="v3-preset-group" id="v3-staff-scale-switch" role="group" aria-label="Chế độ thang đo Thực tế hoặc Chuẩn hóa">
-                <button type="button" class="v3-preset-btn ${scaleMode === 'actual' ? 'active' : ''}" data-staff-scale="actual" title="Hiển thị giá trị thực tế theo ngày">Thực tế</button>
-                <button type="button" class="v3-preset-btn ${scaleMode === 'index100' ? 'active' : ''}" data-staff-scale="index100" title="Quy chuẩn ngày đầu tiên của kỳ = 100 để nhân viên nhỏ không bị nhân viên lớn làm chìm">Chuẩn hóa (ngày đầu = 100)</button>
+            <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;flex-shrink:0;">
+              <div class="v3-preset-group v3-staff-compact-switch" id="v3-staff-granularity-switch" role="group" aria-label="Nhóm theo Ngày hoặc Tháng">
+                <button type="button" class="v3-preset-btn ${granularity === 'day' ? 'active' : ''}" data-staff-granularity="day" title="Hiển thị từng ngày trong kỳ">Ngày</button>
+                <button type="button" class="v3-preset-btn ${granularity === 'month' ? 'active' : ''}" data-staff-granularity="month" title="Nhóm tổng theo từng tháng dương lịch giao với kỳ">Tháng</button>
               </div>
-              <div class="v3-preset-group" id="v3-staff-metric-switch" role="group" aria-label="Chỉ số biểu đồ nhân viên">
+              <div class="v3-preset-group v3-staff-compact-switch" id="v3-staff-scale-switch" role="group" aria-label="Chế độ thang đo Thực tế hoặc Chuẩn hóa">
+                <button type="button" class="v3-preset-btn ${scaleMode === 'actual' ? 'active' : ''}" data-staff-scale="actual" title="Hiển thị giá trị thực tế">Thực tế</button>
+                <button type="button" class="v3-preset-btn ${scaleMode === 'index100' ? 'active' : ''}" data-staff-scale="index100" title="Quy chuẩn điểm đầu tiên của kỳ = 100 để nhân viên nhỏ không bị nhân viên lớn làm chìm">Chuẩn hóa (ngày đầu = 100)</button>
+              </div>
+              <div class="v3-preset-group v3-staff-compact-switch" id="v3-staff-metric-switch" role="group" aria-label="Chỉ số biểu đồ nhân viên">
                 <button type="button" class="v3-preset-btn ${metric === 'views' ? 'active' : ''}" data-staff-metric="views">Views</button>
                 <button type="button" class="v3-preset-btn ${metric === 'netSubs' ? 'active' : ''}" data-staff-metric="netSubs">Sub ròng</button>
                 <button type="button" class="v3-preset-btn ${metric === 'revenue' ? 'active' : ''}" data-staff-metric="revenue">Doanh thu</button>
+                <button type="button" class="v3-preset-btn ${metric === 'likes' ? 'active' : ''}" data-staff-metric="likes">Like</button>
+                <button type="button" class="v3-preset-btn ${metric === 'dislikes' ? 'active' : ''}" data-staff-metric="dislikes">Dislike</button>
+                <button type="button" class="v3-preset-btn ${metric === 'comments' ? 'active' : ''}" data-staff-metric="comments">Comment</button>
               </div>
             </div>
           </div>
@@ -5476,18 +5687,26 @@
       </section>
     `;
 
-    renderStaffCompareChart(selectedStaff, chartWin, metric, scaleMode, dailyMapByEmp, hiddenSet);
+    renderStaffCompareChart(selectedStaff, chartWin, metric, scaleMode, granularity, monthlyBuckets, dailyMapByEmp, hiddenSet);
+
+    // Bind Granularity Switch ("Ngày" | "Tháng")
+    body.querySelectorAll('#v3-staff-granularity-switch [data-staff-granularity]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        v3State.staffChartGranularity = btn.getAttribute('data-staff-granularity') || 'day';
+        renderStaffPage(snap);
+      });
+    });
 
     // Bind Scale Switch ("Thực tế" | "Chuẩn hóa (ngày đầu = 100)")
-    body.querySelectorAll('[data-staff-scale]').forEach(btn => {
+    body.querySelectorAll('#v3-staff-scale-switch [data-staff-scale], #v3-staff-hint-switch-norm').forEach(btn => {
       btn.addEventListener('click', () => {
         v3State.staffChartScale = btn.getAttribute('data-staff-scale') || 'actual';
         renderStaffPage(snap);
       });
     });
 
-    // Bind Metric Switch ("Views" | "Sub ròng" | "Doanh thu")
-    body.querySelectorAll('[data-staff-metric]').forEach(btn => {
+    // Bind Metric Switch (6 metrics: Views | Sub ròng | Doanh thu | Like | Dislike | Comment)
+    body.querySelectorAll('#v3-staff-metric-switch [data-staff-metric]').forEach(btn => {
       btn.addEventListener('click', () => {
         v3State.staffChartMetric = btn.getAttribute('data-staff-metric') || 'views';
         renderStaffPage(snap);
@@ -5665,20 +5884,26 @@
     });
   }
 
-  function renderStaffCompareChart(selectedStaff, chartWin, metric, scaleMode, dailyMapByEmp, hiddenSet) {
+  function renderStaffCompareChart(selectedStaff, chartWin, metric, scaleMode, granularity, monthlyBuckets, dailyMapByEmp, hiddenSet) {
     destroyChart('staffCompare');
     const canvas = document.getElementById('v3-staff-compare-canvas');
     if (!canvas || typeof Chart === 'undefined') return;
 
     const days = chartWin.days || [];
     const prevDays = chartWin.prevDays || [];
-    const labels = days.map(d => formatIsoToShortVN(d));
+    const isMonthMode = granularity === 'month' && Array.isArray(monthlyBuckets) && monthlyBuckets.length > 0;
+    const labels = isMonthMode
+      ? monthlyBuckets.map(b => b.axisLabel)
+      : days.map(d => formatIsoToShortVN(d));
     const isIndex100 = scaleMode === 'index100';
 
     const getRawVal = (pt) => {
       if (!pt) return 0;
       if (metric === 'revenue') return pt.revenue !== null && pt.revenue !== undefined ? Number(pt.revenue) : 0;
       if (metric === 'netSubs') return pt.netSubs !== null && pt.netSubs !== undefined ? Number(pt.netSubs) : 0;
+      if (metric === 'likes') return pt.likes !== null && pt.likes !== undefined ? Number(pt.likes) : 0;
+      if (metric === 'dislikes') return pt.dislikes !== null && pt.dislikes !== undefined ? Number(pt.dislikes) : 0;
+      if (metric === 'comments') return pt.comments !== null && pt.comments !== undefined ? Number(pt.comments) : 0;
       return pt.views !== null && pt.views !== undefined ? Number(pt.views) : 0;
     };
 
@@ -5690,69 +5915,78 @@
     };
 
     const datasets = [];
+    const ptRadiusEmp = isMonthMode ? 4.2 : (days.length > 45 ? 0 : 2.2);
+    const ptRadiusTotal = isMonthMode ? 4.8 : (days.length > 45 ? 0 : 2.6);
+    const ptRadiusPrev = isMonthMode ? 3.8 : (days.length > 45 ? 0 : 1.8);
 
     // 1..5 Employee lines (Fixed colors across all pages)
     selectedStaff.forEach(st => {
       const sMap = dailyMapByEmp.get(st.empId) || new Map();
-      const rawSeries = days.map(d => getRawVal(sMap.get(d)));
+      const rawSeries = isMonthMode
+        ? monthlyBuckets.map(b => b.empSums[st.empId] || 0)
+        : days.map(d => getRawVal(sMap.get(d)));
       const dataSeries = normalizeSeries(rawSeries);
       datasets.push({
         _legendKey: st.empId,
         _rawSeries: rawSeries,
-        _realDays: days,
+        _realDays: isMonthMode ? monthlyBuckets.map(b => b.ym) : days,
         label: `${st.empName} (${st.channelTitleSummary})`,
         data: dataSeries,
         hidden: hiddenSet.has(st.empId),
         borderColor: st.color,
         backgroundColor: st.color + '18',
         borderWidth: 2.3,
-        pointRadius: days.length > 45 ? 0 : 2.2,
-        pointHoverRadius: 4.5,
-        tension: 0.28
+        pointRadius: ptRadiusEmp,
+        pointHoverRadius: 5,
+        tension: 0.25
       });
     });
 
-    // Bold "Tổng" line of the selected group (Item 13)
-    const totalRawSeries = days.map((_, idx) => {
-      const sumDay = selectedStaff.reduce((acc, st) => {
-        const sMap = dailyMapByEmp.get(st.empId);
-        const pt = sMap ? sMap.get(days[idx]) : null;
-        return acc + getRawVal(pt);
-      }, 0);
-      return metric === 'revenue' ? Number(sumDay.toFixed(2)) : sumDay;
-    });
+    // Bold "Tổng" line of the selected group
+    const totalRawSeries = isMonthMode
+      ? monthlyBuckets.map(b => b.groupTotal)
+      : days.map((_, idx) => {
+          const sumDay = selectedStaff.reduce((acc, st) => {
+            const sMap = dailyMapByEmp.get(st.empId);
+            const pt = sMap ? sMap.get(days[idx]) : null;
+            return acc + getRawVal(pt);
+          }, 0);
+          return metric === 'revenue' ? Number(sumDay.toFixed(2)) : sumDay;
+        });
     const totalDataSeries = normalizeSeries(totalRawSeries);
     datasets.push({
       _legendKey: 'TOTAL',
       _rawSeries: totalRawSeries,
-      _realDays: days,
+      _realDays: isMonthMode ? monthlyBuckets.map(b => b.ym) : days,
       label: `Tổng nhóm (${selectedStaff.length} NV)`,
       data: totalDataSeries,
       hidden: hiddenSet.has('TOTAL'),
       borderColor: '#F8FAFC',
       backgroundColor: 'transparent',
       borderWidth: 3.4,
-      pointRadius: days.length > 45 ? 0 : 2.6,
-      pointHoverRadius: 5,
-      tension: 0.28,
+      pointRadius: ptRadiusTotal,
+      pointHoverRadius: 5.5,
+      tension: 0.25,
       order: 0
     });
 
-    // Dashed previous-period reference line ONLY when exactly 1 staff is selected (Item 15)
+    // Dashed previous-period reference line ONLY when exactly 1 staff is selected
     if (selectedStaff.length === 1) {
       const onlySt = selectedStaff[0];
       const prevMap = new Map();
       (onlySt.prev.dailySeries || []).forEach(pt => prevMap.set(pt.day, pt));
-      const prevRawSeries = days.map((_, idx) => {
-        const pd = prevDays[idx];
-        return pd ? getRawVal(prevMap.get(pd)) : null;
-      });
+      const prevRawSeries = isMonthMode
+        ? monthlyBuckets.map(b => b.prevSumSingle)
+        : days.map((_, idx) => {
+            const pd = prevDays[idx];
+            return pd ? getRawVal(prevMap.get(pd)) : null;
+          });
       const prevDataSeries = normalizeSeries(prevRawSeries);
       const prevRangeShort = chartWin.compareRangeShort || `${formatIsoToShortVN(chartWin.prevStart)}–${formatIsoToShortVN(chartWin.prevEnd)}`;
       datasets.push({
         _legendKey: 'PREV',
         _rawSeries: prevRawSeries,
-        _realDays: prevDays,
+        _realDays: isMonthMode ? monthlyBuckets.map(b => b.ym) : prevDays,
         label: `Kỳ trước (${prevRangeShort})`,
         data: prevDataSeries,
         hidden: hiddenSet.has('PREV'),
@@ -5760,9 +5994,9 @@
         backgroundColor: 'transparent',
         borderDash: [6, 4],
         borderWidth: 2.0,
-        pointRadius: days.length > 45 ? 0 : 1.8,
-        pointHoverRadius: 4,
-        tension: 0.28
+        pointRadius: ptRadiusPrev,
+        pointHoverRadius: 4.5,
+        tension: 0.25
       });
     }
 
@@ -5790,6 +6024,10 @@
             callbacks: {
               title: function (items) {
                 const idx = items && items[0] ? items[0].dataIndex : 0;
+                if (isMonthMode && monthlyBuckets[idx]) {
+                  const b = monthlyBuckets[idx];
+                  return `${b.axisLabel} (${formatIsoToVN(b.startDay)} – ${formatIsoToVN(b.endDay)})`;
+                }
                 const dCurr = days[idx];
                 const dPrev = prevDays[idx];
                 if (selectedStaff.length === 1 && dPrev) {
@@ -5801,6 +6039,17 @@
                 const ds = ctx.dataset;
                 const idx = ctx.dataIndex;
                 const rawVal = ds._rawSeries ? ds._rawSeries[idx] : ctx.parsed.y;
+                if (isMonthMode && monthlyBuckets[idx]) {
+                  const b = monthlyBuckets[idx];
+                  const mTag = ` (${b.shortMonthTag}${b.isPartial ? ` · ${b.coveredDays}/${b.totalCalendarDays}d` : ''})`;
+                  if (isIndex100) {
+                    const idxVal = ctx.parsed.y !== null && ctx.parsed.y !== undefined
+                      ? Number(ctx.parsed.y).toFixed(1).replace('.', ',')
+                      : '—';
+                    return ` ${ds.label}${mTag}: ${idxVal} điểm [Thực tế: ${fmtActualVal(rawVal)}]`;
+                  }
+                  return ` ${ds.label}${mTag}: ${fmtActualVal(rawVal)}`;
+                }
                 const realIso = ds._realDays ? ds._realDays[idx] : days[idx];
                 const dateTag = realIso ? ` (${formatIsoToShortVN(realIso)})` : '';
                 if (isIndex100) {
@@ -5854,6 +6103,671 @@
         }
       }
     });
+  }
+
+  // =========================================================================
+  // PAGE 4 TAB 3: "SỐ LIỆU THEO NGÀY" (Matrix: Employees × Days)
+  // =========================================================================
+  function renderStaffDailyTab(body, snap) {
+    const c = core();
+    const staffDs = buildStaffDataset(snap, snap.win);
+    const allStaff = staffDs.staffList;
+    const allStaffByViews = [...allStaff].sort((a, b) => (b.curr.views || 0) - (a.curr.views || 0));
+
+    const VALID_METRICS = ['views', 'netSubs', 'revenue', 'likes', 'dislikes', 'comments'];
+    const metric = VALID_METRICS.includes(v3State.staffDailyMetric) ? v3State.staffDailyMetric : 'views';
+    v3State.staffDailyMetric = metric;
+
+    const metricLabelMap = {
+      views: 'Lượt xem (Views)',
+      netSubs: 'Sub ròng',
+      revenue: 'Doanh thu [Analytics]',
+      likes: 'Lượt thích (Like)',
+      dislikes: 'Không thích (Dislike)',
+      comments: 'Bình luận (Comment)'
+    };
+    const metricShortUnit = {
+      views: 'Views',
+      netSubs: 'Sub ròng',
+      revenue: 'Doanh thu',
+      likes: 'Like',
+      dislikes: 'Dislike',
+      comments: 'Comment'
+    };
+
+    // Default to all 15 employees selected unless user explicitly modified selection
+    let selectedIds = (v3State.staffDailySelectedIds || []).filter(id => allStaff.some(st => st.empId === id));
+    if (selectedIds.length === 0 && !v3State.staffDailyClearedEmpty) {
+      selectedIds = allStaff.map(st => st.empId);
+    }
+    v3State.staffDailySelectedIds = selectedIds;
+
+    // Filter by Team + Selected Employee IDs
+    const teamFilter = v3State.staffDailyTeamFilter || 'ALL';
+    const visibleStaffUnsorted = allStaff.filter(st => {
+      const matchTeam = (teamFilter === 'ALL' || st.teamId === teamFilter);
+      const matchSel = selectedIds.includes(st.empId);
+      return matchTeam && matchSel;
+    });
+
+    const days = snap.win.days || [];
+    const hasDelayDaysInWindow = days.some(d => isAnalyticsDelayDayIso(d));
+    const isLongPeriodOver92 = days.length > 92;
+
+    // Helper: check if an employee has permission for the active metric
+    const hasMetricPerm = (st, m) => {
+      if (!st || !st.curr) return false;
+      if (st.curr.validViewCount === 0) return false;
+      if (m === 'revenue') return Boolean((st.curr.monetaryCount || 0) > 0 && st.curr.estimatedRevenue !== null);
+      if (m === 'netSubs') return Boolean((st.curr.analyticsCount || 0) > 0 || st.curr.netSubs !== null);
+      if (m === 'dislikes') return Boolean((st.curr.analyticsCount || 0) > 0 && st.curr.dislikes !== null);
+      return st.curr.views !== null;
+    };
+
+    const getPointVal = (pt, m) => {
+      if (!pt) return null;
+      if (m === 'revenue') return pt.revenue !== null && pt.revenue !== undefined ? Number(pt.revenue) : null;
+      if (m === 'netSubs') return pt.netSubs !== null && pt.netSubs !== undefined ? Number(pt.netSubs) : null;
+      if (m === 'likes') return pt.likes !== null && pt.likes !== undefined ? Number(pt.likes) : null;
+      if (m === 'dislikes') return pt.dislikes !== null && pt.dislikes !== undefined ? Number(pt.dislikes) : null;
+      if (m === 'comments') return pt.comments !== null && pt.comments !== undefined ? Number(pt.comments) : null;
+      return pt.views !== null && pt.views !== undefined ? Number(pt.views) : null;
+    };
+
+    // Build daily maps and exact period totals for all 15 employees
+    const empDailyMap = new Map();
+    const empPeriodTotal = {};
+    allStaff.forEach(st => {
+      const dMap = new Map();
+      (st.curr.dailySeries || []).forEach(pt => dMap.set(pt.day, pt));
+      empDailyMap.set(st.empId, dMap);
+      if (!hasMetricPerm(st, metric)) {
+        empPeriodTotal[st.empId] = null;
+      } else {
+        const sumVal = days.reduce((acc, d) => {
+          const v = getPointVal(dMap.get(d), metric);
+          const num = v !== null ? v : 0;
+          return metric === 'revenue' ? Number((acc + num).toFixed(2)) : (acc + num);
+        }, 0);
+        empPeriodTotal[st.empId] = sumVal;
+      }
+    });
+
+    // Sort visible employees by "Tổng kỳ" column (Item 7)
+    const sortedStaff = [...visibleStaffUnsorted].sort((a, b) => {
+      const va = empPeriodTotal[a.empId] !== null && empPeriodTotal[a.empId] !== undefined ? empPeriodTotal[a.empId] : -999999999;
+      const vb = empPeriodTotal[b.empId] !== null && empPeriodTotal[b.empId] !== undefined ? empPeriodTotal[b.empId] : -999999999;
+      return v3State.staffDailySortAsc ? (va - vb) : (vb - va);
+    });
+
+    // Pinned "Tổng công ty" row (all 15 employees across each day & period total — Items 4 & 16)
+    const companyHasPerm = metric === 'revenue'
+      ? Boolean(snap.systemCurr.monetaryCount > 0)
+      : (metric === 'dislikes' ? Boolean(snap.systemCurr.analyticsCount > 0) : ( metric === 'netSubs' ? (snap.systemCurr.netSubs !== null) : (snap.systemCurr.views !== null) ));
+    const companyDailyByDay = {};
+    let companyPeriodSum = 0;
+    days.forEach(d => {
+      if (!companyHasPerm) {
+        companyDailyByDay[d] = null;
+        return;
+      }
+      const daySum = allStaff.reduce((acc, st) => {
+        if (!hasMetricPerm(st, metric)) return acc;
+        const v = getPointVal(empDailyMap.get(st.empId)?.get(d), metric);
+        const num = v !== null ? v : 0;
+        return metric === 'revenue' ? Number((acc + num).toFixed(2)) : (acc + num);
+      }, 0);
+      companyDailyByDay[d] = daySum;
+      companyPeriodSum = metric === 'revenue'
+        ? Number((companyPeriodSum + daySum).toFixed(2))
+        : (companyPeriodSum + daySum);
+    });
+
+    // Per-day-column min/max across displayed employee rows for optional Heatmap (Item 8)
+    const heatmapOn = !!v3State.staffDailyHeatmap;
+    const dayColStats = {};
+    if (heatmapOn) {
+      days.forEach(d => {
+        const vals = [];
+        sortedStaff.forEach(st => {
+          if (!hasMetricPerm(st, metric)) return;
+          const v = getPointVal(empDailyMap.get(st.empId)?.get(d), metric);
+          if (v !== null && !Number.isNaN(Number(v))) vals.push(Number(v));
+        });
+        const minV = vals.length ? Math.min(...vals) : 0;
+        const maxV = vals.length ? Math.max(...vals) : 0;
+        dayColStats[d] = { min: minV, max: maxV };
+      });
+    }
+
+    const fmtDailyCellVal = (val) => {
+      if (val === null || val === undefined || Number.isNaN(Number(val))) return '—';
+      if (metric === 'revenue') return fmtMoney(val);
+      if (metric === 'netSubs') {
+        const n = Math.round(Number(val));
+        return n > 0 ? '+' + fmtInt(n) : fmtInt(n);
+      }
+      return fmtInt(val);
+    };
+
+    const currRangeFullVN = `${formatIsoToVN(snap.win.start)} – ${formatIsoToVN(snap.win.end)}`;
+    const activeTeamObj = snap.teamPairs.find(t => t.id === teamFilter);
+
+    // Status chip in Row 2 (always occupies space via visibility so zero layout shift)
+    let statusChipVisible = false;
+    let statusChipText = 'Đủ 15/15 NV';
+    let statusChipHasReset = false;
+    if (teamFilter !== 'ALL' && activeTeamObj) {
+      statusChipVisible = true;
+      statusChipText = `Team: ${activeTeamObj.name.replace(/^Team\s+/i, '')} (${sortedStaff.length} NV)`;
+      statusChipHasReset = true;
+    } else if (selectedIds.length < 15) {
+      statusChipVisible = true;
+      statusChipText = `Đang chọn ${selectedIds.length}/15 NV`;
+      statusChipHasReset = true;
+    } else if (isLongPeriodOver92) {
+      statusChipVisible = true;
+      statusChipText = `Kỳ dài ${days.length} ngày (>92 cột) · Gợi ý xem Tháng`;
+    } else if (snap.win.isPartialQuarter) {
+      statusChipVisible = true;
+      statusChipText = `Chưa trọn quý (${snap.win.dayCount}/${snap.win.quarterCalendarDays}d)`;
+    } else if (snap.win.isPartialPeriod) {
+      statusChipVisible = true;
+      statusChipText = `Chưa trọn kỳ (${snap.win.dayCount}/${snap.win.totalCalendarDays}d)`;
+    }
+
+    const sortArrow = v3State.staffDailySortAsc ? '▲' : '▼';
+
+    body.innerHTML = `
+      <section class="v3-panel v3-staff-panel-locked is-daily-tab" id="v3-staff-main-panel"
+               data-staff-active-tab="daily"
+               data-staff-daily-metric-active="${metric}"
+               data-staff-daily-day-count="${days.length}"
+               data-staff-daily-company-total="${companyHasPerm ? companyPeriodSum : ''}"
+               data-staff-daily-emp-totals='${esc(JSON.stringify(empPeriodTotal))}'
+               data-staff-daily-company-days='${esc(JSON.stringify(companyDailyByDay))}'>
+        <div class="v3-chart-a-header" id="v3-staff-daily-header">
+          <!-- Hàng 1 cố định: Tên bảng + ngày kỳ + nhãn trễ Analytics 24/10–26/10 + Công tắc 6 chỉ số -->
+          <div class="v3-chart-a-header-row1" id="v3-staff-daily-header-row1">
+            <div class="v3-panel-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.6px;min-width:160px;flex:1 1 auto;">
+              <i class="ri-calendar-todo-line" style="color:#38BDF8;"></i>
+              <span>Số liệu theo ngày — ${esc(metricLabelMap[metric])}</span>
+              <span class="v3-panel-date-tag">(${currRangeFullVN} · ${days.length} ngày)</span>
+              ${hasDelayDaysInWindow ? `
+                <span class="v3-badge v3-daily-unstable-badge" id="v3-staff-daily-delay-badge" style="margin-left:4px;font-size:9.6px;padding:1px 6px;" title="Ngày 24/10–26/10 nằm trong khoảng trễ YouTube Analytics 2–3 ngày">
+                  <i class="ri-time-line"></i> 24/10–26/10: Dữ liệu chưa ổn định
+                </span>
+              ` : ''}
+            </div>
+            <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap;flex-shrink:0;">
+              ${isLongPeriodOver92 ? `
+                <button type="button" class="v3-staff-scale-quick-btn" id="v3-staff-daily-go-month-btn" title="Kỳ đang chọn vượt 92 cột ngày (${days.length} ngày) · Bấm để mở biểu đồ nhóm theo Tháng">
+                  <i class="ri-calendar-2-line"></i> Gợi ý nhóm Tháng (${days.length} ngày)
+                </button>
+              ` : ''}
+              <div class="v3-preset-group v3-staff-compact-switch" id="v3-staff-daily-metric-switch" role="group" aria-label="Công tắc chỉ số bảng Số liệu theo ngày">
+                <button type="button" class="v3-preset-btn ${metric === 'views' ? 'active' : ''}" data-staff-daily-metric="views">Views</button>
+                <button type="button" class="v3-preset-btn ${metric === 'netSubs' ? 'active' : ''}" data-staff-daily-metric="netSubs">Sub ròng</button>
+                <button type="button" class="v3-preset-btn ${metric === 'revenue' ? 'active' : ''}" data-staff-daily-metric="revenue">Doanh thu</button>
+                <button type="button" class="v3-preset-btn ${metric === 'likes' ? 'active' : ''}" data-staff-daily-metric="likes">Like</button>
+                <button type="button" class="v3-preset-btn ${metric === 'dislikes' ? 'active' : ''}" data-staff-daily-metric="dislikes">Dislike</button>
+                <button type="button" class="v3-preset-btn ${metric === 'comments' ? 'active' : ''}" data-staff-daily-metric="comments">Comment</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hàng 2 cố định: Lọc Team + Dropdown nổi chọn nhân viên (mặc định 15 NV) + Chip trạng thái (giữ chỗ cố định) + Tô màu theo giá trị + Xuất Excel -->
+          <div class="v3-chart-a-header-row2" id="v3-staff-daily-header-row2">
+            <div class="v3-preset-group v3-staff-compact-switch" id="v3-staff-daily-team-group" role="group" aria-label="Lọc nhân viên theo Team">
+              <button type="button" class="v3-preset-btn ${teamFilter === 'ALL' ? 'active' : ''}" data-staff-daily-team="ALL">Tất cả (15)</button>
+              ${snap.teamPairs.map(tp => `
+                <button type="button" class="v3-preset-btn ${teamFilter === tp.id ? 'active' : ''}" data-staff-daily-team="${tp.id}">
+                  <span class="v3-team-dot" style="background:${tp.color};"></span> ${esc(tp.name.replace(/^Team\s+/i, ''))} (5)
+                </button>
+              `).join('')}
+            </div>
+
+            ${renderUnifiedFloatingPicker({
+              wrapperId: 'v3-staff-daily-picker',
+              btnId: 'v3-staff-daily-picker-btn',
+              btnClass: 'v3-ch-picker-btn v3-staff-picker-trigger',
+              btnTitle: 'Chọn nhân viên hiển thị trong bảng Số liệu theo ngày (mặc định tất cả 15 NV)',
+              triggerHtml: `
+                <i class="ri-user-search-line" style="color:#38BDF8;font-size:13.5px;"></i>
+                <span class="v3-ch-picker-btn-text">
+                  <strong>Nhân viên (${selectedIds.length}/15)</strong>
+                </span>
+                <i class="ri-arrow-down-s-line" style="color:var(--text-muted);font-size:14px;margin-left:auto;"></i>
+              `,
+              menuId: 'v3-staff-daily-picker-menu',
+              searchId: 'v3-staff-daily-picker-search',
+              searchPlaceholder: 'Tìm tên nhân viên, tên kênh, team...',
+              searchQuery: v3State.staffDailyPickerQuery,
+              teamBarId: 'v3-staff-daily-picker-team-bar',
+              teamChipAttr: 'data-stf-daily-picker-team',
+              teamFilter: v3State.staffDailyPickerTeamFilter,
+              showTop3AndClear: true,
+              selectAllBtnId: 'v3-staff-daily-pick-all',
+              top3BtnId: 'v3-staff-daily-pick-top3',
+              clearBtnId: 'v3-staff-daily-pick-clear',
+              listId: 'v3-staff-daily-picker-list',
+              emptyId: 'v3-staff-daily-picker-empty',
+              emptyText: 'Không tìm thấy nhân viên phù hợp',
+              isOpen: v3State.staffDailyPickerOpen,
+              isMulti: true,
+              maxSelect: 15,
+              selectedIds,
+              rowToggleAttr: 'data-stf-daily-toggle-id',
+              rowTeamAttr: 'data-stf-daily-team-id',
+              items: allStaffByViews.map(item => ({
+                id: item.empId,
+                title: item.empName,
+                subtitle: item.channelTitleSummary,
+                color: item.color,
+                teamId: item.teamId,
+                teamName: item.teamName.replace(/^Team\s+/i, ''),
+                teamColor: item.teamColor,
+                views: item.curr.views,
+                searchBlob: `${item.empName} ${item.allChannelTitles} ${item.teamName}`.toLowerCase()
+              }))
+            })}
+
+            <span class="v3-chart-status-chip v3-staff-row2-status-chip ${statusChipVisible ? 'is-visible' : 'is-hidden'}" id="v3-staff-daily-status-chip" title="${esc(statusChipText)}">
+              <span class="v3-chart-status-chip-text">${esc(statusChipText)}</span>
+              <button type="button" class="v3-chart-status-chip-close" id="v3-staff-daily-reset-filter-btn" title="Về mặc định tất cả 15 nhân viên" aria-label="Về mặc định tất cả 15 nhân viên" style="display:${statusChipHasReset ? 'inline-flex' : 'none'};">×</button>
+            </span>
+
+            <div style="display:inline-flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;">
+              <button type="button"
+                      class="v3-preset-btn v3-staff-prev-ref-btn ${heatmapOn ? 'active' : ''}"
+                      id="v3-staff-daily-heatmap-btn"
+                      data-heatmap-active="${heatmapOn ? 'true' : 'false'}"
+                      title="Bật/tắt tô màu nền theo giá trị chuẩn hóa trên từng cột ngày">
+                <i class="ri-Drop-line ri-contrast-drop-2-line"></i>
+                <span>Tô màu theo giá trị</span>
+              </button>
+              <button type="button"
+                      class="v3-preset-btn v3-staff-prev-ref-btn v3-staff-export-excel-btn"
+                      id="v3-staff-daily-export-btn"
+                      title="Xuất bảng Số liệu theo ngày đang hiển thị ra file Excel (.csv UTF-8)">
+                <i class="ri-file-excel-2-line" style="color:#10B981;"></i>
+                <span>Xuất Excel</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="v3-table-wrap v3-staff-table-wrap v3-staff-daily-table-wrap" id="v3-staff-daily-table-wrap">
+          <table class="v3-table v3-staff-daily-matrix" id="v3-staff-daily-table">
+            <thead>
+              <tr class="v3-daily-head-row">
+                <th class="v3-daily-sticky-col v3-daily-col-emp">
+                  <div class="v3-daily-th-emp-inner">
+                    <span>Nhân viên (${sortedStaff.length}/15)</span>
+                    <small>Cố định khi cuộn ngang</small>
+                  </div>
+                </th>
+                <th class="v3-daily-sticky-col v3-daily-col-total num" id="v3-staff-daily-sort-total" data-sort-dir="${v3State.staffDailySortAsc ? 'asc' : 'desc'}" title="Nhấn để sắp xếp theo Tổng kỳ">
+                  <div class="v3-daily-th-total-inner">
+                    <span>Tổng kỳ ${sortArrow}</span>
+                    <small>${esc(snap.win.shortPresetName || `${days.length} ngày`)}</small>
+                  </div>
+                </th>
+                ${days.map(d => {
+                  const wk = getShortWeekdayVN(d);
+                  const shortDate = formatIsoToShortVN(d);
+                  const isWknd = isWeekendIso(d);
+                  const isDelay = isAnalyticsDelayDayIso(d);
+                  return `
+                    <th class="num v3-daily-day-th ${isWknd ? 'is-weekend' : ''} ${isDelay ? 'is-delay-day' : ''}"
+                        data-day-iso="${d}"
+                        data-is-weekend="${isWknd ? 'true' : 'false'}"
+                        data-delay-day="${isDelay ? 'true' : 'false'}"
+                        title="${wk} · ${formatIsoToVN(d)}${isDelay ? ' — Dữ liệu chưa ổn định (trễ Analytics 2–3 ngày)' : ''}">
+                      <div class="v3-daily-th-day-top">${wk} · ${shortDate}</div>
+                      ${isDelay ? `<div class="v3-daily-th-delay-tag">Dữ liệu chưa ổn định</div>` : (isWknd ? `<div class="v3-daily-th-wknd-tag">Cuối tuần</div>` : `<div class="v3-daily-th-sub-placeholder">&nbsp;</div>`)}
+                    </th>
+                  `;
+                }).join('')}
+              </tr>
+              <!-- Dòng "Tổng công ty" ghim cố định ngay đầu bảng (tổng 15 nhân viên theo từng ngày và tổng kỳ — Mục 4 & 16) -->
+              <tr class="v3-daily-company-row" id="v3-staff-daily-company-row"
+                  data-company-period-total="${companyHasPerm ? companyPeriodSum : ''}">
+                <th class="v3-daily-sticky-col v3-daily-col-emp">
+                  <div class="v3-daily-company-cell">
+                    <span class="v3-badge highest" style="font-size:9px;padding:1px 5px;">GHIM</span>
+                    <div>
+                      <strong>Tổng công ty (15 NV)</strong>
+                      <div class="v3-daily-company-sub">Khớp Toàn network Trang 1</div>
+                    </div>
+                  </div>
+                </th>
+                <th class="v3-daily-sticky-col v3-daily-col-total num" data-company-total-val="${companyHasPerm ? companyPeriodSum : ''}">
+                  ${companyHasPerm
+                    ? `<strong>${fmtDailyCellVal(companyPeriodSum)}</strong>`
+                    : `<span class="v3-daily-no-perm-cell" data-no-perm="true">Chưa cấp quyền</span>`}
+                </th>
+                ${days.map(d => {
+                  const isWknd = isWeekendIso(d);
+                  const isDelay = isAnalyticsDelayDayIso(d);
+                  const cVal = companyDailyByDay[d];
+                  return `
+                    <th class="num v3-daily-day-td is-company-cell ${isWknd ? 'is-weekend' : ''} ${isDelay ? 'is-delay-day' : ''}"
+                        data-company-day="${d}"
+                        data-company-day-val="${cVal !== null && cVal !== undefined ? cVal : ''}">
+                      ${companyHasPerm && cVal !== null
+                        ? `<strong>${fmtDailyCellVal(cVal)}</strong>`
+                        : `<span class="v3-daily-no-perm-cell" data-no-perm="true">Chưa cấp quyền</span>`}
+                    </th>
+                  `;
+                }).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${sortedStaff.length === 0 ? `
+                <tr>
+                  <td colspan="${days.length + 2}" style="text-align:center;padding:32px;color:var(--text-muted);">
+                    Chưa có nhân viên nào trong bộ lọc hiện tại · Nhấn <strong>Chọn tất cả</strong> trong ô Nhân viên để hiển thị lại đủ 15 nhân viên.
+                  </td>
+                </tr>
+              ` : sortedStaff.map(st => {
+                const dMap = empDailyMap.get(st.empId) || new Map();
+                const hasPerm = hasMetricPerm(st, metric);
+                const pTotal = empPeriodTotal[st.empId];
+                const shortTeam = st.teamName.replace(/^Team\s+/i, '');
+                return `
+                  <tr class="v3-daily-emp-row"
+                      data-daily-emp-id="${st.empId}"
+                      data-daily-emp-team="${st.teamId}"
+                      data-daily-emp-color="${st.color}"
+                      data-daily-emp-total="${hasPerm && pTotal !== null ? pTotal : ''}"
+                      data-daily-has-perm="${hasPerm ? 'true' : 'false'}">
+                    <td class="v3-daily-sticky-col v3-daily-col-emp">
+                      <div class="v3-daily-emp-cell-main">
+                        <span class="v3-team-dot" style="background:${st.color};flex-shrink:0;" data-emp-color="${st.color}"></span>
+                        <div class="v3-daily-emp-meta">
+                          <div class="v3-daily-emp-line1">
+                            <strong class="v3-daily-emp-name">${esc(st.empName)}</strong>
+                            <span class="v3-badge v3-daily-team-mini" style="background:${st.teamColor}1D;color:${st.teamColor};border:1px solid ${st.teamColor}48;">${esc(shortTeam)}</span>
+                          </div>
+                          <div class="v3-daily-emp-ch" title="${esc(st.allChannelTitles)}">${esc(st.channelTitleSummary)}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="v3-daily-sticky-col v3-daily-col-total num" data-emp-period-total="${hasPerm && pTotal !== null ? pTotal : ''}">
+                      ${hasPerm && pTotal !== null
+                        ? `<strong>${fmtDailyCellVal(pTotal)}</strong>`
+                        : `<span class="v3-daily-no-perm-cell" data-no-perm="true">Chưa cấp quyền</span>`}
+                    </td>
+                    ${days.map(d => {
+                      const isWknd = isWeekendIso(d);
+                      const isDelay = isAnalyticsDelayDayIso(d);
+                      const val = hasPerm ? getPointVal(dMap.get(d), metric) : null;
+                      let hmStyle = '';
+                      let hmRatioAttr = '';
+                      if (heatmapOn && hasPerm && val !== null && dayColStats[d]) {
+                        const { min, max } = dayColStats[d];
+                        const ratio = max > min ? (Number(val) - min) / (max - min) : (max > 0 ? 0.5 : 0);
+                        hmRatioAttr = `data-heatmap-ratio="${ratio.toFixed(3)}"`;
+                        if (Number(val) < 0) {
+                          const alpha = (0.08 + (1 - ratio) * 0.24).toFixed(3);
+                          hmStyle = `background:rgba(239, 68, 68, ${alpha}) !important;`;
+                        } else {
+                          const alpha = (0.05 + ratio * 0.28).toFixed(3);
+                          hmStyle = `background:rgba(56, 189, 248, ${alpha}) !important;`;
+                        }
+                      }
+                      return `
+                        <td class="num v3-daily-day-td ${isWknd ? 'is-weekend' : ''} ${isDelay ? 'is-delay-day' : ''} ${heatmapOn && hasPerm && val !== null ? 'is-heatmap-cell' : ''}"
+                            data-emp-day="${d}"
+                            data-emp-day-val="${hasPerm && val !== null ? val : ''}"
+                            ${hmRatioAttr}
+                            style="${hmStyle}">
+                          ${hasPerm && val !== null
+                            ? fmtDailyCellVal(val)
+                            : `<span class="v3-daily-no-perm-cell" data-no-perm="true">Chưa cấp quyền</span>`}
+                        </td>
+                      `;
+                    }).join('')}
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+
+    // Bind Metric Switch (Views | Sub ròng | Doanh thu | Like | Dislike | Comment)
+    body.querySelectorAll('#v3-staff-daily-metric-switch [data-staff-daily-metric]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        v3State.staffDailyMetric = btn.getAttribute('data-staff-daily-metric') || 'views';
+        renderStaffPage(snap);
+      });
+    });
+
+    // Bind Team Filter
+    body.querySelectorAll('#v3-staff-daily-team-group [data-staff-daily-team]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const nextTeam = btn.getAttribute('data-staff-daily-team') || 'ALL';
+        v3State.staffDailyTeamFilter = nextTeam;
+        v3State.staffDailyPickerTeamFilter = nextTeam;
+        renderStaffPage(snap);
+      });
+    });
+
+    // Bind Reset Filter Chip Button
+    document.getElementById('v3-staff-daily-reset-filter-btn')?.addEventListener('click', () => {
+      v3State.staffDailyTeamFilter = 'ALL';
+      v3State.staffDailyPickerTeamFilter = 'ALL';
+      v3State.staffDailyClearedEmpty = false;
+      v3State.staffDailySelectedIds = allStaff.map(st => st.empId);
+      renderStaffPage(snap);
+    });
+
+    // Bind Sort by "Tổng kỳ"
+    document.getElementById('v3-staff-daily-sort-total')?.addEventListener('click', () => {
+      v3State.staffDailySortAsc = !v3State.staffDailySortAsc;
+      renderStaffPage(snap);
+    });
+
+    // Bind Heatmap Toggle ("Tô màu theo giá trị")
+    document.getElementById('v3-staff-daily-heatmap-btn')?.addEventListener('click', () => {
+      v3State.staffDailyHeatmap = !v3State.staffDailyHeatmap;
+      renderStaffPage(snap);
+    });
+
+    // Bind Long Period (>92 days) Quick Switch to Month Chart
+    document.getElementById('v3-staff-daily-go-month-btn')?.addEventListener('click', () => {
+      v3State.staffTab = 'compare';
+      v3State.staffChartGranularity = 'month';
+      v3State.staffChartMetric = metric;
+      renderStaffPage(snap);
+    });
+
+    // Bind Excel Export ("Xuất Excel")
+    document.getElementById('v3-staff-daily-export-btn')?.addEventListener('click', () => {
+      exportStaffDailyExcel({
+        snap,
+        metric,
+        metricLabel: metricLabelMap[metric],
+        days,
+        sortedStaff,
+        empDailyMap,
+        empPeriodTotal,
+        hasMetricPerm,
+        getPointVal,
+        companyHasPerm,
+        companyPeriodSum,
+        companyDailyByDay,
+        fmtDailyCellVal
+      });
+    });
+
+    // Bind Shared Floating Employee Multi-Picker
+    bindUnifiedFloatingPicker(body, {
+      wrapperId: 'v3-staff-daily-picker',
+      btnId: 'v3-staff-daily-picker-btn',
+      menuId: 'v3-staff-daily-picker-menu',
+      searchId: 'v3-staff-daily-picker-search',
+      listId: 'v3-staff-daily-picker-list',
+      emptyId: 'v3-staff-daily-picker-empty',
+      teamChipAttr: 'data-stf-daily-picker-team',
+      rowToggleAttr: 'data-stf-daily-toggle-id',
+      rowTeamAttr: 'data-stf-daily-team-id',
+      selectAllBtnId: 'v3-staff-daily-pick-all',
+      top3BtnId: 'v3-staff-daily-pick-top3',
+      clearBtnId: 'v3-staff-daily-pick-clear',
+      getOpenState: () => v3State.staffDailyPickerOpen,
+      setOpenState: (v) => { v3State.staffDailyPickerOpen = v; },
+      getSearchQuery: () => v3State.staffDailyPickerQuery,
+      setSearchQuery: (v) => { v3State.staffDailyPickerQuery = v; },
+      getTeamFilter: () => v3State.staffDailyPickerTeamFilter,
+      setTeamFilter: (v) => { v3State.staffDailyPickerTeamFilter = v; },
+      onSelectAll: () => {
+        v3State.staffDailyClearedEmpty = false;
+        v3State.staffDailySelectedIds = allStaff.map(st => st.empId);
+        v3State.staffDailyPickerOpen = true;
+        renderStaffPage(snap);
+      },
+      onSelectTop3: () => {
+        v3State.staffDailyClearedEmpty = false;
+        v3State.staffDailySelectedIds = allStaffByViews.slice(0, 3).map(st => st.empId);
+        v3State.staffDailyPickerOpen = true;
+        renderStaffPage(snap);
+      },
+      onClear: () => {
+        v3State.staffDailyClearedEmpty = true;
+        v3State.staffDailySelectedIds = [];
+        v3State.staffDailyPickerQuery = '';
+        v3State.staffDailyPickerTeamFilter = 'ALL';
+        v3State.staffDailyPickerOpen = true;
+        renderStaffPage(snap);
+      },
+      onRowClick: (empId) => {
+        const curr = [...(v3State.staffDailySelectedIds || [])];
+        const idx = curr.indexOf(empId);
+        if (idx >= 0) {
+          curr.splice(idx, 1);
+          v3State.staffDailyClearedEmpty = (curr.length === 0);
+        } else {
+          curr.push(empId);
+          v3State.staffDailyClearedEmpty = false;
+        }
+        v3State.staffDailySelectedIds = curr;
+        renderStaffPage(snap);
+      }
+    });
+  }
+
+  function exportStaffDailyExcel(cfg) {
+    const c = core();
+    const currCode = (c.state && c.state.currency) || 'USD';
+    const {
+      snap,
+      metric,
+      metricLabel,
+      days,
+      sortedStaff,
+      empDailyMap,
+      empPeriodTotal,
+      hasMetricPerm,
+      getPointVal,
+      companyHasPerm,
+      companyPeriodSum,
+      companyDailyByDay,
+      fmtDailyCellVal
+    } = cfg;
+
+    const csvEsc = (val) => {
+      const s = val === null || val === undefined ? '' : String(val);
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+
+    const headerCols = [
+      'Nhân viên',
+      'Team',
+      'Kênh phụ trách',
+      'Tổng kỳ',
+      ...days.map(d => {
+        const wk = getShortWeekdayVN(d);
+        const sd = formatIsoToShortVN(d);
+        const delayTag = isAnalyticsDelayDayIso(d) ? ' [Dữ liệu chưa ổn định]' : '';
+        return `${wk} · ${sd}${delayTag}`;
+      })
+    ];
+
+    const rows = [];
+    rows.push([
+      `CMedia YouTube Analytics - Số liệu theo ngày (${metricLabel})`,
+      `Kỳ: ${formatIsoToVN(snap.win.start)} - ${formatIsoToVN(snap.win.end)}`,
+      `Tiền tệ: ${currCode}`,
+      `Số nhân viên: ${sortedStaff.length}/15`
+    ]);
+    rows.push(headerCols);
+
+    // Pinned Company Row
+    rows.push([
+      'Tổng công ty (15 NV)',
+      'Toàn công ty',
+      '15 kênh thuộc CMedia',
+      companyHasPerm ? fmtDailyCellVal(companyPeriodSum) : 'Chưa cấp quyền',
+      ...days.map(d => {
+        const v = companyDailyByDay[d];
+        return (companyHasPerm && v !== null && v !== undefined) ? fmtDailyCellVal(v) : 'Chưa cấp quyền';
+      })
+    ]);
+
+    // Displayed Employee Rows in current sort order
+    sortedStaff.forEach(st => {
+      const hasPerm = hasMetricPerm(st, metric);
+      const pTotal = empPeriodTotal[st.empId];
+      const dMap = empDailyMap.get(st.empId) || new Map();
+      rows.push([
+        st.empName,
+        st.teamName.replace(/^Team\s+/i, ''),
+        st.allChannelTitles,
+        hasPerm && pTotal !== null ? fmtDailyCellVal(pTotal) : 'Chưa cấp quyền',
+        ...days.map(d => {
+          if (!hasPerm) return 'Chưa cấp quyền';
+          const v = getPointVal(dMap.get(d), metric);
+          return v !== null && v !== undefined ? fmtDailyCellVal(v) : 'Chưa cấp quyền';
+        })
+      ]);
+    });
+
+    const csvBody = '\uFEFF' + rows.map(r => r.map(csvEsc).join(',')).join('\r\n');
+    const filename = `bao_cao_nv_theo_ngay_${metric}_${snap.win.start}_${snap.win.end}_${currCode}.csv`;
+
+    window.__LAST_STAFF_DAILY_EXPORT__ = {
+      filename,
+      metric,
+      currency: currCode,
+      start: snap.win.start,
+      end: snap.win.end,
+      dayCount: days.length,
+      employeeCount: sortedStaff.length,
+      rows,
+      csvBody
+    };
+
+    try {
+      const blob = new Blob([csvBody], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      if (c.showToast) {
+        c.showToast(`Đã xuất file Excel: ${filename} (${sortedStaff.length} NV × ${days.length} ngày)`);
+      }
+    } catch (e) { }
   }
 
   // =========================================================================

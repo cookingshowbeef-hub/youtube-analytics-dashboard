@@ -65,20 +65,20 @@
     {
       "path": "channel_daily.json",
       "row_count": 9990,
-      "bytes": 7307077,
-      "sha256": "89173e149afdd09b57c39edfd915b348a2c1e3cfcdb732fca8c84ebeec62a63d"
+      "bytes": 7441959,
+      "sha256": "f1e1dcd8a4caee043302660a7babf443c0cddee621f455b6591570830ed17da8"
     },
     {
       "path": "video_daily.json",
       "row_count": 4394,
-      "bytes": 3113108,
-      "sha256": "06423df3cc1ec875b22d03493ebc520be25b9e50608da59d3ca64c8b72cfee8d"
+      "bytes": 3170272,
+      "sha256": "95ffb4ffbccb0eda81d82c60e265cf08795b83105d81457f8b6e41d4e22f587f"
     },
     {
       "path": "other_content_daily.json",
       "row_count": 1350,
-      "bytes": 953399,
-      "sha256": "e87f4a3294240de08709628d625f3a647c4c3bf4e6ad894ba448d3040ebf3dd6"
+      "bytes": 971504,
+      "sha256": "a5be4c91587186cf39c191dd0c9e8525762ac5175ca1365fb13a9480744270d3"
     },
     {
       "path": "channel_daily_videos.json",
@@ -89,8 +89,8 @@
     {
       "path": "video_summaries.json",
       "row_count": 150,
-      "bytes": 332330,
-      "sha256": "6068a531e525330ea4899b79578437251b61be43852beb27a3c6ff735febb1ba"
+      "bytes": 338236,
+      "sha256": "739329a425effd2aec100d49be0bda17099045988784106dcc669fe5aa022272"
     },
     {
       "path": "retention.json",
@@ -107,14 +107,14 @@
     {
       "path": "summaries.json",
       "row_count": 272,
-      "bytes": 457618,
-      "sha256": "ca17c9d203dc8f5687309826e09363434e601ebb7e500408482d2a06d71551a3"
+      "bytes": 465397,
+      "sha256": "cd6ae03144a2079c04eb7c1757c7e75ea5f88e19ebdb747546a9e6feea8441b0"
     },
     {
       "path": "period_rollups.json",
       "row_count": 1020,
-      "bytes": 1048159,
-      "sha256": "ec3a92437a1f9c11e181feb5ca959bf831b3d7aeb9eba947a7d22ca9489eda54"
+      "bytes": 1063589,
+      "sha256": "b079fada70847275cd24fcd9857ff5f6708d99e0220eaa1f99404171a252ca09"
     },
     {
       "path": "daily_fx.json",
@@ -125,14 +125,14 @@
     {
       "path": "scenarios.json",
       "row_count": 9,
-      "bytes": 32516,
-      "sha256": "e4376b0f5fd3fe9695de6e269894cc026a08d844cfeb1d82a6d0d7e81527d35f"
+      "bytes": 32628,
+      "sha256": "69fc973b4880ca9d94f658a0d804f263bf17965d085eac4e44683bbb173ab4ba"
     },
     {
       "path": "channel_summary_28d.csv",
       "row_count": 15,
-      "bytes": 5131,
-      "sha256": "c99cb5e30c5e0196a77cfb1561aa2a61fbbe536800fa785c34dba85d25ae2885"
+      "bytes": 5199,
+      "sha256": "bfad133fa8a831611d9dd843c6a690bb8b2ef4cdeb4863bd8fff3aea0d625165"
     },
     {
       "path": "channel_snapshot_daily.json",

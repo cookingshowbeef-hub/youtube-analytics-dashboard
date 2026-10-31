@@ -21,7 +21,7 @@ START = dt.date(2025, 1, 1)
 END = dt.date(2026, 10, 28)
 DETAIL_START = END - dt.timedelta(days=89)
 DEFAULT_START = END - dt.timedelta(days=27)
-INT_FIELDS = ("views", "engagedViews", "estimatedMinutesWatched", "likes", "comments",
+INT_FIELDS = ("views", "engagedViews", "estimatedMinutesWatched", "likes", "dislikes", "comments",
               "shares", "subscribersGained", "subscribersLost", "adImpressions", "monetizedPlaybacks")
 CENT_FIELDS = ("ad_cents", "premium_cents", "gross_cents")
 RAW_FIELDS = INT_FIELDS + CENT_FIELDS + ("view_percent_basis",)
@@ -190,6 +190,7 @@ def main():
             raw = dict(views=views, engagedViews=views,
                        estimatedMinutesWatched=round(views * avg_seconds / 60),
                        likes=round(views * r.uniform(0.018, 0.047)),
+                       dislikes=round(views * rng(f"dislikes:{ci}:{day}").uniform(0.0005, 0.0018)),
                        comments=round(views * r.uniform(0.001, 0.005)),
                        shares=round(views * r.uniform(0.002, 0.008)),
                        subscribersGained=round(views * r.uniform(0.001, 0.003)),

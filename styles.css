@@ -8673,6 +8673,348 @@ input:checked + .slider:before {
   white-space: nowrap;
 }
 
+/* ==========================================================================
+   Page 4 Tab 3: "Số liệu theo ngày" (Matrix Table) & Tab 2 Compact Switches
+   ========================================================================== */
+.v3-staff-compact-switch .v3-preset-btn {
+  padding: 0 6.5px !important;
+  font-size: 10.4px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+}
+
+#v3-staff-daily-header-row2 {
+  gap: 5px !important;
+}
+
+.v3-staff-export-excel-btn {
+  border-color: rgba(16, 185, 129, 0.38) !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+  color: #34D399 !important;
+}
+
+.v3-staff-export-excel-btn:hover {
+  border-color: #10B981 !important;
+  background: rgba(16, 185, 129, 0.22) !important;
+  color: #ECFDF5 !important;
+}
+
+.v3-staff-daily-table-wrap {
+  height: 676px;
+  min-height: 676px;
+  max-height: 676px;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  position: relative;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  box-sizing: border-box;
+  background: rgba(15, 23, 42, 0.55);
+  scrollbar-width: thin;
+}
+
+.v3-staff-daily-matrix {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  table-layout: fixed;
+}
+
+/* Sticky Left Columns: Col 1 ("Nhân viên") & Col 2 ("Tổng kỳ") */
+.v3-staff-daily-matrix .v3-daily-col-emp {
+  position: sticky;
+  left: 0;
+  width: 238px;
+  min-width: 238px;
+  max-width: 238px;
+  z-index: 4;
+  background: #0F172A;
+  border-right: 1px solid rgba(148, 163, 184, 0.18);
+  box-sizing: border-box;
+}
+
+.v3-staff-daily-matrix .v3-daily-col-total {
+  position: sticky;
+  left: 238px;
+  width: 118px;
+  min-width: 118px;
+  max-width: 118px;
+  z-index: 4;
+  background: #0F172A;
+  border-right: 2px solid rgba(56, 189, 248, 0.42);
+  box-sizing: border-box;
+}
+
+#v3-staff-daily-picker-menu {
+  width: 575px !important;
+  min-width: 575px !important;
+}
+
+/* Sticky Top Header Row 1 (Day columns) */
+.v3-staff-daily-matrix thead tr.v3-daily-head-row th {
+  position: sticky;
+  top: 0;
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  z-index: 6;
+  background: #0B1120;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 3px 6px !important;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.v3-staff-daily-matrix thead tr.v3-daily-head-row th.v3-daily-col-emp,
+.v3-staff-daily-matrix thead tr.v3-daily-head-row th.v3-daily-col-total {
+  z-index: 10;
+  background: #0B1120;
+}
+
+#v3-staff-daily-sort-total {
+  cursor: pointer;
+  user-select: none;
+  color: #38BDF8;
+}
+
+#v3-staff-daily-sort-total:hover {
+  background: #13203B;
+}
+
+/* Pinned Top Row: "Tổng công ty (15 NV)" (Row 2 in thead, sticky at top: 42px) */
+.v3-staff-daily-matrix thead tr.v3-daily-company-row th {
+  position: sticky;
+  top: 42px;
+  height: 38px;
+  min-height: 38px;
+  max-height: 38px;
+  z-index: 5;
+  background: #112239;
+  border-bottom: 2px solid rgba(56, 189, 248, 0.45);
+  border-right: 1px solid rgba(148, 163, 184, 0.14);
+  padding: 3px 7px !important;
+  font-family: var(--font-mono);
+  font-size: 11px !important;
+  color: #F8FAFC;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.v3-staff-daily-matrix thead tr.v3-daily-company-row th.v3-daily-col-emp,
+.v3-staff-daily-matrix thead tr.v3-daily-company-row th.v3-daily-col-total {
+  z-index: 9;
+  background: #112239;
+}
+
+.v3-staff-daily-matrix thead tr.v3-daily-company-row th.v3-daily-col-total {
+  border-right: 2px solid rgba(56, 189, 248, 0.5);
+  color: #38BDF8;
+}
+
+.v3-daily-company-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  text-align: left;
+}
+
+.v3-daily-company-cell strong {
+  font-size: 11.2px;
+  color: #F8FAFC;
+  display: block;
+  line-height: 1.15;
+}
+
+.v3-daily-company-sub {
+  font-size: 9.2px;
+  color: #94A3B8;
+  font-weight: 600;
+}
+
+/* Day Columns */
+.v3-daily-day-th,
+.v3-daily-day-td {
+  width: 98px;
+  min-width: 98px;
+  max-width: 98px;
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  padding: 4px 7px !important;
+  font-size: 11px !important;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.v3-daily-th-emp-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+}
+
+.v3-daily-th-emp-inner span {
+  font-size: 10.8px;
+  font-weight: 800;
+  color: #F8FAFC;
+}
+
+.v3-daily-th-emp-inner small,
+.v3-daily-th-total-inner small {
+  font-size: 8.8px;
+  color: #94A3B8;
+  font-weight: 600;
+}
+
+.v3-daily-th-total-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.15;
+}
+
+.v3-daily-th-total-inner span {
+  font-size: 10.8px;
+  font-weight: 800;
+}
+
+.v3-daily-th-day-top {
+  font-size: 10.4px;
+  font-weight: 800;
+  color: #E2E8F0;
+  font-family: var(--font-mono);
+  line-height: 1.15;
+}
+
+.v3-daily-th-wknd-tag {
+  font-size: 8.4px;
+  color: #38BDF8;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-top: 1px;
+}
+
+.v3-daily-th-delay-tag {
+  font-size: 8.1px;
+  color: #FBBF24;
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 3px;
+  padding: 0 3px;
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-top: 1px;
+}
+
+.v3-daily-th-sub-placeholder {
+  font-size: 8.4px;
+  line-height: 1.1;
+  margin-top: 1px;
+}
+
+/* Weekend Subtle Background Tint (Item 5) */
+.v3-staff-daily-matrix thead tr.v3-daily-head-row th.is-weekend {
+  background: #131F35;
+}
+
+.v3-staff-daily-matrix thead tr.v3-daily-company-row th.is-weekend {
+  background: #172B47;
+}
+
+.v3-staff-daily-matrix tbody td.is-weekend {
+  background: rgba(56, 189, 248, 0.045);
+}
+
+/* Analytics Delay Days (24/10–26/10) Subtle Border/Tint (Item 10) */
+.v3-staff-daily-matrix thead tr.v3-daily-head-row th.is-delay-day {
+  background: #1F1B16;
+  border-bottom-color: rgba(245, 158, 11, 0.55);
+}
+
+.v3-staff-daily-matrix tbody td.is-delay-day {
+  background: rgba(245, 158, 11, 0.04);
+}
+
+/* Employee Body Rows */
+.v3-staff-daily-matrix tbody tr.v3-daily-emp-row {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+}
+
+.v3-staff-daily-matrix tbody tr.v3-daily-emp-row:hover td {
+  background: rgba(30, 41, 59, 0.85);
+}
+
+.v3-staff-daily-matrix tbody tr.v3-daily-emp-row:hover td.v3-daily-col-emp,
+.v3-staff-daily-matrix tbody tr.v3-daily-emp-row:hover td.v3-daily-col-total {
+  background: #16233B;
+}
+
+.v3-daily-emp-cell-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.v3-daily-emp-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.v3-daily-emp-line1 {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.v3-daily-emp-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: #F8FAFC;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v3-daily-team-mini {
+  font-size: 8.4px !important;
+  padding: 0 4px !important;
+  flex-shrink: 0;
+}
+
+.v3-daily-emp-ch {
+  font-size: 9.4px;
+  color: #94A3B8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v3-daily-no-perm-cell {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 9.2px;
+  font-weight: 700;
+  color: #FBBF24;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px dashed rgba(245, 158, 11, 0.4);
+  border-radius: 4px;
+  padding: 1px 4px;
+  white-space: nowrap;
+}
+
+
 
 
 

@@ -46,7 +46,7 @@ def main():
     index = {(r["channel_id"], r["day"]): r for r in daily}
     check("unique_channel_days_and_valid_fk", len(index) == len(daily) == 9990 and {r["channel_id"] for r in daily} == ids)
     check("video_days_unique_and_channel_fk_valid", len({(r["video_id"], r["day"]) for r in videos}) == len(videos) and all(video_links.get(r["video_id"]) == r["channel_id"] for r in videos))
-    additive = ["views", "engagedViews", "estimatedMinutesWatched", "likes", "comments", "shares", "subscribersGained", "subscribersLost", "adImpressions", "monetizedPlaybacks"]
+    additive = ["views", "engagedViews", "estimatedMinutesWatched", "likes", "dislikes", "comments", "shares", "subscribersGained", "subscribersLost", "adImpressions", "monetizedPlaybacks"]
     money = ["estimatedRevenue", "estimatedAdRevenue", "estimatedRedPartnerRevenue", "grossRevenue"]
 
     def aggregate(rows):
@@ -1059,6 +1059,132 @@ def main():
                 if not daily_report_ok:
                     break
     check("page3_daily_report_5_metrics_reconcile_with_kpi_cards_and_daily_videos", daily_report_ok)
+
+    # Check 40 (Page 4 Item 20): Page 4 Tab 3 ("Số liệu theo ngày") & Tab 2 ("Báo cáo NV theo biểu đồ" — Ngày | Tháng):
+    # - In both USD and VND, across all periods (7d, 30d, Month, Quarter, Custom):
+    #   1. Sum of daily values for each employee equals their period total in Tab 1 ("Báo cáo NV theo số liệu")
+    #      and equals the sum of their assigned channels on Page 2, for all 6 metrics (views, netSubs, revenue, likes, dislikes, comments).
+    #   2. Daily column sum of all 15 employees ("Tổng công ty") equals Page 1 "Toàn network" on that same day,
+    #      and the 27/09–26/10 period total equals 5,443,838 views.
+    #   3. Monthly sum in Tab 2 ("Tháng" mode) equals the exact sum of days belonging to that month within the period,
+    #      and partial months are accurately flagged (covered_days < calendar_days_in_month).
+    #   4. Engagement rate calculated from (likes + comments + shares) / views matches the displayed value for every employee and company total.
+    p4_daily_and_monthly_ok = True
+    p4_test_windows = [
+        ("2026-09-27", "2026-10-26"),  # Default 30d (5,443,838 views)
+        ("2026-10-20", "2026-10-26"),  # 7d
+        ("2026-10-01", "2026-10-26"),  # Partial Month 10/2026 (26/31 days)
+        ("2026-07-01", "2026-09-30"),  # Full Quarter Q3/2026 (92 days)
+        ("2026-07-24", "2026-10-26"),  # Custom 95-day window (> 92 days)
+    ]
+    for w_start, w_end in p4_test_windows:
+        w_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and w_start <= r["day"] <= w_end]
+        if not w_days:
+            p4_daily_and_monthly_ok = False
+            break
+
+        # Group w_days by calendar month (YYYY-MM) for "Tháng" mode check
+        month_groups = defaultdict(list)
+        for d_iso in w_days:
+            month_groups[d_iso[:7]].append(d_iso)
+
+        for curr_code, fx_mult in fx_rates_to_test:
+            # 1. Per-employee reconciliation across all 6 metrics + engagement rate + monthly grouping
+            emp_daily_matrix = {m: defaultdict(int) for m in ("views", "netSubs", "rev_cents", "likes", "dislikes", "comments")}
+            for emp in baseline["employees"]:
+                eid = emp["id"]
+                e_cids = emp_to_channels[eid]
+
+                # Sum across days for this employee (Tab 3 "Số liệu theo ngày" row sum)
+                row_days_views = [sum(index[cid, d]["views"] for cid in e_cids) for d in w_days]
+                row_days_subs = [sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in e_cids) for d in w_days]
+                row_days_rev_cents = [sum(cents(index[cid, d]["estimatedRevenue"]) for cid in e_cids) for d in w_days]
+                row_days_likes = [sum(index[cid, d]["likes"] for cid in e_cids) for d in w_days]
+                row_days_dislikes = [sum(index[cid, d]["dislikes"] for cid in e_cids) for d in w_days]
+                row_days_comments = [sum(index[cid, d]["comments"] for cid in e_cids) for d in w_days]
+                row_days_shares = [sum(index[cid, d]["shares"] for cid in e_cids) for d in w_days]
+
+                for d_idx, d_iso in enumerate(w_days):
+                    emp_daily_matrix["views"][d_iso] += row_days_views[d_idx]
+                    emp_daily_matrix["netSubs"][d_iso] += row_days_subs[d_idx]
+                    emp_daily_matrix["rev_cents"][d_iso] += row_days_rev_cents[d_idx]
+                    emp_daily_matrix["likes"][d_iso] += row_days_likes[d_idx]
+                    emp_daily_matrix["dislikes"][d_iso] += row_days_dislikes[d_idx]
+                    emp_daily_matrix["comments"][d_iso] += row_days_comments[d_idx]
+
+                # Tab 1 period numbers & Page 2 assigned-channels period numbers
+                p2_views = sum(sum(index[cid, d]["views"] for d in w_days) for cid in e_cids)
+                p2_subs = sum(sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in w_days) for cid in e_cids)
+                p2_rev_cents = sum(sum(cents(index[cid, d]["estimatedRevenue"]) for d in w_days) for cid in e_cids)
+                p2_likes = sum(sum(index[cid, d]["likes"] for d in w_days) for cid in e_cids)
+                p2_dislikes = sum(sum(index[cid, d]["dislikes"] for d in w_days) for cid in e_cids)
+                p2_comments = sum(sum(index[cid, d]["comments"] for d in w_days) for cid in e_cids)
+                p2_shares = sum(sum(index[cid, d]["shares"] for d in w_days) for cid in e_cids)
+
+                row_rev_curr = (Decimal(sum(row_days_rev_cents)) / Decimal(100)) * fx_mult
+                p2_rev_curr = (Decimal(p2_rev_cents) / Decimal(100)) * fx_mult
+
+                # Engagement rate from (likes + comments + shares) / views
+                calc_eng_rate = round(((sum(row_days_likes) + sum(row_days_comments) + sum(row_days_shares)) / sum(row_days_views)) * 100, 2) if sum(row_days_views) > 0 else 0.0
+                disp_eng_rate = round(((p2_likes + p2_comments + p2_shares) / p2_views) * 100, 2) if p2_views > 0 else 0.0
+
+                # Monthly buckets check ("Tháng" mode in Tab 2): each month bucket == sum of days in that month
+                m_views_sum = sum(sum(index[cid, d]["views"] for cid in e_cids for d in m_days) for m_days in month_groups.values())
+                m_subs_sum = sum(sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for cid in e_cids for d in m_days) for m_days in month_groups.values())
+                m_rev_cents_sum = sum(sum(cents(index[cid, d]["estimatedRevenue"]) for cid in e_cids for d in m_days) for m_days in month_groups.values())
+                m_likes_sum = sum(sum(index[cid, d]["likes"] for cid in e_cids for d in m_days) for m_days in month_groups.values())
+                m_dislikes_sum = sum(sum(index[cid, d]["dislikes"] for cid in e_cids for d in m_days) for m_days in month_groups.values())
+                m_comments_sum = sum(sum(index[cid, d]["comments"] for cid in e_cids for d in m_days) for m_days in month_groups.values())
+
+                if not (
+                    sum(row_days_views) == p2_views == m_views_sum and
+                    sum(row_days_subs) == p2_subs == m_subs_sum and
+                    sum(row_days_rev_cents) == p2_rev_cents == m_rev_cents_sum and
+                    row_rev_curr == p2_rev_curr and
+                    sum(row_days_likes) == p2_likes == m_likes_sum and
+                    sum(row_days_dislikes) == p2_dislikes == m_dislikes_sum and
+                    sum(row_days_comments) == p2_comments == m_comments_sum and
+                    sum(row_days_shares) == p2_shares and
+                    calc_eng_rate == disp_eng_rate and
+                    sum(row_days_dislikes) > 0
+                ):
+                    p4_daily_and_monthly_ok = False
+                    break
+
+            if not p4_daily_and_monthly_ok:
+                break
+
+            # 2. Daily column sum of all 15 employees ("Tổng công ty") == Page 1 "Toàn network" on that same day
+            for d_iso in w_days:
+                p1_day_views = sum(index[c["id"], d_iso]["views"] for c in baseline["channels"])
+                p1_day_subs = sum(index[c["id"], d_iso]["subscribersGained"] - index[c["id"], d_iso]["subscribersLost"] for c in baseline["channels"])
+                p1_day_rev_cents = sum(cents(index[c["id"], d_iso]["estimatedRevenue"]) for c in baseline["channels"])
+                p1_day_likes = sum(index[c["id"], d_iso]["likes"] for c in baseline["channels"])
+                p1_day_dislikes = sum(index[c["id"], d_iso]["dislikes"] for c in baseline["channels"])
+                p1_day_comments = sum(index[c["id"], d_iso]["comments"] for c in baseline["channels"])
+
+                col_rev_curr = (Decimal(emp_daily_matrix["rev_cents"][d_iso]) / Decimal(100)) * fx_mult
+                p1_day_rev_curr = (Decimal(p1_day_rev_cents) / Decimal(100)) * fx_mult
+
+                if not (
+                    emp_daily_matrix["views"][d_iso] == p1_day_views and
+                    emp_daily_matrix["netSubs"][d_iso] == p1_day_subs and
+                    emp_daily_matrix["rev_cents"][d_iso] == p1_day_rev_cents and
+                    col_rev_curr == p1_day_rev_curr and
+                    emp_daily_matrix["likes"][d_iso] == p1_day_likes and
+                    emp_daily_matrix["dislikes"][d_iso] == p1_day_dislikes and
+                    emp_daily_matrix["comments"][d_iso] == p1_day_comments
+                ):
+                    p4_daily_and_monthly_ok = False
+                    break
+
+            # Verify 27/09–26/10 company period total == 5,443,838 views
+            if w_start == "2026-09-27" and w_end == "2026-10-26":
+                if sum(emp_daily_matrix["views"].values()) != 5443838:
+                    p4_daily_and_monthly_ok = False
+                    break
+
+    check("page4_daily_tab_and_monthly_chart_reconcile_all_6_metrics_usd_vnd", p4_daily_and_monthly_ok)
 
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())

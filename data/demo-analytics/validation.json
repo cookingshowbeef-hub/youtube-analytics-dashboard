@@ -13,7 +13,7 @@
     "seed": "antigravity-analytics-demo-v1-20261029"
   },
   "passed": true,
-  "check_count": 21,
+  "check_count": 22,
   "checks": [
     {
       "name": "hierarchy_3_teams_15_employees_15_unique_channels_150_sample_videos",
@@ -98,6 +98,10 @@
     {
       "name": "every_generated_json_carries_demo_provenance",
       "passed": true
+    },
+    {
+      "name": "channel_daily_videos_reconcile_views_and_published_counts",
+      "passed": true
     }
   ],
   "counts": {
@@ -106,6 +110,7 @@
     "channels": 15,
     "sample_videos": 150,
     "channel_daily": 9990,
+    "channel_daily_videos": 9990,
     "video_daily": 4394,
     "breakdown_daily": 21600,
     "retention_videos": 145,

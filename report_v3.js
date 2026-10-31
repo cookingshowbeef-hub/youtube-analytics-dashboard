@@ -117,6 +117,10 @@
     channelPickerOpen: false,
     channelPickerQuery: '',
     channelPickerTeamFilter: 'ALL',
+    channelDailyPanelOpen: false,
+    channelSelectedDayIdx: null,
+    channelSelectedDayIso: null,
+    channelHoveredDayIdx: null,
     deepAnalyticsOpen: false,
     compareChannelIds: ['UCSJ4gkVC6NrvII8umztf0Ow', 'UCJhjE7wbdYAae1G25m0tHAA', 'UCM9KEEuzacwVlkt9JfJad7g'],
     compareChannelMetric: 'views',
@@ -298,6 +302,15 @@
     const parts = String(isoStr).slice(0, 10).split('-');
     if (parts.length !== 3) return isoStr;
     return `${parts[2]}/${parts[1]}`;
+  }
+
+  function formatIsoToWeekdayVN(isoStr) {
+    if (!isoStr) return '';
+    const parts = String(isoStr).slice(0, 10).split('-').map(Number);
+    if (parts.length !== 3 || parts.some(Number.isNaN)) return '';
+    const dow = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2])).getUTCDay();
+    const names = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    return names[dow] || '';
   }
 
   function shiftIsoDays(isoStr, deltaDays) {
@@ -635,13 +648,24 @@
       const dailyMap = new Map();
       rawRows.forEach(r => {
         if (r.day <= '2026-10-26') {
-          viewsSum += (r.views || 0);
-          likesSum += (r.likes || 0);
-          commentsSum += (r.comments || 0);
+          const dV = r.views || 0;
+          const dLk = r.likes || 0;
+          const dCm = r.comments || 0;
+          const dInt = dLk + dCm;
+          viewsSum += dV;
+          likesSum += dLk;
+          commentsSum += dCm;
           dailyMap.set(r.day, {
-            views: r.views || 0,
+            views: dV,
             watchHours: null,
             netSubs: null,
+            subsGained: null,
+            subsLost: null,
+            likes: dLk,
+            comments: dCm,
+            shares: null,
+            interactions: dInt,
+            engagementRate: dV > 0 ? Number(((dInt / dV) * 100).toFixed(2)) : null,
             revenue: null,
             videosPublished: Number(r.daily_videos_published || 0)
           });
@@ -731,10 +755,18 @@
         revCents += Math.round(Number(rev) * 100);
       }
 
+      const dInt = lk + cm + sh;
       dailyMap.set(r.day, {
         views: v,
         watchHours: Number((m / 60).toFixed(2)),
         netSubs: sg - sl,
+        subsGained: sg,
+        subsLost: sl,
+        likes: lk,
+        comments: cm,
+        shares: sh,
+        interactions: dInt,
+        engagementRate: v > 0 ? Number(((dInt / v) * 100).toFixed(2)) : 0,
         revenue: dayHasMon ? Number(rev) : null,
         viewsWithMon: dayHasMon ? v : 0,
         videosPublished: Number(r.daily_videos_published || 0)
@@ -2222,6 +2254,555 @@
     bindHelpLinks(root);
   }
 
+  function resolveChannelSelectedDayIdx(cp, win) {
+    const currDays = (win && win.days) || [];
+    const M = currDays.length;
+    if (!M) return 0;
+
+    if (v3State.channelSelectedDayIso && currDays.includes(v3State.channelSelectedDayIso)) {
+      const idx = currDays.indexOf(v3State.channelSelectedDayIso);
+      v3State.channelSelectedDayIdx = idx;
+      return idx;
+    }
+    if (v3State.channelSelectedDayIdx !== null && v3State.channelSelectedDayIdx >= 0 && v3State.channelSelectedDayIdx < M) {
+      v3State.channelSelectedDayIso = currDays[v3State.channelSelectedDayIdx];
+      return v3State.channelSelectedDayIdx;
+    }
+    // Default to peak views day in the active period
+    let peakIdx = 0;
+    let peakViews = -1;
+    currDays.forEach((d, idx) => {
+      const pt = cp && cp.curr && cp.curr.dailyMap ? cp.curr.dailyMap.get(d) : null;
+      const v = pt && pt.views !== null && pt.views !== undefined ? Number(pt.views) : -1;
+      if (v > peakViews) {
+        peakViews = v;
+        peakIdx = idx;
+      }
+    });
+    v3State.channelSelectedDayIdx = peakIdx;
+    v3State.channelSelectedDayIso = currDays[peakIdx];
+    return peakIdx;
+  }
+
+  function fmtDailyDeltaCompact(currVal, refVal, labelPrefix, isCurrency = false, isPercentPoint = false, isSignedDiff = false) {
+    if (currVal === null || currVal === undefined || refVal === null || refVal === undefined || Number.isNaN(Number(currVal)) || Number.isNaN(Number(refVal))) {
+      return `<div class="v3-daily-delta-line"><span class="v3-daily-delta-lbl">${esc(labelPrefix)}:</span> <span class="v3-delta flat v3-daily-delta-badge">—</span></div>`;
+    }
+    const cNum = Number(currVal);
+    const rNum = Number(refVal);
+    const diff = cNum - rNum;
+    let pct = null;
+    if (Math.abs(rNum) > 0.0001) {
+      pct = (diff / Math.abs(rNum)) * 100;
+    } else if (Math.abs(cNum) < 0.0001) {
+      pct = 0;
+    }
+    const isSmall = isPercentPoint
+      ? Math.abs(diff) < 0.05
+      : (pct !== null ? Math.abs(pct) < 0.5 : Math.abs(diff) < 0.01);
+    const cls = isSmall ? 'flat' : (diff > 0.0001 ? 'up' : (diff < -0.0001 ? 'down' : 'flat'));
+    const arrow = diff > 0.0001 ? '▲' : (diff < -0.0001 ? '▼' : '•');
+    const sign = diff > 0.0001 ? '+' : (diff < -0.0001 ? '−' : '');
+    const absDiff = Math.abs(diff);
+
+    let valText = '';
+    if (isPercentPoint) {
+      valText = `${sign}${absDiff.toFixed(2).replace('.', ',')} điểm %`;
+    } else if (isCurrency) {
+      valText = `${sign}${fmtMoney(absDiff)}${pct !== null ? ` (${fmtPct(pct)})` : ''}`;
+    } else if (isSignedDiff) {
+      const diffFormatted = Number.isInteger(cNum) && Number.isInteger(rNum)
+        ? fmtInt(Math.round(absDiff))
+        : fmtDec(absDiff, 1);
+      valText = `${sign}${diffFormatted}${pct !== null ? ` (${fmtPct(pct)})` : ''}`;
+    } else {
+      valText = `${sign}${fmtCompact(Math.round(absDiff))}${pct !== null ? ` (${fmtPct(pct)})` : ''}`;
+    }
+    return `
+      <div class="v3-daily-delta-line">
+        <span class="v3-daily-delta-lbl">${esc(labelPrefix)}:</span>
+        <span class="v3-delta ${cls} v3-daily-delta-badge">${arrow} ${valText}</span>
+      </div>
+    `;
+  }
+
+  function buildDailyReportConclusion(cp, win, refWin, dayIdx, dayIso, refDayIso, dayPt, refPt, vidReport, isDelayDay) {
+    const curr = cp.curr;
+    const currDays = win.days || [];
+    const M = Math.max(1, currDays.length);
+    const weekdayVN = formatIsoToWeekdayVN(dayIso);
+    const dateFullVN = `${weekdayVN ? weekdayVN + ', ' : ''}${formatIsoToVN(dayIso)}`;
+
+    // Rank this day by views within the active period
+    const allDayViewsSorted = currDays
+      .map(d => {
+        const pt = curr.dailyMap.get(d);
+        return { day: d, views: pt && pt.views !== null && pt.views !== undefined ? Number(pt.views) : 0 };
+      })
+      .sort((a, b) => (b.views - a.views) || a.day.localeCompare(b.day));
+    const rankPos = Math.max(1, allDayViewsSorted.findIndex(x => x.day === dayIso) + 1);
+
+    const dayViews = dayPt && dayPt.views !== null && dayPt.views !== undefined ? Number(dayPt.views) : 0;
+    const avgViews = curr.views !== null ? (curr.views / M) : 0;
+    const vsAvgPct = avgViews > 0 ? ((dayViews - avgViews) / avgViews) * 100 : 0;
+    const refViews = refPt && refPt.views !== null && refPt.views !== undefined ? Number(refPt.views) : null;
+    const vsRefPct = (refViews !== null && refViews > 0) ? ((dayViews - refViews) / refViews) * 100 : null;
+
+    let rankPhrase = `đứng hạng #${rankPos}/${M} ngày trong kỳ`;
+    if (rankPos === 1) {
+      rankPhrase = `là ngày đỉnh cao nhất kỳ (#1/${M} ngày)`;
+    } else if (rankPos <= 3) {
+      rankPhrase = `nằm trong nhóm 3 ngày cao điểm nhất kỳ (#${rankPos}/${M} ngày)`;
+    } else if (rankPos === M) {
+      rankPhrase = `là ngày thấp nhất trong kỳ (#${M}/${M} ngày)`;
+    }
+
+    const avgCmpPhrase = Math.abs(vsAvgPct) < 0.5
+      ? `ngang mức trung bình kỳ (${fmtInt(Math.round(avgViews))} views/ngày)`
+      : `${vsAvgPct > 0 ? 'cao hơn' : 'thấp hơn'} trung bình ngày của kỳ ${fmtPct(Math.abs(vsAvgPct), false)} (TB: ${fmtInt(Math.round(avgViews))} views/ngày)`;
+
+    const refCmpPhrase = (vsRefPct !== null && refDayIso)
+      ? `, ${vsRefPct >= 0 ? 'tăng' : 'giảm'} ${fmtPct(Math.abs(vsRefPct), false)} so với ngày thứ ${dayIdx + 1} kỳ đối chứng (${formatIsoToShortVN(refDayIso)}: ${fmtInt(refViews)} views)`
+      : '';
+
+    let videoPhrase = '';
+    if (!curr.hasAnalytics) {
+      videoPhrase = `Kênh chưa cấp quyền Analytics nên chỉ hiển thị số tổng ngày (${fmtInt(dayPt.videosPublished || 0)} video đăng); chưa mở khóa phân rã views theo video.`;
+    } else {
+      const pubVids = (vidReport && vidReport.published_videos) || [];
+      const top3 = (vidReport && vidReport.top3_videos) || [];
+      const top3Sum = top3.reduce((s, v) => s + (v.views || 0), 0);
+      const top3Share = dayViews > 0 ? (top3Sum / dayViews) * 100 : 0;
+      if (pubVids.length > 0) {
+        const pv = pubVids[0];
+        const pvShare = dayViews > 0 ? (pv.views / dayViews) * 100 : 0;
+        videoPhrase = `Có ${pubVids.length} video đăng mới lúc ${pv.published_time_pt} (“${pv.title}”) đóng góp ngay ${fmtInt(pv.views)} views (${fmtDec(pvShare, 1)}% views ngày); Top 3 video chiếm ${fmtDec(top3Share, 1)}% tổng views ngày.`;
+      } else if (top3.length > 0 && dayViews > 0) {
+        const t1 = top3[0];
+        const t1Share = (t1.views / dayViews) * 100;
+        videoPhrase = `Không có video đăng mới (0 video); lưu lượng dẫn dắt bởi “${t1.title}” (${fmtInt(t1.views)} views, ${fmtDec(t1Share, 1)}%), Top 3 video chiếm ${fmtDec(top3Share, 1)}% tổng views ngày.`;
+      } else {
+        videoPhrase = `Không có phát sinh lượt xem video trong ngày này.`;
+      }
+    }
+
+    const delayPhrase = isDelayDay
+      ? ` [Lưu ý: Ngày ${formatIsoToShortVN(dayIso)} thuộc khoảng độ trễ 2–3 ngày nên dữ liệu chưa ổn định].`
+      : '';
+
+    return `${dateFullVN} đạt ${fmtInt(dayViews)} views (${rankPhrase}, ${avgCmpPhrase}${refCmpPhrase}). ${videoPhrase}${delayPhrase}`;
+  }
+
+  function renderDailyReportPanelInner(cp, snap, refWin, demo) {
+    const curr = cp.curr;
+    const meta = cp.meta;
+    const win = snap.win;
+    const currDays = win.days || [];
+    const refDays = (refWin && refWin.refDays) ? refWin.refDays : (win.prevDays || []);
+    const M = Math.max(1, currDays.length);
+
+    const dayIdx = resolveChannelSelectedDayIdx(cp, win);
+    const dayIso = currDays[dayIdx] || win.end;
+    const refDayIso = refDays[dayIdx] || null;
+    const weekdayVN = formatIsoToWeekdayVN(dayIso);
+    const refWeekdayVN = refDayIso ? formatIsoToWeekdayVN(refDayIso) : '';
+
+    // Find peak day and a representative normal day in the active period for quick selection & testing
+    let peakDayIdx = 0;
+    let peakDayViews = -1;
+    currDays.forEach((d, idx) => {
+      const pt = curr.dailyMap.get(d);
+      const v = pt && pt.views !== null ? Number(pt.views) : -1;
+      if (v > peakDayViews) {
+        peakDayViews = v;
+        peakDayIdx = idx;
+      }
+    });
+    const peakDayIso = currDays[peakDayIdx] || win.end;
+
+    // Pick a normal day (not in top 3, not in delay window 24..26/10 if possible, preferably with a published video)
+    const sortedByViews = currDays
+      .map((d, idx) => {
+        const pt = curr.dailyMap.get(d);
+        return {
+          idx,
+          day: d,
+          views: pt && pt.views !== null ? Number(pt.views) : 0,
+          vidsPub: pt ? Number(pt.videosPublished || 0) : 0
+        };
+      })
+      .sort((a, b) => (b.views - a.views) || a.day.localeCompare(b.day));
+
+    const rankPos = Math.max(1, sortedByViews.findIndex(x => x.day === dayIso) + 1);
+    const midCandidates = sortedByViews.slice(Math.min(4, Math.floor(M * 0.25)), Math.max(5, Math.floor(M * 0.78)));
+    const normalCandidate = midCandidates.find(x => x.day < '2026-10-24' && x.vidsPub > 0) ||
+      midCandidates.find(x => x.day < '2026-10-24') ||
+      sortedByViews[Math.floor(M / 2)] ||
+      { idx: 0, day: currDays[0], views: 0 };
+    const normalDayIdx = normalCandidate.idx;
+    const normalDayIso = normalCandidate.day;
+
+    const dayPt = curr.dailyMap.get(dayIso) || {
+      views: 0,
+      netSubs: null,
+      videosPublished: 0,
+      interactions: 0,
+      engagementRate: null,
+      revenue: null
+    };
+    const refMap = (refWin && refWin.refMetrics && refWin.refMetrics.dailyMap) ? refWin.refMetrics.dailyMap : cp.prev.dailyMap;
+    const refPt = (refDayIso && refMap) ? refMap.get(refDayIso) : null;
+
+    const avgViews = curr.views !== null ? (curr.views / M) : null;
+    const avgNetSubs = curr.netSubs !== null ? (curr.netSubs / M) : null;
+    const avgVids = curr.videosPublished !== null ? (curr.videosPublished / M) : null;
+    const avgEngRate = curr.engagementRate;
+    const avgRev = curr.estimatedRevenue !== null ? (curr.estimatedRevenue / M) : null;
+
+    const hasOAuth = !!curr.hasAnalytics;
+    const hasMonetary = !!(curr.hasAnalytics && curr.hasMonetary);
+    // Item 5: Days in the 2-3 day Analytics delay window (24/10 - 26/10/2026) show "Dữ liệu chưa ổn định"
+    const isDelayDay = dayIso >= '2026-10-24';
+
+    // Fetch per-video daily breakdown (Item 3 & Item 7)
+    let vidReport = (demo && demo.getDailyVideoReport) ? demo.getDailyVideoReport(cp.id, dayIso) : null;
+    if (vidReport && dayPt.views === 0 && vidReport.day_views > 0) {
+      // Respect scenario zero_denominator override
+      vidReport = {
+        ...vidReport,
+        day_views: 0,
+        published_videos: (vidReport.published_videos || []).map(v => ({ ...v, views: 0 })),
+        top3_videos: (vidReport.top3_videos || []).map(v => ({ ...v, views: 0 })),
+        video_views: (vidReport.video_views || []).map(v => ({ ...v, views: 0 }))
+      };
+    }
+
+    const publishedVideos = vidReport ? (vidReport.published_videos || []) : [];
+    const top3Videos = vidReport ? (vidReport.top3_videos || []) : [];
+    const allDayVideos = vidReport ? (vidReport.video_views || []) : [];
+    const dayVideoViewsSum = allDayVideos.reduce((s, v) => s + (v.views || 0), 0);
+    const top3DayViews = top3Videos.reduce((s, v) => s + (v.views || 0), 0);
+    const top3DayShare = dayPt.views > 0 ? (top3DayViews / dayPt.views) * 100 : 0;
+
+    const refShortLabel = refDayIso
+      ? `ĐC N${dayIdx + 1} (${formatIsoToShortVN(refDayIso)})`
+      : `ĐC N${dayIdx + 1}`;
+
+    const conclusionText = buildDailyReportConclusion(
+      cp, win, refWin, dayIdx, dayIso, refDayIso, dayPt, refPt, vidReport, isDelayDay
+    );
+
+    const isOpen = !!v3State.channelDailyPanelOpen;
+
+    return `
+      <!-- Lớp chờ khi chưa mở (Giữ nguyên chiều cao cố định 274px để mở/đóng không làm biểu đồ nhảy) -->
+      <div class="v3-daily-standby-layer ${isOpen ? 'is-hidden' : 'is-visible'}" id="v3-daily-report-standby">
+        <div class="v3-daily-standby-box">
+          <div class="v3-daily-standby-title">
+            <i class="ri-calendar-event-line" style="color:${meta.channelColor};font-size:16px;"></i>
+            <strong>Báo cáo ngày (${esc(meta.title)})</strong>
+            <span class="v3-badge muted">Chưa chọn ngày</span>
+          </div>
+          <div class="v3-daily-standby-desc">
+            Bấm vào <strong>bất kỳ cột dọc ngày nào</strong> trên biểu đồ <em>“Xu hướng theo ngày”</em> phía trên để mở Báo cáo ngày chi tiết (5 chỉ số ngày + delta so với ngày thứ N kỳ đối chứng &amp; TB kỳ + danh sách video đăng trong ngày + Top 3 video cao nhất ngày).
+          </div>
+          <div class="v3-daily-standby-actions">
+            <button type="button" class="v3-btn v3-daily-quick-btn" id="v3-daily-open-peak-btn" data-open-day-idx="${peakDayIdx}">
+              <i class="ri-fire-line" style="color:#F59E0B;"></i>
+              <span>Xem ngày đỉnh kỳ: <strong>${formatIsoToVN(peakDayIso)}</strong> (${fmtInt(peakDayViews)} views)</span>
+            </button>
+            <button type="button" class="v3-btn v3-daily-quick-btn" id="v3-daily-open-normal-btn" data-open-day-idx="${normalDayIdx}">
+              <i class="ri-calendar-check-line" style="color:#38BDF8;"></i>
+              <span>Xem ngày thường: <strong>${formatIsoToVN(normalDayIso)}</strong> (${fmtInt(normalCandidate.views)} views)</span>
+            </button>
+            <button type="button" class="v3-btn v3-daily-quick-btn" id="v3-daily-open-latest-btn" data-open-day-idx="${M - 1}">
+              <i class="ri-time-line" style="color:#10B981;"></i>
+              <span>Xem ngày cuối kỳ: <strong>${formatIsoToVN(currDays[M - 1])}</strong> (Trễ 2–3 ngày)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lớp nội dung chi tiết Báo cáo ngày -->
+      <div class="v3-daily-active-layer ${isOpen ? 'is-visible' : 'is-hidden'}"
+           id="v3-daily-report-active-body"
+           data-day-iso="${esc(dayIso)}"
+           data-day-idx="${dayIdx}"
+           data-day-views="${dayPt.views ?? ''}"
+           data-day-video-views-sum="${dayVideoViewsSum}"
+           data-day-subs="${dayPt.netSubs ?? ''}"
+           data-day-vids-pub="${dayPt.videosPublished ?? 0}"
+           data-day-published-list-count="${publishedVideos.length}"
+           data-day-eng-rate="${dayPt.engagementRate ?? ''}"
+           data-day-interactions="${dayPt.interactions ?? ''}"
+           data-day-rev="${dayPt.revenue ?? ''}"
+           data-is-delay-day="${isDelayDay ? 'true' : 'false'}"
+           data-has-oauth="${hasOAuth ? 'true' : 'false'}">
+
+        <!-- Thanh tiêu đề Báo cáo ngày: Ngày thật + Thứ + Mốc ngày thứ N + Nhãn trạng thái + Nút ‹ › và × -->
+        <div class="v3-daily-header-bar" id="v3-daily-report-header">
+          <div class="v3-daily-header-left">
+            <span class="v3-daily-panel-tag" style="border-color:${meta.channelColor}66;background:${meta.channelColor}18;color:${meta.channelColor};">
+              <i class="ri-calendar-check-fill"></i> Báo cáo ngày
+            </span>
+            <strong class="v3-daily-real-date" id="v3-daily-real-date">${esc(weekdayVN)}, ${formatIsoToVN(dayIso)}</strong>
+            <span class="v3-badge muted" id="v3-daily-nth-badge">Ngày ${dayIdx + 1}/${M}</span>
+            <span class="v3-badge ${rankPos === 1 ? 'highest' : (rankPos <= 3 ? 'analytics' : 'muted')}" id="v3-daily-rank-badge">
+              ${rankPos === 1 ? `Đỉnh #1/${M}` : `Hạng #${rankPos}/${M}`}
+            </span>
+            ${isDelayDay ? `
+              <span class="v3-badge warn v3-daily-unstable-badge" id="v3-daily-unstable-badge" style="flex-shrink:0;" title="Ngày nằm trong khoảng độ trễ 2–3 ngày của YouTube Analytics">
+                <i class="ri-error-warning-line"></i> Dữ liệu chưa ổn định
+              </span>
+            ` : ''}
+            ${!hasOAuth ? `
+              <span class="v3-badge warn" id="v3-daily-no-oauth-badge" style="flex-shrink:0;">
+                Chưa cấp quyền Analytics
+              </span>
+            ` : ''}
+          </div>
+
+          <div class="v3-daily-header-right">
+            <div class="v3-daily-QuickPick-group">
+              <button type="button" class="v3-daily-QuickPick-btn ${dayIdx === peakDayIdx ? 'active' : ''}" data-daily-jump-idx="${peakDayIdx}" title="Nhảy tới ngày đỉnh nhất trong kỳ (${formatIsoToVN(peakDayIso)})">
+                Ngày đỉnh (${formatIsoToShortVN(peakDayIso)})
+              </button>
+              <button type="button" class="v3-daily-QuickPick-btn ${dayIdx === normalDayIdx ? 'active' : ''}" data-daily-jump-idx="${normalDayIdx}" title="Nhảy tới ngày thường (${formatIsoToVN(normalDayIso)})">
+                Ngày thường (${formatIsoToShortVN(normalDayIso)})
+              </button>
+            </div>
+            <div class="v3-daily-nav-group" role="group" aria-label="Chuyển ngày trên biểu đồ">
+              <button type="button" class="v3-daily-nav-btn" id="v3-daily-prev-btn" ${dayIdx <= 0 ? 'disabled' : ''} title="Ngày liền trước (‹)" aria-label="Ngày liền trước">‹</button>
+              <span class="v3-daily-nav-label" id="v3-daily-nav-label">${formatIsoToShortVN(dayIso)} (${dayIdx + 1}/${M})</span>
+              <button type="button" class="v3-daily-nav-btn" id="v3-daily-next-btn" ${dayIdx >= M - 1 ? 'disabled' : ''} title="Ngày liền sau (›)" aria-label="Ngày liền sau">›</button>
+            </div>
+            <button type="button" class="v3-daily-close-btn" id="v3-daily-close-btn" title="Đóng Báo cáo ngày (×)" aria-label="Đóng Báo cáo ngày">×</button>
+          </div>
+        </div>
+
+        <!-- Hàng 1: 5 chỉ số trong ngày (Views, Sub ròng, Video đăng, Tương tác, Doanh thu) kèm 2 dòng delta (vs Ngày thứ N kỳ đối chứng & vs TB ngày của kỳ) -->
+        <div class="v3-daily-kpi-grid" id="v3-daily-kpi-grid">
+          <!-- 1. Views -->
+          <div class="v3-daily-kpi-card" data-daily-kpi="views">
+            <div class="v3-daily-kpi-top">
+              <span class="v3-daily-kpi-name">Views</span>
+              <strong class="v3-daily-kpi-val" data-daily-val="views">${dayPt.views !== null ? fmtInt(dayPt.views) : '—'}</strong>
+            </div>
+            ${fmtDailyDeltaCompact(dayPt.views, refPt ? refPt.views : null, refShortLabel, false, false)}
+            ${fmtDailyDeltaCompact(dayPt.views, avgViews, `TB kỳ (${avgViews !== null ? fmtInt(Math.round(avgViews)) : '—'})`, false, false)}
+          </div>
+
+          <!-- 2. Sub ròng -->
+          <div class="v3-daily-kpi-card" data-daily-kpi="netSubs">
+            <div class="v3-daily-kpi-top">
+              <span class="v3-daily-kpi-name">Sub ròng</span>
+              <strong class="v3-daily-kpi-val" data-daily-val="netSubs">
+                ${hasOAuth && dayPt.netSubs !== null ? (dayPt.netSubs > 0 ? '+' + fmtInt(dayPt.netSubs) : fmtInt(dayPt.netSubs)) : (hasOAuth ? '—' : '<span class="v3-daily-no-perm-inline">Chưa cấp quyền</span>')}
+              </strong>
+            </div>
+            ${hasOAuth
+              ? fmtDailyDeltaCompact(dayPt.netSubs, refPt ? refPt.netSubs : null, refShortLabel, false, false, true)
+              : `<div class="v3-daily-delta-line"><span class="v3-daily-delta-lbl">${esc(refShortLabel)}:</span> <span class="v3-daily-delta-muted">Chưa cấp quyền</span></div>`
+            }
+            ${hasOAuth
+              ? fmtDailyDeltaCompact(dayPt.netSubs, avgNetSubs, `TB kỳ (${avgNetSubs !== null ? fmtDec(avgNetSubs, 1) : '—'})`, false, false, true)
+              : `<div class="v3-daily-delta-line"><span class="v3-daily-delta-lbl">TB kỳ:</span> <span class="v3-daily-delta-muted">—</span></div>`
+            }
+          </div>
+
+          <!-- 3. Video đăng -->
+          <div class="v3-daily-kpi-card" data-daily-kpi="videosPublished">
+            <div class="v3-daily-kpi-top">
+              <span class="v3-daily-kpi-name">Video đăng</span>
+              <strong class="v3-daily-kpi-val" data-daily-val="videosPublished">${fmtInt(dayPt.videosPublished || 0)}</strong>
+            </div>
+            ${fmtDailyDeltaCompact(dayPt.videosPublished, refPt ? refPt.videosPublished : null, refShortLabel, false, false, true)}
+            ${fmtDailyDeltaCompact(dayPt.videosPublished, avgVids, `TB kỳ (${avgVids !== null ? fmtDec(avgVids, 2) : '—'})`, false, false, true)}
+          </div>
+
+          <!-- 4. Tương tác -->
+          <div class="v3-daily-kpi-card" data-daily-kpi="engagement">
+            <div class="v3-daily-kpi-top">
+              <span class="v3-daily-kpi-name">Tương tác</span>
+              <strong class="v3-daily-kpi-val" data-daily-val="engagement">
+                ${dayPt.engagementRate !== null ? `${fmtDec(dayPt.engagementRate, 2)}% <span class="v3-daily-sub-cnt">(${fmtInt(dayPt.interactions || 0)})</span>` : '—'}
+              </strong>
+            </div>
+            ${fmtDailyDeltaCompact(dayPt.engagementRate, refPt ? refPt.engagementRate : null, refShortLabel, false, true)}
+            ${fmtDailyDeltaCompact(dayPt.engagementRate, avgEngRate, `TB kỳ (${avgEngRate !== null ? fmtDec(avgEngRate, 2) + '%' : '—'})`, false, true)}
+          </div>
+
+          <!-- 5. Doanh thu -->
+          <div class="v3-daily-kpi-card" data-daily-kpi="revenue">
+            <div class="v3-daily-kpi-top">
+              <span class="v3-daily-kpi-name">Doanh thu</span>
+              <strong class="v3-daily-kpi-val" data-daily-val="revenue">
+                ${(hasOAuth && hasMonetary && dayPt.revenue !== null)
+                  ? fmtMoney(dayPt.revenue)
+                  : (!hasOAuth
+                    ? '<span class="v3-daily-no-perm-inline">Chưa cấp quyền</span>'
+                    : (isDelayDay ? '<span class="v3-daily-no-perm-inline">Dữ liệu chưa ổn định</span>' : '—'))}
+              </strong>
+            </div>
+            ${(hasOAuth && hasMonetary && dayPt.revenue !== null)
+              ? fmtDailyDeltaCompact(dayPt.revenue, refPt ? refPt.revenue : null, refShortLabel, true, false)
+              : `<div class="v3-daily-delta-line"><span class="v3-daily-delta-lbl">${esc(refShortLabel)}:</span> <span class="v3-daily-delta-muted">${!hasOAuth ? 'Chưa cấp quyền' : (isDelayDay ? 'Dữ liệu chưa ổn định' : '—')}</span></div>`
+            }
+            ${(hasOAuth && hasMonetary && dayPt.revenue !== null)
+              ? fmtDailyDeltaCompact(dayPt.revenue, avgRev, `TB kỳ (${avgRev !== null ? fmtMoney(avgRev) : '—'})`, true, false)
+              : `<div class="v3-daily-delta-line"><span class="v3-daily-delta-lbl">TB kỳ:</span> <span class="v3-daily-delta-muted">—</span></div>`
+            }
+          </div>
+        </div>
+
+        <!-- Hàng 2: Danh sách video đăng trong ngày & Top 3 video có views cao nhất ngày đó (Hoặc thông báo Chưa cấp quyền Analytics ở phần video) -->
+        <div class="v3-daily-videos-section" id="v3-daily-videos-section">
+          ${!hasOAuth ? `
+            <div class="v3-daily-video-no-oauth" id="v3-daily-video-no-oauth">
+              <span class="v3-badge warn"><i class="ri-lock-2-line"></i> Chưa cấp quyền Analytics</span>
+              <span>
+                Kênh <strong>${esc(meta.title)}</strong> chưa kết nối OAuth YouTube Analytics API v2 nên chỉ hiện số tổng ngày (<strong>${fmtInt(dayPt.views || 0)} views</strong> · <strong>${fmtInt(dayPt.videosPublished || 0)} video đăng</strong>).
+                Cấp quyền Analytics để xem danh sách video đăng trong ngày và Top 3 video có views cao nhất ngày.
+              </span>
+            </div>
+          ` : `
+            <div class="v3-daily-videos-grid">
+              <!-- Cột trái: Danh sách video đăng trong ngày (tên, giờ đăng, views trong ngày) -->
+              <div class="v3-daily-video-box" id="v3-daily-published-box">
+                <div class="v3-daily-video-box-hdr">
+                  <span>
+                    <i class="ri-upload-cloud-2-line" style="color:#10B981;"></i>
+                    <strong>Video đăng trong ngày (${publishedVideos.length} video)</strong>
+                  </span>
+                  <span class="v3-daily-box-sub">Khớp daily_videos_published: ${dayPt.videosPublished || 0}</span>
+                </div>
+                <div class="v3-daily-video-box-body" id="v3-daily-published-list">
+                  ${publishedVideos.length > 0 ? publishedVideos.map(pv => {
+                    const pvShare = dayPt.views > 0 ? (pv.views / dayPt.views) * 100 : 0;
+                    return `
+                      <div class="v3-daily-vid-item is-pub-item" data-published-video-id="${esc(pv.video_id)}" data-published-video-views="${pv.views}">
+                        <span class="v3-badge highest" style="font-size:9.5px;padding:1px 5px;flex-shrink:0;">Mới đăng</span>
+                        <span class="v3-daily-vid-title" title="${esc(pv.title)}">${esc(pv.title)}</span>
+                        <span class="v3-daily-vid-time"><i class="ri-time-line"></i> ${esc(pv.published_time_pt)}</span>
+                        <strong class="v3-daily-vid-views">${fmtInt(pv.views)} views <small>(${fmtDec(pvShare, 1)}%)</small></strong>
+                      </div>
+                    `;
+                  }).join('') : `
+                    <div class="v3-daily-vid-empty" id="v3-daily-published-empty">
+                      <i class="ri-information-line"></i>
+                      <span>Không có video đăng mới trong ngày ${formatIsoToVN(dayIso)} (<strong>0 video</strong>). Toàn bộ <strong>${fmtInt(dayPt.views || 0)} views</strong> ngày này đến từ ${allDayVideos.length} video đã phát hành trước đó.</span>
+                    </div>
+                  `}
+                </div>
+              </div>
+
+              <!-- Cột phải: Top 3 video có views cao nhất ngày đó -->
+              <div class="v3-daily-video-box" id="v3-daily-top3-box">
+                <div class="v3-daily-video-box-hdr">
+                  <span>
+                    <i class="ri-trophy-line" style="color:#F59E0B;"></i>
+                    <strong>Top 3 video có views cao nhất ngày ${formatIsoToShortVN(dayIso)}</strong>
+                  </span>
+                  <span class="v3-daily-box-sub">
+                    Top 3: <strong>${fmtInt(top3DayViews)}</strong> (${fmtDec(top3DayShare, 1)}%) · Tổng ${allDayVideos.length} video = <strong>${fmtInt(dayVideoViewsSum)}</strong> views
+                  </span>
+                </div>
+                <div class="v3-daily-video-box-body" id="v3-daily-top3-list">
+                  ${top3Videos.map((tv, idx) => {
+                    const tvShare = dayPt.views > 0 ? (tv.views / dayPt.views) * 100 : 0;
+                    const isPubToday = tv.published_day_pt === dayIso;
+                    return `
+                      <div class="v3-daily-vid-item is-top-item" data-top3-rank="${idx + 1}" data-top3-video-id="${esc(tv.video_id)}" data-top3-video-views="${tv.views}">
+                        <span class="v3-daily-rank-pill rank-${idx + 1}">#${idx + 1}</span>
+                        <span class="v3-daily-vid-title" title="${esc(tv.title)}">${esc(tv.title)}</span>
+                        <span class="v3-daily-vid-time">
+                          ${isPubToday ? `<strong style="color:#10B981;">Đăng hôm nay · ${esc(tv.published_time_pt)}</strong>` : `${formatIsoToShortVN(tv.published_day_pt)} · ${esc(tv.published_time_pt)}`}
+                        </span>
+                        <strong class="v3-daily-vid-views">${fmtInt(tv.views)} views <small>(${fmtDec(tvShare, 1)}%)</small></strong>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+          `}
+        </div>
+
+        <!-- Hàng 3: Một dòng kết luận sinh từ dữ liệu, không viết cứng (Item 4) -->
+        <div class="v3-daily-conclusion-bar" id="v3-daily-conclusion-bar">
+          <span class="v3-daily-conclusion-tag">Kết luận ngày:</span>
+          <span class="v3-daily-conclusion-text" id="v3-daily-conclusion-text">${esc(conclusionText)}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function updateDailyReportSelection(nextIdx, openPanel, cp, snap, refWin, demo) {
+    const currDays = (snap && snap.win && snap.win.days) || [];
+    if (!currDays.length) return;
+    const clampedIdx = Math.max(0, Math.min(currDays.length - 1, Number(nextIdx) || 0));
+    v3State.channelSelectedDayIdx = clampedIdx;
+    v3State.channelSelectedDayIso = currDays[clampedIdx];
+    v3State.channelDailyPanelOpen = Boolean(openPanel);
+
+    const panel = document.getElementById('v3-channel-daily-report-panel');
+    if (panel) {
+      panel.classList.toggle('is-open', v3State.channelDailyPanelOpen);
+      panel.classList.toggle('is-closed', !v3State.channelDailyPanelOpen);
+      panel.classList.toggle('is-panel-open', v3State.channelDailyPanelOpen);
+      panel.classList.toggle('is-panel-closed', !v3State.channelDailyPanelOpen);
+      panel.setAttribute('data-daily-open', v3State.channelDailyPanelOpen ? 'true' : 'false');
+      panel.setAttribute('data-panel-open', v3State.channelDailyPanelOpen ? 'true' : 'false');
+      panel.setAttribute('data-selected-day', v3State.channelSelectedDayIso || '');
+      panel.setAttribute('data-selected-day-idx', String(clampedIdx));
+      panel.innerHTML = renderDailyReportPanelInner(cp, snap, refWin, demo);
+      bindDailyReportPanelEvents(panel, cp, snap, refWin, demo);
+    }
+
+    const chart = chartInstances['channelSingle'];
+    if (chart) {
+      chart.update('none');
+    }
+  }
+
+  function bindDailyReportPanelEvents(container, cp, snap, refWin, demo) {
+    if (!container) return;
+    const currDays = (snap && snap.win && snap.win.days) || [];
+    const M = currDays.length;
+
+    container.querySelector('#v3-daily-close-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      updateDailyReportSelection(v3State.channelSelectedDayIdx || 0, false, cp, snap, refWin, demo);
+    });
+
+    container.querySelector('#v3-daily-prev-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const curIdx = resolveChannelSelectedDayIdx(cp, snap.win);
+      if (curIdx > 0) {
+        updateDailyReportSelection(curIdx - 1, true, cp, snap, refWin, demo);
+      }
+    });
+
+    container.querySelector('#v3-daily-next-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const curIdx = resolveChannelSelectedDayIdx(cp, snap.win);
+      if (curIdx < M - 1) {
+        updateDailyReportSelection(curIdx + 1, true, cp, snap, refWin, demo);
+      }
+    });
+
+    container.querySelectorAll('[data-open-day-idx], [data-daily-jump-idx]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const attrVal = btn.getAttribute('data-open-day-idx') ?? btn.getAttribute('data-daily-jump-idx');
+        const idx = Number(attrVal);
+        if (!Number.isNaN(idx)) {
+          updateDailyReportSelection(idx, true, cp, snap, refWin, demo);
+        }
+      });
+    });
+  }
+
   function renderChannelSingleMode(body, snap, cp, demo) {
     const curr = cp.curr;
     const meta = cp.meta;
@@ -2243,19 +2824,22 @@
     const useAvg = refWin.isUnequalLength && v3State.channelUnequalMode === 'avg';
 
     // Fetch 10 sample videos for this channel to compute the 1-line video summary below chart (Item 13)
+    const periodVideosFromDaily = (demo && demo.getPeriodVideoViews) ? demo.getPeriodVideoViews(cp.id, win.start, win.end) : null;
     const rawVids = (core().DATA_STORE && core().DATA_STORE.getVideos(cp.id)) || [];
     const periodType = win.dayCount <= 7 ? 'metrics_7d' : (win.dayCount <= 28 ? 'metrics_28d' : 'metrics');
-    const enrichedVideos = rawVids.map(v => {
-      const vs = (demo && demo.getVideoSummary) ? demo.getVideoSummary(v.id) : null;
-      const pMetrics = vs ? (vs[periodType] || vs.metrics || vs.metrics_28d) : null;
-      const periodViews = (curr.hasAnalytics && pMetrics && pMetrics.views !== undefined)
-        ? pMetrics.views
-        : (curr.views !== null && vs && (vs.metrics || vs.metrics_28d) ? (vs.metrics || vs.metrics_28d).views : 0);
-      return {
-        ...v,
-        periodViews
-      };
-    }).sort((a, b) => (b.periodViews || 0) - (a.periodViews || 0));
+    const enrichedVideos = (periodVideosFromDaily && periodVideosFromDaily.length > 0 && curr.hasAnalytics)
+      ? periodVideosFromDaily
+      : rawVids.map(v => {
+          const vs = (demo && demo.getVideoSummary) ? demo.getVideoSummary(v.id) : null;
+          const pMetrics = vs ? (vs[periodType] || vs.metrics || vs.metrics_28d) : null;
+          const periodViews = (curr.hasAnalytics && pMetrics && pMetrics.views !== undefined)
+            ? pMetrics.views
+            : (curr.views !== null && vs && (vs.metrics || vs.metrics_28d) ? (vs.metrics || vs.metrics_28d).views : 0);
+          return {
+            ...v,
+            periodViews
+          };
+        }).sort((a, b) => (b.periodViews || 0) - (a.periodViews || 0));
 
     const top1Vid = enrichedVideos[0] || null;
     const top1Views = top1Vid ? (top1Vid.periodViews || 0) : 0;
@@ -2715,6 +3299,13 @@
         </div>
       </section>
 
+      <!-- 3B. PANEL "BÁO CÁO NGÀY" NGAY DƯỚI BIỂU ĐỒ XU HƯỚNG (Chiếm chỗ cố định 274px, mở/đóng/chuyển ngày không nhảy UI) -->
+      <section class="v3-panel v3-ch-daily-report-locked ${v3State.channelDailyPanelOpen ? 'is-panel-open' : 'is-panel-closed'}"
+               id="v3-channel-daily-report-panel"
+               data-panel-open="${v3State.channelDailyPanelOpen ? 'true' : 'false'}">
+        ${renderDailyReportPanelInner(cp, snap, refWin, demo)}
+      </section>
+
       <!-- 4. KHỐI GẬP MẶC ĐỊNH: "QUỐC GIA VÀ NGUỒN TRUY CẬP" (Mục 14) -->
       <section class="v3-panel" id="v3-channel-geo-traffic-panel" style="margin-bottom:0;" data-collapsed="${v3State.deepAnalyticsOpen ? 'false' : 'true'}">
         <div class="v3-panel-header" style="margin-bottom:${v3State.deepAnalyticsOpen ? '14px' : '0'};flex-wrap:nowrap;">
@@ -2823,6 +3414,12 @@
 
     // Render Single Channel Trend Chart (Current vs Active Reference Period)
     renderSingleChannelChart(cp, snap, refWin);
+
+    // Bind Daily Report Panel events (× close, ‹ › prev/next, quick chips)
+    const dailyPanelEl = document.getElementById('v3-channel-daily-report-panel');
+    if (dailyPanelEl) {
+      bindDailyReportPanelEvents(dailyPanelEl, cp, snap, refWin, demo);
+    }
 
     // Bind Mode Switch ("Một kênh | So sánh kênh")
     body.querySelectorAll('[data-ch-mode]').forEach(btn => {
@@ -3021,9 +3618,99 @@
     const refModeName = refWin ? refWin.refModeName : 'Kỳ trước';
     const refRangeShort = refWin ? refWin.refRangeShort : snap.win.compareRangeShort;
     const lineColor = cp.meta.channelColor || cp.meta.teamColor;
+    const demo = core().DEMO_STORE;
 
-    chartInstances['channelSingle'] = new Chart(canvas.getContext('2d'), {
+    // Resolve nearest day column index for any X coordinate within chartArea (full-column click/hover)
+    const getColumnIndexAtX = (chart, pixelX) => {
+      const xScale = chart && chart.scales ? chart.scales.x : null;
+      const area = chart ? chart.chartArea : null;
+      if (!xScale || !area || currDays.length === 0) return -1;
+      if (pixelX < area.left - 8 || pixelX > area.right + 8) return -1;
+      let bestIdx = 0;
+      let bestDist = Infinity;
+      const limit = currDays.length;
+      for (let i = 0; i < limit; i++) {
+        const px = xScale.getPixelForValue(i);
+        const dist = Math.abs(pixelX - px);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestIdx = i;
+        }
+      }
+      return bestIdx;
+    };
+
+    const v3DailyColumnCrosshairPlugin = {
+      id: 'v3DailyColumnCrosshairPlugin',
+      afterDatasetsDraw(chart) {
+        const ctx = chart.ctx;
+        const area = chart.chartArea;
+        const xScale = chart.scales && chart.scales.x;
+        if (!ctx || !area || !xScale || currDays.length === 0) return;
+
+        const stepPx = currDays.length > 1
+          ? Math.abs(xScale.getPixelForValue(1) - xScale.getPixelForValue(0))
+          : Math.max(24, (area.right - area.left) / 2);
+        const colHalfW = Math.max(6, Math.min(22, stepPx * 0.45));
+
+        // 1. Selected Day Column Band + Solid Vertical Line + Active Point Ring (when panel is open)
+        if (v3State.channelDailyPanelOpen) {
+          const selIdx = resolveChannelSelectedDayIdx(cp, snap.win);
+          if (selIdx >= 0 && selIdx < currDays.length) {
+            const selX = xScale.getPixelForValue(selIdx);
+            ctx.save();
+            const bandLeft = Math.max(area.left, selX - colHalfW);
+            const bandRight = Math.min(area.right, selX + colHalfW);
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.11)';
+            ctx.fillRect(bandLeft, area.top, Math.max(2, bandRight - bandLeft), area.bottom - area.top);
+
+            ctx.beginPath();
+            ctx.moveTo(selX, area.top);
+            ctx.lineTo(selX, area.bottom);
+            ctx.lineWidth = 1.6;
+            ctx.strokeStyle = '#38BDF8';
+            ctx.stroke();
+
+            const meta0 = chart.getDatasetMeta(0);
+            const ptEl = meta0 && meta0.data ? meta0.data[selIdx] : null;
+            if (ptEl && typeof ptEl.y === 'number' && !Number.isNaN(ptEl.y)) {
+              ctx.beginPath();
+              ctx.arc(selX, ptEl.y, 5.5, 0, Math.PI * 2);
+              ctx.fillStyle = lineColor;
+              ctx.fill();
+              ctx.lineWidth = 2;
+              ctx.strokeStyle = '#F8FAFC';
+              ctx.stroke();
+            }
+            ctx.restore();
+          }
+        }
+
+        // 2. Hovered Day Vertical Crosshair Line across full column height
+        const hovIdx = typeof v3State.channelHoveredDayIdx === 'number' ? v3State.channelHoveredDayIdx : -1;
+        if (hovIdx >= 0 && hovIdx < currDays.length) {
+          const hovX = xScale.getPixelForValue(hovIdx);
+          ctx.save();
+          const bandLeft = Math.max(area.left, hovX - colHalfW);
+          const bandRight = Math.min(area.right, hovX + colHalfW);
+          ctx.fillStyle = 'rgba(248, 250, 252, 0.045)';
+          ctx.fillRect(bandLeft, area.top, Math.max(2, bandRight - bandLeft), area.bottom - area.top);
+
+          ctx.beginPath();
+          ctx.setLineDash([4, 3]);
+          ctx.moveTo(hovX, area.top);
+          ctx.lineTo(hovX, area.bottom);
+          ctx.lineWidth = 1.35;
+          ctx.strokeStyle = 'rgba(226, 232, 240, 0.78)';
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    };
+
+    const chart = new Chart(canvas.getContext('2d'), {
       type: 'line',
+      plugins: [v3DailyColumnCrosshairPlugin],
       data: {
         labels,
         datasets: [
@@ -3034,6 +3721,7 @@
             backgroundColor: lineColor + '1F',
             borderWidth: 2.6,
             pointRadius: 2.3,
+            pointHoverRadius: 5,
             tension: 0.3,
             fill: true
           },
@@ -3045,6 +3733,7 @@
             backgroundColor: 'transparent',
             borderWidth: 2,
             pointRadius: 1.8,
+            pointHoverRadius: 4,
             tension: 0.3,
             fill: false
           }
@@ -3055,7 +3744,40 @@
         responsive: true,
         maintainAspectRatio: false,
         layout: { padding: { top: 6, bottom: 0 } },
-        interaction: { mode: 'index', intersect: false },
+        interaction: { mode: 'index', axis: 'x', intersect: false },
+        onHover: (event, activeElements, chartInst) => {
+          const nativeEvt = event && event.native ? event.native : null;
+          if (!nativeEvt) return;
+          const area = chartInst.chartArea;
+          const x = event.x;
+          const y = event.y;
+          if (area && x >= area.left - 6 && x <= area.right + 6 && y >= area.top - 6 && y <= area.bottom + 18) {
+            const colIdx = getColumnIndexAtX(chartInst, x);
+            canvas.style.cursor = colIdx >= 0 ? 'pointer' : 'default';
+            if (v3State.channelHoveredDayIdx !== colIdx) {
+              v3State.channelHoveredDayIdx = colIdx;
+              chartInst.draw();
+            }
+          } else {
+            canvas.style.cursor = 'default';
+            if (v3State.channelHoveredDayIdx !== -1) {
+              v3State.channelHoveredDayIdx = -1;
+              chartInst.draw();
+            }
+          }
+        },
+        onClick: (event, activeElements, chartInst) => {
+          let clickedIdx = -1;
+          if (event && typeof event.x === 'number') {
+            clickedIdx = getColumnIndexAtX(chartInst, event.x);
+          }
+          if (clickedIdx < 0 && activeElements && activeElements.length > 0) {
+            clickedIdx = activeElements[0].index;
+          }
+          if (clickedIdx >= 0 && clickedIdx < currDays.length) {
+            updateDailyReportSelection(clickedIdx, true, cp, snap, refWin, demo);
+          }
+        },
         plugins: {
           // Item 6: Legend merged into the "So với" header row to save vertical height
           legend: {
@@ -3067,7 +3789,7 @@
                 const idx = items && items[0] ? items[0].dataIndex : 0;
                 const dCurr = currDays[idx];
                 const dRef = refDays[idx];
-                return `Ngày thứ ${idx + 1} của kỳ (${dCurr ? formatIsoToVN(dCurr) : '—'} vs ${dRef ? formatIsoToVN(dRef) : '—'})`;
+                return `Ngày thứ ${idx + 1} của kỳ (${dCurr ? formatIsoToVN(dCurr) : '—'} vs ${dRef ? formatIsoToVN(dRef) : '—'}) · Nhấn để mở Báo cáo ngày`;
               },
               label: function (ctx) {
                 const idx = ctx.dataIndex;
@@ -3083,7 +3805,7 @@
           x: {
             title: {
               display: true,
-              text: 'Ngày thứ N của kỳ',
+              text: 'Ngày thứ N của kỳ (Nhấn vào cột dọc của ngày bất kỳ để mở Báo cáo ngày)',
               color: '#94A3B8',
               font: { size: 11, weight: '600' },
               padding: { top: 2, bottom: 0 }
@@ -3124,6 +3846,18 @@
         }
       }
     });
+
+    canvas.addEventListener('mouseleave', () => {
+      canvas.style.cursor = 'default';
+      if (v3State.channelHoveredDayIdx !== -1) {
+        v3State.channelHoveredDayIdx = -1;
+        if (chartInstances['channelSingle']) {
+          chartInstances['channelSingle'].draw();
+        }
+      }
+    });
+
+    chartInstances['channelSingle'] = chart;
   }
 
   function renderChannelCompareMode(body, snap) {
@@ -6977,6 +7711,21 @@
     refreshActiveView();
   }
 
+  function selectChannelDay(dayIdxOrIso, openPanel = true) {
+    const snap = computeFullDatasetSnapshot();
+    const cp = snap.channelPairs.find(c => c.id === v3State.selectedChannelId) || snap.channelPairs[0];
+    const refWin = buildChannelRefWindow(snap.win, cp, snap);
+    const currDays = snap.win.days || [];
+    let idx = -1;
+    if (typeof dayIdxOrIso === 'string') {
+      idx = currDays.indexOf(dayIdxOrIso);
+    } else if (typeof dayIdxOrIso === 'number') {
+      idx = dayIdxOrIso;
+    }
+    if (idx < 0) idx = resolveChannelSelectedDayIdx(cp, snap.win);
+    updateDailyReportSelection(idx, openPanel, cp, snap, refWin, core().DEMO_STORE);
+  }
+
   function openGuideSection(anchorId) {
     const c = core();
     if (c.switchView) {
@@ -7024,6 +7773,7 @@
     toggleDeepAnalytics,
     toggleProjectConfigured,
     setStaffTab,
+    selectChannelDay,
     openGuideSection
   };
 

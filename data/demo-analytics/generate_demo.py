@@ -280,6 +280,145 @@ def main():
           for (cid, day), raw in residual_raw.items()], period_start=str(DETAIL_START), period_end=str(END),
           notice="Synthetic reconciliation bucket, not a YouTube video ID or deleted-video claim.")
 
+    # Daily per-video breakdown ("channel_daily_videos.json") so every day's per-video views sum to exact daily views
+    # (and 30d sum for Mellow Moon Lofi equals 465,653) and published_videos count equals daily_videos_published.
+    SESSION_THEMES = [
+        "Late Night Chill Mix", "Midnight Study Session", "Cozy Rainy Evening",
+        "Sunset Coffee Lounge", "Deep Focus Instrumental", "Golden Hour Vibes",
+        "Starlight Ambient Tape", "Quiet Morning Brew", "Dreamscape Lo-fi Beats",
+        "Velvet Skyline Session"
+    ]
+    PUB_HOURS_PT = ["17:00 PT", "18:00 PT", "18:30 PT", "19:00 PT", "19:30 PT", "20:00 PT", "20:30 PT", "21:00 PT"]
+    daily_video_catalog = {}
+    channel_catalog_list = defaultdict(list)
+    for ci, ch_obj in enumerate(channels):
+        cid = ch_obj["id"]
+        ch_title = ch_obj["snippet"]["title"]
+        sample_vids_sorted = sorted(by_channel[cid], key=lambda v: v["published_at"], reverse=True)
+        pub_days_cutoff = sorted(
+            [d for d in all_days if d <= dt.date(2026, 10, 26) and channel_vids_pub[cid, d] > 0],
+            reverse=True,
+        )
+        mapped_sample_days = pub_days_cutoff[:len(sample_vids_sorted)]
+        sample_day_to_vid = {d: sample_vids_sorted[idx] for idx, d in enumerate(mapped_sample_days)}
+
+        # 4 baseline evergreen catalog videos before START (2025-01-01) so every day has >= 4 active videos
+        for b_idx, b_day_str in enumerate(["2024-12-08", "2024-12-15", "2024-12-21", "2024-12-27"]):
+            b_vid_id = f"{cid[-6:]}-base-{b_idx + 1}"
+            b_time = PUB_HOURS_PT[(ci + b_idx) % len(PUB_HOURS_PT)]
+            b_entry = dict(
+                video_id=b_vid_id,
+                channel_id=cid,
+                title=f"{ch_title} — {SESSION_THEMES[(ci + b_idx) % len(SESSION_THEMES)]} #{b_idx + 1}",
+                published_day_pt=b_day_str,
+                published_time_pt=b_time,
+            )
+            daily_video_catalog[b_vid_id] = b_entry
+            channel_catalog_list[cid].append(b_entry)
+
+        seq_counter = 5
+        for d in all_days:
+            v_pub_cnt = channel_vids_pub[cid, d]
+            if v_pub_cnt <= 0:
+                continue
+            for k in range(v_pub_cnt):
+                if k == 0 and d in sample_day_to_vid:
+                    sv = sample_day_to_vid[d]
+                    vid_id = sv["id"]
+                    v_title = sv["title"]
+                    iso_ts = sv.get("published_at") or ""
+                    hh_mm = iso_ts[11:16] if len(iso_ts) >= 16 else PUB_HOURS_PT[(ci + seq_counter) % len(PUB_HOURS_PT)][:5]
+                    pub_time_pt = f"{hh_mm} PT"
+                else:
+                    vid_id = f"{cid[-6:]}-{d.strftime('%Y%m%d')}-{k + 1}"
+                    theme = SESSION_THEMES[(ci + seq_counter) % len(SESSION_THEMES)]
+                    v_title = f"{ch_title} · {theme} #{seq_counter} ({d.strftime('%d/%m')})"
+                    pub_time_pt = PUB_HOURS_PT[(ci * 3 + seq_counter) % len(PUB_HOURS_PT)]
+                seq_counter += 1
+                v_entry = dict(
+                    video_id=vid_id,
+                    channel_id=cid,
+                    title=v_title,
+                    published_day_pt=d.isoformat(),
+                    published_time_pt=pub_time_pt,
+                )
+                daily_video_catalog[vid_id] = v_entry
+                channel_catalog_list[cid].append(v_entry)
+
+    channel_daily_videos_rows = []
+    compact_daily_videos = defaultdict(dict)
+    for ci, cid in enumerate(channel_ids):
+        ch_cat = channel_catalog_list[cid]
+        for day in all_days:
+            day_iso = day.isoformat()
+            day_views = channel_raw[cid, day]["views"]
+            vids_pub_cnt = channel_vids_pub[cid, day]
+            pub_today = [v for v in ch_cat if v["published_day_pt"] == day_iso]
+            eligible_vids = sorted(
+                [v for v in ch_cat if v["published_day_pt"] <= day_iso],
+                key=lambda v: (v["published_day_pt"], v["video_id"]),
+                reverse=True,
+            )[:10]
+            r_dv = rng(f"daily_vid_alloc:{ci}:{day_iso}")
+            weights = []
+            for v in eligible_vids:
+                age_days = max(0, (day - dt.date.fromisoformat(v["published_day_pt"])).days)
+                if age_days == 0:
+                    w = 2.65 * r_dv.uniform(0.92, 1.16)
+                elif age_days <= 7:
+                    w = (1.55 / (1.0 + age_days * 0.12)) * r_dv.uniform(0.86, 1.18)
+                else:
+                    w = (0.95 / (1.0 + age_days / 24.0)) * r_dv.uniform(0.80, 1.24)
+                weights.append(w)
+            alloc_views = allocate(day_views, weights)
+            views_by_vid = {v["video_id"]: val for v, val in zip(eligible_vids, alloc_views)}
+            sorted_vids = sorted(
+                eligible_vids,
+                key=lambda v: (-views_by_vid[v["video_id"]], v["published_day_pt"], v["video_id"]),
+            )
+            top3_entries = [
+                dict(
+                    video_id=v["video_id"],
+                    title=v["title"],
+                    published_day_pt=v["published_day_pt"],
+                    published_time_pt=v["published_time_pt"],
+                    views=views_by_vid[v["video_id"]],
+                )
+                for v in sorted_vids[:3]
+            ]
+            video_views_entries = [
+                dict(
+                    video_id=v["video_id"],
+                    views=views_by_vid[v["video_id"]],
+                )
+                for v in sorted_vids
+            ]
+            published_entries = [
+                dict(
+                    video_id=v["video_id"],
+                    title=v["title"],
+                    published_day_pt=v["published_day_pt"],
+                    published_time_pt=v["published_time_pt"],
+                    views=views_by_vid.get(v["video_id"], 0),
+                )
+                for v in pub_today
+            ]
+            channel_daily_videos_rows.append(dict(
+                channel_id=cid,
+                day=day_iso,
+                day_views=day_views,
+                daily_videos_published=vids_pub_cnt,
+                published_videos=published_entries,
+                top3_videos=top3_entries,
+                video_views=video_views_entries,
+            ))
+            compact_daily_videos[cid][day_iso] = dict(
+                pub=[v["video_id"] for v in pub_today],
+                vids=[[v["video_id"], v["views"]] for v in video_views_entries],
+            )
+    write("channel_daily_videos.json", channel_daily_videos_rows, period_start=str(START), period_end=str(END),
+          notice="Daily per-video view breakdown reconciling 100% with channel_daily views and daily_videos_published.")
+
     video_summaries = []
     retention = []
     last_7_start = END - dt.timedelta(days=6)
@@ -647,6 +786,10 @@ def main():
     check("public_snapshot_and_js_bundle_unchanged", digest(PUBLIC) == public_hash and (not bundle_hash or digest(bundle_path) == bundle_hash))
     check("public_analytics_null_and_original_assignments_preserved", all(c["analytics"]["estimatedRevenue"] is None and c["analytics"]["status"] == "not_connected" for c in public["channels"]) and all(a["valid_from"] == "2026-10-29" for a in public["assignments"]))
     check("every_generated_json_carries_demo_provenance", all(json.loads((OUT / name).read_text(encoding="utf-8"))["meta"]["is_demo"] and not json.loads((OUT / name).read_text(encoding="utf-8"))["meta"]["oauth_authorized"] for name, _ in written if name.endswith(".json")))
+    check("channel_daily_videos_reconcile_views_and_published_counts", len(channel_daily_videos_rows) == 9990 and all(
+        sum(v["views"] for v in r["video_views"]) == r["day_views"] == channel_raw[r["channel_id"], dt.date.fromisoformat(r["day"])]["views"] and
+        len(r["published_videos"]) == r["daily_videos_published"] == channel_vids_pub[r["channel_id"], dt.date.fromisoformat(r["day"])]
+        for r in channel_daily_videos_rows))
 
     files = [dict(path=name, row_count=count, bytes=(OUT / name).stat().st_size, sha256=digest(OUT / name)) for name, count in written]
     manifest = dict(meta=meta(), integration_status="data_only_not_wired_to_template",
@@ -654,7 +797,8 @@ def main():
         detail_period={"start": str(DETAIL_START), "end": str(END), "days": 90},
         default_period={"start": str(DEFAULT_START), "end": str(END), "key": "last_28_days"},
         counts={"teams": 3, "employees": 15, "channels": 15, "sample_videos": 150,
-                "channel_daily": len(channel_rows), "video_daily": len(video_rows), "breakdown_daily": len(breakdowns),
+                "channel_daily": len(channel_rows), "channel_daily_videos": len(channel_daily_videos_rows),
+                "video_daily": len(video_rows), "breakdown_daily": len(breakdowns),
                 "retention_videos": len(retention), "summary_entities_per_period": len(entities)},
         source_public_snapshot={"path": "../mock-hierarchy/dataset.json", "sha256": public_hash, "unchanged": True},
         content_types=["VIDEO"], missing_content_types=["SHORTS", "LIVE"],
@@ -681,6 +825,8 @@ def main():
         period_rollups=rollups,
         channel_snapshot_profiles=channel_snapshot_profiles,
         channel_breakdowns=channel_breakdowns,
+        daily_video_catalog=daily_video_catalog,
+        channel_daily_videos=compact_daily_videos,
     )
     (OUT / "demo_bundle.js").write_text(
         "window.__DEMO_ANALYTICS__ = " + json.dumps(bundle_payload, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + ";\n",

@@ -960,6 +960,106 @@ def main():
                     break
     check("page4_indie_and_retro_staff_reconcile_with_page2_team_channels_usd_vnd", indie_retro_ok)
 
+    # 39. Page 3 Daily Report Panel ("Báo cáo ngày"):
+    # - Sum of the 5 daily metrics (Views, Sub ròng, Video đăng, Tương tác, Doanh thu in USD & VND) across the days in each period
+    #   equals the period KPI card numbers for all 15 channels.
+    # - In channel_daily_videos.json, on every channel-day:
+    #   * len(published_videos) == daily_videos_published
+    #   * sum(v["views"] for v in video_views) == day_views == channel_daily.views
+    #   * top3_videos are the top 3 videos sorted by views descending on that day
+    #   * For Mellow Moon Lofi (UCSJ4gkVC6NrvII8umztf0Ow) in 30d (2026-09-27..2026-10-26), sum of daily video views equals 465,653.
+    daily_videos_path = HERE / "channel_daily_videos.json"
+    daily_report_ok = daily_videos_path.exists()
+    if daily_report_ok:
+        daily_vid_rows = load("channel_daily_videos.json")["rows"]
+        if len(daily_vid_rows) != len(daily):
+            daily_report_ok = False
+        dv_index = {(r["channel_id"], r["day"]): r for r in daily_vid_rows}
+
+        # Verify every channel-day in channel_daily_videos.json
+        for (cid, d), cd_row in index.items():
+            dv = dv_index.get((cid, d))
+            if not dv:
+                daily_report_ok = False
+                break
+            pub_list = dv.get("published_videos", [])
+            vid_views = dv.get("video_views", [])
+            top3_list = dv.get("top3_videos", [])
+            expected_pub_cnt = cd_row["daily_videos_published"]
+            expected_day_views = cd_row["views"]
+            sum_vid_views = sum(int(v["views"]) for v in vid_views)
+            top3_expected_views = sorted([int(x["views"]) for x in vid_views], reverse=True)[:3]
+            if not (
+                dv.get("daily_videos_published") == expected_pub_cnt and
+                len(pub_list) == expected_pub_cnt and
+                dv.get("day_views") == expected_day_views and
+                sum_vid_views == expected_day_views and
+                [t["video_id"] for t in top3_list] == [t["video_id"] for t in vid_views[:3]] and
+                [int(t["views"]) for t in top3_list] == top3_expected_views
+            ):
+                daily_report_ok = False
+                break
+
+        # Verify Mellow Moon Lofi 30d (2026-09-27..2026-10-26) daily video views sum == 465,653 and published videos count == 8
+        if daily_report_ok:
+            mellow_30d_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and "2026-09-27" <= r["day"] <= "2026-10-26"]
+            mellow_30d_vid_views = sum(
+                sum(int(v["views"]) for v in dv_index[mellow_cid, d]["video_views"])
+                for d in mellow_30d_days
+            )
+            mellow_30d_pub_count = sum(
+                len(dv_index[mellow_cid, d]["published_videos"])
+                for d in mellow_30d_days
+            )
+            if mellow_30d_vid_views != 465653 or mellow_30d_pub_count != 8:
+                daily_report_ok = False
+
+        # Verify sum of the 5 daily metrics across all days in each period matches the 5 KPI cards on Page 3 (in USD & VND)
+        if daily_report_ok:
+            for c_start, c_end, _, _ in p4_period_pairs:
+                c_days = [r["day"] for r in daily if r["channel_id"] == mellow_cid and c_start <= r["day"] <= c_end]
+                for ch in baseline["channels"]:
+                    cid = ch["id"]
+                    for curr_code, fx_mult in fx_rates_to_test:
+                        # Sum of daily metrics from Daily Report Panel across c_days
+                        daily_views_sum = sum(index[cid, d]["views"] for d in c_days)
+                        daily_subs_sum = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in c_days)
+                        daily_vids_sum = sum(index[cid, d]["daily_videos_published"] for d in c_days)
+                        daily_pub_list_sum = sum(len(dv_index[cid, d]["published_videos"]) for d in c_days)
+                        daily_interactions_sum = sum(
+                            index[cid, d]["likes"] + index[cid, d]["comments"] + index[cid, d]["shares"]
+                            for d in c_days
+                        )
+                        daily_eng_rate = round((daily_interactions_sum / daily_views_sum) * 100, 2) if daily_views_sum > 0 else 0.0
+                        daily_rev_cents_sum = sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days)
+                        daily_rev_curr_sum = (Decimal(daily_rev_cents_sum) / Decimal(100)) * fx_mult
+
+                        # Period KPI card values on Page 3
+                        kpi_views = sum(index[cid, d]["views"] for d in c_days)
+                        kpi_subs = sum(index[cid, d]["subscribersGained"] - index[cid, d]["subscribersLost"] for d in c_days)
+                        kpi_vids = sum(index[cid, d]["daily_videos_published"] for d in c_days)
+                        kpi_eng_rate = round(
+                            (sum(index[cid, d]["likes"] + index[cid, d]["comments"] + index[cid, d]["shares"] for d in c_days) / kpi_views) * 100,
+                            2
+                        ) if kpi_views > 0 else 0.0
+                        kpi_rev_curr = (Decimal(sum(cents(index[cid, d]["estimatedRevenue"]) for d in c_days)) / Decimal(100)) * fx_mult
+
+                        if not (
+                            daily_views_sum == kpi_views and
+                            daily_subs_sum == kpi_subs and
+                            daily_vids_sum == kpi_vids and
+                            daily_pub_list_sum == kpi_vids and
+                            daily_eng_rate == kpi_eng_rate and
+                            daily_rev_curr_sum == kpi_rev_curr
+                        ):
+                            daily_report_ok = False
+                            break
+                    if not daily_report_ok:
+                        break
+                if not daily_report_ok:
+                    break
+    check("page3_daily_report_5_metrics_reconcile_with_kpi_cards_and_daily_videos", daily_report_ok)
+
     result = dict(meta=manifest["meta"], passed=True, check_count=len(checks), checks=checks,
                   counts=manifest["counts"], verified_at=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat())
     (HERE / "independent_validation.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

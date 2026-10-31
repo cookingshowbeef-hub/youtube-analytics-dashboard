@@ -221,10 +221,82 @@
 
       this.channelSnapshotProfiles = bundle.channel_snapshot_profiles || {};
       this.channelBreakdowns = bundle.channel_breakdowns || {};
+      this.dailyVideoCatalog = bundle.daily_video_catalog || {};
+      this.channelDailyVideos = bundle.channel_daily_videos || {};
 
       this.isLoaded = true;
       console.log('DEMO_STORE initialized with', this.channelDailyMap.size, 'channels,', dailyList.length, 'daily rows, and', this.retentionMap.size, 'retention curves');
       return true;
+    },
+
+    getDailyVideoReport(channelId, dayIso) {
+      const chMap = this.channelDailyVideos && this.channelDailyVideos[channelId];
+      const rec = chMap && chMap[dayIso];
+      if (!rec) return null;
+      const cat = this.dailyVideoCatalog || {};
+      const viewsMap = new Map();
+      const videoViews = (rec.vids || []).map(([vid, vVal]) => {
+        const meta = cat[vid] || {};
+        const views = Number(vVal || 0);
+        viewsMap.set(vid, views);
+        return {
+          video_id: vid,
+          title: meta.title || vid,
+          published_day_pt: meta.published_day_pt || dayIso,
+          published_time_pt: meta.published_time_pt || '19:30 PT',
+          views
+        };
+      });
+      const dayViews = videoViews.reduce((s, x) => s + x.views, 0);
+      const publishedVideos = (rec.pub || []).map(vid => {
+        const meta = cat[vid] || {};
+        return {
+          video_id: vid,
+          title: meta.title || vid,
+          published_day_pt: meta.published_day_pt || dayIso,
+          published_time_pt: meta.published_time_pt || '19:30 PT',
+          views: viewsMap.get(vid) || 0
+        };
+      });
+      return {
+        channel_id: channelId,
+        day: dayIso,
+        day_views: dayViews,
+        daily_videos_published: publishedVideos.length,
+        published_videos: publishedVideos,
+        top3_videos: videoViews.slice(0, 3),
+        video_views: videoViews
+      };
+    },
+
+    getPeriodVideoViews(channelId, startDate, endDate) {
+      const chMap = this.channelDailyVideos && this.channelDailyVideos[channelId];
+      if (!chMap) return [];
+      const cat = this.dailyVideoCatalog || {};
+      const sumsByVid = new Map();
+      Object.keys(chMap).forEach(dayIso => {
+        if ((startDate && dayIso < startDate) || (endDate && dayIso > endDate)) return;
+        const rec = chMap[dayIso];
+        if (!rec || !rec.vids) return;
+        rec.vids.forEach(([vid, vVal]) => {
+          sumsByVid.set(vid, (sumsByVid.get(vid) || 0) + Number(vVal || 0));
+        });
+      });
+      const result = [];
+      sumsByVid.forEach((views, vid) => {
+        const meta = cat[vid] || {};
+        result.push({
+          id: vid,
+          video_id: vid,
+          channelId,
+          title: meta.title || vid,
+          published_day_pt: meta.published_day_pt || '',
+          published_time_pt: meta.published_time_pt || '19:30 PT',
+          periodViews: views
+        });
+      });
+      result.sort((a, b) => (b.periodViews - a.periodViews) || String(b.published_day_pt).localeCompare(String(a.published_day_pt)));
+      return result;
     },
 
     getChannelSnapshotProfile(channelId) {
